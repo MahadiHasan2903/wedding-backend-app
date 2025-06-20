@@ -1,9 +1,9 @@
 import {
   Entity,
-  PrimaryGeneratedColumn,
   Column,
-  CreateDateColumn,
   UpdateDateColumn,
+  CreateDateColumn,
+  PrimaryGeneratedColumn,
 } from 'typeorm';
 import {
   Gender,
@@ -22,6 +22,8 @@ import {
   CulturalPractices,
   AstrologicalSign,
   LoveLanguage,
+  MembershipPackage,
+  Currency,
 } from '../enum/account.enum';
 
 @Entity('account')
@@ -34,6 +36,15 @@ export class Account {
 
   @Column()
   lastName: string;
+
+  @Column({ unique: true })
+  email: string;
+
+  @Column({ nullable: true })
+  phoneNumber?: string;
+
+  @Column()
+  password: string;
 
   @Column({ type: 'text', nullable: true })
   bio?: string;
@@ -65,17 +76,15 @@ export class Account {
   @Column('simple-array', { nullable: true })
   preferredLanguages?: string[];
 
-  @Column({ nullable: true })
-  phoneNumber?: string;
-
-  @Column({ unique: true })
-  email: string;
-
-  @Column()
-  password: string;
-
   @Column({ type: 'enum', enum: UserRole, default: UserRole.USER })
   userRole: UserRole;
+
+  @Column({
+    type: 'enum',
+    enum: MembershipPackage,
+    default: MembershipPackage.BASIC,
+  })
+  membershipPackage: MembershipPackage;
 
   @Column({ nullable: true })
   timeZone?: string;
@@ -95,8 +104,8 @@ export class Account {
   @Column({ type: 'float', nullable: true })
   monthlyIncome?: number;
 
-  @Column({ nullable: true })
-  incomeCurrency?: string;
+  @Column({ type: 'enum', enum: Currency, nullable: true })
+  incomeCurrency?: Currency;
 
   @Column({ type: 'enum', enum: Religion, nullable: true })
   religion?: Religion;

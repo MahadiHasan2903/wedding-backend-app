@@ -31,6 +31,8 @@ import {
   CulturalPractices,
   AstrologicalSign,
   LoveLanguage,
+  MembershipPackage,
+  Currency,
 } from '../enum/account.enum';
 
 export class CreateAccountDto {
@@ -39,6 +41,17 @@ export class CreateAccountDto {
 
   @IsString()
   lastName: string;
+
+  @IsEmail()
+  email: string;
+
+  @IsOptional()
+  @IsPhoneNumber()
+  phoneNumber?: string;
+
+  @IsString()
+  @Length(6, 100)
+  password: string;
 
   @IsOptional()
   @IsString()
@@ -84,19 +97,12 @@ export class CreateAccountDto {
   preferredLanguages?: string[];
 
   @IsOptional()
-  @IsPhoneNumber()
-  phoneNumber?: string;
-
-  @IsEmail()
-  email: string;
-
-  @IsString()
-  @Length(6, 100)
-  password: string;
-
-  @IsOptional()
   @IsEnum(UserRole)
   userRole?: UserRole;
+
+  @IsOptional()
+  @IsEnum(MembershipPackage)
+  membershipPackage?: MembershipPackage;
 
   @IsOptional()
   @IsString()
@@ -123,8 +129,8 @@ export class CreateAccountDto {
   monthlyIncome?: number;
 
   @IsOptional()
-  @IsString()
-  incomeCurrency?: string;
+  @IsEnum(Currency)
+  incomeCurrency?: Currency;
 
   @IsOptional()
   @IsEnum(Religion)

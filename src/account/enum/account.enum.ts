@@ -1,5 +1,3 @@
-// account.enums.ts
-
 export enum Gender {
   MALE = 'male',
   FEMALE = 'female',
@@ -20,6 +18,16 @@ export enum MaritalStatus {
 export enum UserRole {
   ADMIN = 'admin',
   USER = 'user',
+}
+
+export enum MembershipPackage {
+  BASIC = 'basic',
+  VIP = 'vip',
+}
+
+export enum Currency {
+  USD = 'usd',
+  EURO = 'euro',
 }
 
 export enum Religion {
