@@ -2,9 +2,9 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AccountService } from './account.service';
 import { AccountController } from './account.controller';
-import { EmailModule } from 'src/email/email.module';
+import { EmailModule } from 'src/common/email/email.module';
 import { JwtModule } from '@nestjs/jwt';
-import { JwtStrategy } from './jwt/jwt.strategy';
+import { JwtStrategy } from '../common/guards/jwt/jwt.strategy';
 import { User } from 'src/users/entities/user.entity';
 
 @Module({

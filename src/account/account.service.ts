@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from '../users/entities/user.entity';
 import { CreateAccountDto } from './dto/create-account.dto';
-import { EmailService } from '../email/email.service';
+import { EmailService } from '../common/email/email.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 
@@ -161,7 +161,9 @@ export class AccountService {
       email: account.email,
       userRole: account.userRole,
     };
+
     const accessToken = this.jwtService.sign(payload, {
+      secret: process.env.JWT_SECRET,
       expiresIn: process.env.JWT_EXPIRES_IN || '1d',
     });
 
@@ -225,7 +227,8 @@ export class AccountService {
    * @param otp - The OTP provided by the user.
    * @throws If OTP is missing or invalid.
    */
-  verifyForgetPasswordOtp(email: string, otp: string) {
+  async verifyForgetPasswordOtp(email: string, otp: string) {
+    await Promise.resolve();
     const storedOtp = this.forgetPasswordOtpStore.get(email);
     if (!storedOtp) throw new Error('No OTP request found for this email');
     if (storedOtp !== otp) throw new Error('Invalid OTP');

@@ -1,42 +1,66 @@
 import {
   Controller,
-  Get,
-  Post,
-  Body,
   Patch,
   Param,
-  Delete,
+  Body,
+  UseInterceptors,
+  UploadedFile,
+  ParseIntPipe,
+  HttpStatus,
+  HttpException,
 } from '@nestjs/common';
+import { FileUploadInterceptor } from 'src/common/file/file-upload.interceptor';
 import { UsersService } from './users.service';
-import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { UserRole } from './enum/users.enum';
+import { Roles } from 'src/common/decorators/roles.decorator';
+import { sanitizeError } from 'src/utils/helpers';
 
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  @Post()
-  create(@Body() createUserDto: CreateUserDto) {
-    return this.usersService.create(createUserDto);
-  }
-
-  @Get()
-  findAll() {
-    return this.usersService.findAll();
-  }
-
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.usersService.findOne(+id);
-  }
-
+  /**
+   * Updates a user's profile, including uploading a new profile picture if provided.
+   *
+   * @param id - The user's unique ID from the route parameter.
+   * @param updateUserDto - DTO containing fields to update on the user.
+   * @param file - Optional uploaded profile image file (from multipart/form-data).
+   * @returns A response object with status, success flag, message, and updated user data (excluding password).
+   *
+   * @throws HttpException - If an error occurs during the update, a 400 Bad Request is thrown with error details.
+   */
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-    return this.usersService.update(+id, updateUserDto);
-  }
+  @Roles(UserRole.USER)
+  @UseInterceptors(FileUploadInterceptor('image'))
+  async update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() updateUserDto: UpdateUserDto,
+    @UploadedFile() file?: Express.Multer.File,
+  ) {
+    try {
+      const user = await this.usersService.update(id, updateUserDto, file);
+      const { password, ...safeUser } = user;
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.usersService.remove(+id);
+      return {
+        status: HttpStatus.OK,
+        success: true,
+        message: 'User updated successfully',
+        data: safeUser,
+      };
+    } catch (error: unknown) {
+      const sanitizedError = sanitizeError(error);
+
+      throw new HttpException(
+        {
+          status: HttpStatus.BAD_REQUEST,
+          success: false,
+          message: 'Failed to update user',
+          data: {},
+          error: sanitizedError,
+        },
+        HttpStatus.BAD_REQUEST,
+      );
+    }
   }
 }

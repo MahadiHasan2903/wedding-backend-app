@@ -5,14 +5,16 @@ import {
   HttpException,
   HttpStatus,
   Req,
-  UseGuards,
 } from '@nestjs/common';
 import { AccountService } from './account.service';
 import { CreateAccountDto } from './dto/create-account.dto';
 import { ConfirmRegistrationDto } from './dto/confirm-registration.dto';
 import { SigninDto } from './dto/signin.dto';
-import { JwtAuthGuard } from './jwt/jwt-auth.guard';
-import { AuthenticatedRequest } from 'src/types/types';
+import { AuthenticatedRequest } from 'src/types/common.types';
+import { Roles } from 'src/common/decorators/roles.decorator';
+import { UserRole } from 'src/users/enum/users.enum';
+import { Public } from 'src/common/decorators/public.decorator';
+import { sanitizeError } from 'src/utils/helpers';
 
 @Controller('v1/account')
 export class AccountController {
@@ -28,6 +30,7 @@ export class AccountController {
    * @returns Success message and OTP (in development), or conflict error if account already exists.
    * @throws HttpException if account creation or OTP sending fails.
    */
+  @Public()
   @Post('registration-request')
   async create(@Body() createAccountDto: CreateAccountDto) {
     try {
@@ -56,15 +59,12 @@ export class AccountController {
         data: { ...(result.otp && { otp: result.otp }) },
       };
     } catch (error: unknown) {
-      const sanitizedError =
-        error instanceof Error ? error.message : JSON.stringify(error);
-
       throw new HttpException(
         {
           status: HttpStatus.BAD_REQUEST,
           success: false,
           message: 'Failed to create account',
-          error: sanitizedError,
+          error: sanitizeError(error),
         },
         HttpStatus.BAD_REQUEST,
       );
@@ -77,6 +77,7 @@ export class AccountController {
    * @returns Created account details (excluding password) on success.
    * @throws HttpException if OTP is invalid or not found.
    */
+  @Public()
   @Post('registration-confirmation')
   async confirm(@Body() body: ConfirmRegistrationDto) {
     try {
@@ -90,15 +91,12 @@ export class AccountController {
         data: accountWithoutPassword,
       };
     } catch (error: unknown) {
-      const sanitizedError =
-        error instanceof Error ? error.message : JSON.stringify(error);
-
       throw new HttpException(
         {
           status: HttpStatus.BAD_REQUEST,
           success: false,
           message: 'OTP verification failed',
-          error: sanitizedError,
+          error: sanitizeError(error),
         },
         HttpStatus.BAD_REQUEST,
       );
@@ -111,6 +109,7 @@ export class AccountController {
    * @returns JWT access token and user profile info.
    * @throws HttpException if credentials are invalid.
    */
+  @Public()
   @Post('signin')
   async signin(@Body() signinDto: SigninDto) {
     try {
@@ -127,15 +126,12 @@ export class AccountController {
         },
       };
     } catch (error: unknown) {
-      const sanitizedError =
-        error instanceof Error ? error.message : JSON.stringify(error);
-
       throw new HttpException(
         {
           status: HttpStatus.UNAUTHORIZED,
           success: false,
           message: 'Invalid email or password',
-          error: sanitizedError,
+          error: sanitizeError(error),
         },
         HttpStatus.UNAUTHORIZED,
       );
@@ -148,7 +144,7 @@ export class AccountController {
    * @returns Success message.
    */
   @Post('logout')
-  @UseGuards(JwtAuthGuard)
+  @Roles(UserRole.USER)
   async logout() {
     await Promise.resolve(); // to satisfy linting rule requiring await in async function
     return {
@@ -167,27 +163,38 @@ export class AccountController {
    * @throws HttpException if current password is invalid or update fails.
    */
   @Post('change-password')
-  @UseGuards(JwtAuthGuard)
+  @Roles(UserRole.ADMIN)
   async changePassword(
     @Req() req: AuthenticatedRequest,
     @Body() body: { currentPassword: string; newPassword: string },
   ) {
-    console.log('Request:', req);
-    const userId = Number(req.user.userId);
-    const { currentPassword, newPassword } = body;
+    try {
+      const userId = Number(req.user.userId);
+      const { currentPassword, newPassword } = body;
 
-    await this.accountService.changePassword(
-      userId,
-      currentPassword,
-      newPassword,
-    );
+      await this.accountService.changePassword(
+        userId,
+        currentPassword,
+        newPassword,
+      );
 
-    return {
-      status: HttpStatus.OK,
-      success: true,
-      message: 'Password changed successfully',
-      data: {},
-    };
+      return {
+        status: HttpStatus.OK,
+        success: true,
+        message: 'Password changed successfully',
+        data: {},
+      };
+    } catch (error: unknown) {
+      throw new HttpException(
+        {
+          status: HttpStatus.BAD_REQUEST,
+          success: false,
+          message: 'Password change failed',
+          error: sanitizeError(error),
+        },
+        HttpStatus.BAD_REQUEST,
+      );
+    }
   }
 
   /**
@@ -195,38 +202,61 @@ export class AccountController {
    * @param body - Object containing the user's email.
    * @returns Success message regardless of whether the email exists (for security).
    */
+  @Public()
   @Post('forget-password-request')
   async forgetPasswordRequest(@Body() body: { email: string }) {
-    const { email } = body;
-    await this.accountService.forgetPasswordRequest(email);
+    try {
+      await this.accountService.forgetPasswordRequest(body.email);
 
-    return {
-      status: HttpStatus.OK,
-      success: true,
-      message: 'OTP sent to your email for password reset',
-      data: {},
-    };
+      return {
+        status: HttpStatus.OK,
+        success: true,
+        message: 'OTP sent to your email for password reset',
+        data: {},
+      };
+    } catch (error: unknown) {
+      throw new HttpException(
+        {
+          status: HttpStatus.INTERNAL_SERVER_ERROR,
+          success: false,
+          message: 'Failed to send OTP for password reset',
+          error: sanitizeError(error),
+        },
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
-
   /**
    * Confirms the OTP sent for password reset.
    * @param body - Object containing email and OTP.
    * @returns Success message if OTP is valid.
    * @throws HttpException if OTP is invalid or missing.
    */
+  @Public()
   @Post('forget-password-confirmation')
   async forgetPasswordConfirmation(
     @Body() body: { email: string; otp: string },
   ) {
-    await Promise.resolve(); // to satisfy linting rule requiring await in async function
-    this.accountService.verifyForgetPasswordOtp(body.email, body.otp);
+    try {
+      await this.accountService.verifyForgetPasswordOtp(body.email, body.otp);
 
-    return {
-      status: HttpStatus.OK,
-      success: true,
-      message: 'OTP verified successfully',
-      data: {},
-    };
+      return {
+        status: HttpStatus.OK,
+        success: true,
+        message: 'OTP verified successfully',
+        data: {},
+      };
+    } catch (error: unknown) {
+      throw new HttpException(
+        {
+          status: HttpStatus.BAD_REQUEST,
+          success: false,
+          message: 'OTP verification failed',
+          error: sanitizeError(error),
+        },
+        HttpStatus.BAD_REQUEST,
+      );
+    }
   }
 
   /**
@@ -235,15 +265,28 @@ export class AccountController {
    * @returns Success message if password is reset.
    * @throws HttpException if OTP was not verified or user does not exist.
    */
+  @Public()
   @Post('reset-password')
   async resetPassword(@Body() body: { email: string; newPassword: string }) {
-    await this.accountService.resetPassword(body.email, body.newPassword);
+    try {
+      await this.accountService.resetPassword(body.email, body.newPassword);
 
-    return {
-      status: HttpStatus.OK,
-      success: true,
-      message: 'Password reset successful',
-      data: {},
-    };
+      return {
+        status: HttpStatus.OK,
+        success: true,
+        message: 'Password reset successful',
+        data: {},
+      };
+    } catch (error: unknown) {
+      throw new HttpException(
+        {
+          status: HttpStatus.BAD_REQUEST,
+          success: false,
+          message: 'Password reset failed',
+          error: sanitizeError(error),
+        },
+        HttpStatus.BAD_REQUEST,
+      );
+    }
   }
 }

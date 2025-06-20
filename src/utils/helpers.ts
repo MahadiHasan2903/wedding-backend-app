@@ -1,12 +1,11 @@
-import { ConfigService } from '@nestjs/config';
-
-export const getRequiredConfig = (
-  configService: ConfigService,
-  key: string,
-): string => {
-  const value = configService.get<string>(key);
-  if (!value) {
-    throw new Error(`Missing env variable ${key}`);
+// function to sanitize error message
+export const sanitizeError = (error: unknown): string => {
+  if (error instanceof Error) {
+    return error.message;
   }
-  return value;
+  try {
+    return JSON.stringify(error);
+  } catch {
+    return 'Unknown error';
+  }
 };
