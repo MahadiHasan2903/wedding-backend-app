@@ -12,6 +12,7 @@ import { CreateAccountDto } from './dto/create-account.dto';
 import { ConfirmRegistrationDto } from './dto/confirm-registration.dto';
 import { SigninDto } from './dto/signin.dto';
 import { JwtAuthGuard } from './jwt/jwt-auth.guard';
+import { AuthenticatedRequest } from 'src/types/types';
 
 @Controller('v1/account')
 export class AccountController {
@@ -168,11 +169,11 @@ export class AccountController {
   @Post('change-password')
   @UseGuards(JwtAuthGuard)
   async changePassword(
-    @Req() req,
+    @Req() req: AuthenticatedRequest,
     @Body() body: { currentPassword: string; newPassword: string },
   ) {
     console.log('Request:', req);
-    const userId = req.user.sub;
+    const userId = Number(req.user.userId);
     const { currentPassword, newPassword } = body;
 
     await this.accountService.changePassword(

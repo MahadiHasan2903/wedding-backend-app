@@ -20,6 +20,12 @@ export enum UserRole {
   USER = 'user',
 }
 
+export enum AccountStatus {
+  ACTIVE = 'active',
+  INACTIVE = 'inactive',
+  RESTRICTED = 'restricted',
+}
+
 export enum MembershipPackage {
   BASIC = 'basic',
   VIP = 'vip',

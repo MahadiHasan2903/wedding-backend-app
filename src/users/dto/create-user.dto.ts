@@ -35,9 +35,9 @@ import {
   MembershipPackage,
   Currency,
   AccountStatus,
-} from '../../users/enum/users.enum';
+} from '../enum/users.enum';
 
-export class CreateAccountDto {
+export class CreateUserDto {
   @IsString()
   firstName: string;
 

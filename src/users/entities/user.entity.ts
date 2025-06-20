@@ -24,10 +24,11 @@ import {
   LoveLanguage,
   MembershipPackage,
   Currency,
-} from '../enum/account.enum';
+  AccountStatus,
+} from '../enum/users.enum';
 
-@Entity('account')
-export class Account {
+@Entity('users')
+export class User {
   @PrimaryGeneratedColumn()
   id: number;
 
@@ -78,6 +79,9 @@ export class Account {
 
   @Column({ type: 'enum', enum: UserRole, default: UserRole.USER })
   userRole: UserRole;
+
+  @Column({ type: 'enum', enum: AccountStatus, default: AccountStatus.ACTIVE })
+  accountStatus: AccountStatus;
 
   @Column({
     type: 'enum',

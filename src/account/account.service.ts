@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Account } from './entities/account.entity';
+import { User } from '../users/entities/user.entity';
 import { CreateAccountDto } from './dto/create-account.dto';
 import { EmailService } from '../email/email.service';
 import { JwtService } from '@nestjs/jwt';
@@ -25,8 +25,8 @@ export class AccountService {
   private forgetPasswordOtpStore = new Map<string, string>();
 
   constructor(
-    @InjectRepository(Account)
-    private readonly accountRepo: Repository<Account>,
+    @InjectRepository(User)
+    private readonly accountRepo: Repository<User>,
     private readonly emailService: EmailService,
     private readonly jwtService: JwtService,
   ) {}
@@ -40,7 +40,7 @@ export class AccountService {
   async findByEmailOrPhone(
     email: string,
     phone?: string,
-  ): Promise<Account | null> {
+  ): Promise<User | null> {
     return this.accountRepo.findOne({
       where: [{ email }, ...(phone ? [{ phoneNumber: phone }] : [])],
     });
@@ -104,7 +104,7 @@ export class AccountService {
    * @returns The created account.
    * @throws If the OTP is missing or invalid.
    */
-  async verifyOtp(email: string, otp: string): Promise<Account> {
+  async verifyOtp(email: string, otp: string): Promise<User> {
     const record = this.otpStore.get(email);
     if (!record) {
       throw new Error('No OTP request found for this email');
@@ -142,8 +142,8 @@ export class AccountService {
       firstName: string;
       lastName: string;
       email: string;
-      userRole: string;
       phoneNumber: string | null;
+      userRole: string;
     };
   }> {
     const account = await this.accountRepo.findOne({ where: { email } });
@@ -170,8 +170,8 @@ export class AccountService {
         firstName: account.firstName,
         lastName: account.lastName,
         email: account.email,
-        userRole: account.userRole,
         phoneNumber: account.phoneNumber ?? null,
+        userRole: account.userRole,
       },
       accessToken,
     };
