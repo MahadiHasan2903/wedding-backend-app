@@ -13,6 +13,25 @@ export class UsersService {
   ) {}
 
   /**
+   * Retrieves a user by their ID, excluding the password field from the returned object.
+   *
+   * @param id - The unique identifier of the user to retrieve.
+   * @returns A user object without the password field.
+   *
+   * @throws NotFoundException - If no user exists with the provided ID.
+   */
+  async findById(id: number): Promise<Omit<User, 'password'>> {
+    const user = await this.usersRepository.findOneBy({ id });
+
+    if (!user) {
+      throw new NotFoundException(`User with id ${id} not found`);
+    }
+
+    const { password, ...safeUser } = user;
+    return safeUser;
+  }
+
+  /**
    * Updates a user's information, including profile fields and optional profile picture upload.
    *
    * @param id - The unique ID of the user to update.
@@ -75,5 +94,38 @@ export class UsersService {
 
     const updatedUser = this.usersRepository.merge(user, updateUserDto);
     return this.usersRepository.save(updatedUser);
+  }
+
+  /**
+   * Deletes a specific photo URL from the user's additionalPhotos array.
+   *
+   * @param id - The unique ID of the user whose photo is to be deleted.
+   * @param photoUrl - The exact URL of the photo to be removed.
+   * @returns The updated User entity after the photo has been removed and deleted from storage.
+   *
+   * @throws NotFoundException if the user does not exist or if the photo URL is not found in the user's additionalPhotos.
+   */
+  async deleteAdditionalPhoto(id: number, photoUrl: string): Promise<User> {
+    const user = await this.usersRepository.findOneBy({ id });
+
+    if (!user) {
+      throw new NotFoundException(`User with id ${id} not found`);
+    }
+
+    if (!user.additionalPhotos || !user.additionalPhotos.includes(photoUrl)) {
+      throw new NotFoundException(
+        'Photo not found in user additional photo album',
+      );
+    }
+
+    // Remove the photo URL from the array
+    user.additionalPhotos = user.additionalPhotos.filter(
+      (url) => url !== photoUrl,
+    );
+
+    // Delete photo from storage
+    await this.mediaService.deleteMedia(photoUrl);
+
+    return this.usersRepository.save(user);
   }
 }

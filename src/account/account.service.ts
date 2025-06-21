@@ -123,6 +123,7 @@ export class AccountService {
 
     const savedAccount = await this.accountRepo.save(account);
     this.otpStore.delete(email);
+
     return savedAccount;
   }
 
@@ -221,6 +222,8 @@ export class AccountService {
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     this.forgetPasswordOtpStore.set(email, otp);
     await this.sendOtpEmail(email, otp);
+
+    return otp;
   }
 
   /**
@@ -244,7 +247,9 @@ export class AccountService {
    */
   async resetPassword(email: string, newPassword: string) {
     const account = await this.accountRepo.findOne({ where: { email } });
-    if (!account) throw new Error('Account not found');
+    if (!account) {
+      throw new Error('Account not found');
+    }
 
     if (!this.forgetPasswordOtpStore.has(email)) {
       throw new Error('OTP verification required before resetting password');

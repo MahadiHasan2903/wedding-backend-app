@@ -206,13 +206,13 @@ export class AccountController {
   @Post('forget-password-request')
   async forgetPasswordRequest(@Body() body: { email: string }) {
     try {
-      await this.accountService.forgetPasswordRequest(body.email);
+      const otp = await this.accountService.forgetPasswordRequest(body.email);
 
       return {
         status: HttpStatus.OK,
         success: true,
         message: 'OTP sent to your email for password reset',
-        data: {},
+        data: process.env.NODE_ENV === 'production' ? {} : { otp },
       };
     } catch (error: unknown) {
       throw new HttpException(
