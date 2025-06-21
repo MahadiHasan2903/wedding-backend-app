@@ -50,6 +50,9 @@ export class User {
   @Column({ type: 'text', nullable: true })
   bio?: string;
 
+  @Column({ type: 'text', nullable: true })
+  motherTongue?: string;
+
   @Column({ type: 'date', nullable: true })
   dateOfBirth?: Date;
 
@@ -71,10 +74,10 @@ export class User {
   @Column('simple-array', { nullable: true })
   additionalPhotos?: string[];
 
-  @Column('simple-array', { nullable: true })
-  socialMediaLinks?: string[];
+  @Column('text', { array: true, nullable: true })
+  socialMediaLinks: string[];
 
-  @Column('simple-array', { nullable: true })
+  @Column('text', { array: true, nullable: true })
   preferredLanguages?: string[];
 
   @Column({ type: 'enum', enum: UserRole, default: UserRole.USER })
@@ -126,10 +129,10 @@ export class User {
   @Column({ type: 'enum', enum: LookingFor, nullable: true })
   lookingFor?: LookingFor;
 
-  @Column({ type: 'json', nullable: true })
-  preferredAgeRange?: string | { min: number; max: number };
+  @Column({ type: 'text', nullable: true })
+  preferredAgeRange?: string;
 
-  @Column('simple-array', { nullable: true })
+  @Column('text', { array: true, nullable: true })
   preferredNationality?: string[];
 
   @Column({ type: 'enum', enum: ReligionPreference, nullable: true })
@@ -162,8 +165,8 @@ export class User {
   @Column({ type: 'enum', enum: DietaryPreference, nullable: true })
   dietaryPreference?: DietaryPreference;
 
-  @Column({ default: false })
-  hasChildren: boolean;
+  @Column({ type: 'float', nullable: true })
+  children?: number;
 
   @Column({ type: 'enum', enum: FamilyBackground, nullable: true })
   familyBackground?: FamilyBackground;

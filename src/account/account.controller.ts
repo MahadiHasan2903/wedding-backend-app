@@ -163,7 +163,7 @@ export class AccountController {
    * @throws HttpException if current password is invalid or update fails.
    */
   @Post('change-password')
-  @Roles(UserRole.ADMIN)
+  @Roles(UserRole.USER)
   async changePassword(
     @Req() req: AuthenticatedRequest,
     @Body() body: { currentPassword: string; newPassword: string },

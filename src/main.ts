@@ -11,7 +11,13 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   // Apply global validation pipe
-  app.useGlobalPipes(new ValidationPipe());
+  app.useGlobalPipes(
+    new ValidationPipe({
+      transform: true,
+      whitelist: true,
+      forbidNonWhitelisted: false, // optional
+    }),
+  );
 
   // Get the Reflector instance for guards that use metadata (e.g. @Roles)
   const reflector = app.get(Reflector);

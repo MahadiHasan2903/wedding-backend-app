@@ -4,19 +4,19 @@ import {
   Param,
   Body,
   UseInterceptors,
-  UploadedFile,
   ParseIntPipe,
   HttpStatus,
   HttpException,
+  UploadedFiles,
 } from '@nestjs/common';
-import { FileUploadInterceptor } from 'src/common/file/file-upload.interceptor';
 import { UsersService } from './users.service';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserRole } from './enum/users.enum';
 import { Roles } from 'src/common/decorators/roles.decorator';
 import { sanitizeError } from 'src/utils/helpers';
+import { FileFieldsInterceptor } from '@nestjs/platform-express';
 
-@Controller('users')
+@Controller('v1/users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
@@ -31,15 +31,24 @@ export class UsersController {
    * @throws HttpException - If an error occurs during the update, a 400 Bad Request is thrown with error details.
    */
   @Patch(':id')
-  @Roles(UserRole.USER)
-  @UseInterceptors(FileUploadInterceptor('image'))
+  @Roles(UserRole.USER, UserRole.ADMIN)
+  @UseInterceptors(
+    FileFieldsInterceptor([
+      { name: 'profilePicture', maxCount: 1 },
+      { name: 'additionalPhotos', maxCount: 10 },
+    ]),
+  )
   async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateUserDto: UpdateUserDto,
-    @UploadedFile() file?: Express.Multer.File,
+    @UploadedFiles()
+    files: {
+      profilePicture?: Express.Multer.File[];
+      additionalPhotos?: Express.Multer.File[];
+    },
   ) {
     try {
-      const user = await this.usersService.update(id, updateUserDto, file);
+      const user = await this.usersService.update(id, updateUserDto, files);
       const { password, ...safeUser } = user;
 
       return {

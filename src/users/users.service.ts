@@ -1,16 +1,15 @@
-// src/users/users.service.ts
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { FileService } from 'src/common/file/file.service';
 import { User } from './entities/user.entity';
+import { MediaService } from 'src/common/media/media.service';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(User) private readonly usersRepository: Repository<User>,
-    private readonly fileService: FileService,
+    private readonly mediaService: MediaService,
   ) {}
 
   /**
@@ -30,7 +29,10 @@ export class UsersService {
   async update(
     id: number,
     updateUserDto: UpdateUserDto,
-    file?: Express.Multer.File,
+    files?: {
+      profilePicture?: Express.Multer.File[];
+      additionalPhotos?: Express.Multer.File[];
+    },
   ): Promise<User> {
     const user = await this.usersRepository.findOneBy({ id });
 
@@ -38,19 +40,37 @@ export class UsersService {
       throw new NotFoundException(`User with id ${id} not found`);
     }
 
-    if (file) {
-      if (user.profilePicture) {
-        await this.fileService.deleteFile(user.profilePicture);
-      }
-
-      const uploadedImageUrl = await this.fileService.uploadFile(
+    // Handle profile picture
+    if (files?.profilePicture?.length) {
+      const file = files.profilePicture[0];
+      const uploadedUrl = await this.mediaService.uploadMedia(
         file.buffer,
         file.originalname,
         file.mimetype,
-        `users/${user.id}`,
+        `users/${id}/profile`,
       );
 
-      updateUserDto.profilePicture = uploadedImageUrl;
+      // Delete old one if different
+      if (user.profilePicture && user.profilePicture !== uploadedUrl) {
+        await this.mediaService.deleteMedia(user.profilePicture);
+      }
+
+      updateUserDto.profilePicture = uploadedUrl;
+    }
+
+    // Handle additional photos
+    if (files?.additionalPhotos?.length) {
+      const uploadedUrls: string[] = [];
+      for (const file of files.additionalPhotos) {
+        const url = await this.mediaService.uploadMedia(
+          file.buffer,
+          file.originalname,
+          file.mimetype,
+          `users/${id}/additional-photo-album`,
+        );
+        uploadedUrls.push(url);
+      }
+      updateUserDto.additionalPhotos = uploadedUrls;
     }
 
     const updatedUser = this.usersRepository.merge(user, updateUserDto);

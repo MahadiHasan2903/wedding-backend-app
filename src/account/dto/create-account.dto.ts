@@ -73,6 +73,10 @@ export class CreateAccountDto {
 
   @IsOptional()
   @IsString()
+  motherTongue?: string;
+
+  @IsOptional()
+  @IsString()
   city?: string;
 
   @IsOptional()
@@ -160,7 +164,7 @@ export class CreateAccountDto {
 
   @IsOptional()
   @IsObject()
-  preferredAgeRange?: { min: number; max: number } | string;
+  preferredAgeRange?: string;
 
   @IsOptional()
   @IsArray()
@@ -212,8 +216,8 @@ export class CreateAccountDto {
   dietaryPreference?: DietaryPreference;
 
   @IsOptional()
-  @IsBoolean()
-  hasChildren?: boolean;
+  @IsNumber()
+  children: number;
 
   @IsOptional()
   @IsEnum(FamilyBackground)

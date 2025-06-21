@@ -8,7 +8,7 @@ import { ConfigService } from '@nestjs/config';
 import { randomUUID } from 'crypto';
 
 @Injectable()
-export class FileService {
+export class MediaService {
   private s3: S3Client;
   private bucket: string;
 
@@ -37,7 +37,7 @@ export class FileService {
    * @param folder - Optional folder path within the S3 bucket.
    * @returns The full S3 URL of the uploaded file.
    */
-  async uploadFile(
+  async uploadMedia(
     buffer: Buffer,
     originalName: string,
     mimeType: string,
@@ -64,7 +64,7 @@ export class FileService {
    *
    * @param key - The full URL of the file to delete.
    */
-  async deleteFile(key: string): Promise<void> {
+  async deleteMedia(key: string): Promise<void> {
     const Key = key.replace(
       `https://${this.bucket}.s3.${this.configService.get<string>(
         'AWS_REGION',

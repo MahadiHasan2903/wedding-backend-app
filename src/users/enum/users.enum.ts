@@ -120,9 +120,16 @@ export enum FamilyBackground {
 }
 
 export enum CulturalPractices {
-  BENGALI_TRADITIONS = 'Follows Bengali traditions',
   MODERN = 'Modern lifestyle',
   MIXED = 'Mixed culture',
+  TRADITIONAL = 'Traditional lifestyle',
+  CONSERVATIVE = 'Conservative values',
+  LIBERAL = 'Liberal values',
+  URBAN = 'Urban culture',
+  RURAL = 'Rural culture',
+  FAMILY_ORIENTED = 'Family-oriented',
+  SPIRITUAL = 'Spiritual practices',
+  GLOBAL = 'Global/international outlook',
 }
 
 export enum AstrologicalSign {

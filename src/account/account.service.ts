@@ -139,6 +139,7 @@ export class AccountService {
   ): Promise<{
     accessToken: string;
     user: {
+      id: number;
       firstName: string;
       lastName: string;
       email: string;
@@ -169,6 +170,7 @@ export class AccountService {
 
     return {
       user: {
+        id: account.id,
         firstName: account.firstName,
         lastName: account.lastName,
         email: account.email,
