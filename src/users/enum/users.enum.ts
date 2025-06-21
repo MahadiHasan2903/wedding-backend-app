@@ -23,12 +23,13 @@ export enum UserRole {
 export enum AccountStatus {
   ACTIVE = 'active',
   INACTIVE = 'inactive',
-  RESTRICTED = 'restricted',
+  BLOCK = 'block',
+  DELETE = 'delete',
 }
 
 export enum MembershipPackage {
   BASIC = 'basic',
-  VIP = 'vip',
+  PREMIUM = 'premium',
 }
 
 export enum Currency {
@@ -153,4 +154,10 @@ export enum LoveLanguage {
   GIFTS = 'Receiving gifts',
   TIME = 'Quality time',
   TOUCH = 'Physical touch',
+}
+
+export enum PrivacySettings {
+  EVERYONE = 'everyone',
+  CONNECTIONS = 'connections',
+  PREMIUM_MEMBERS = 'premium_members',
 }

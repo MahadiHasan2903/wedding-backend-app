@@ -4,6 +4,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
 import { MediaService } from 'src/common/media/media.service';
+import { AccountStatus } from './enum/users.enum';
 
 @Injectable()
 export class UsersService {
@@ -126,6 +127,34 @@ export class UsersService {
     // Delete photo from storage
     await this.mediaService.deleteMedia(photoUrl);
 
+    return this.usersRepository.save(user);
+  }
+
+  /**
+   * Updates the account status of a user by their ID.
+   *
+   * @param userId - The unique identifier of the user whose account status is to be updated.
+   * @param accountStatus - The new account status to set for the user.
+   * @returns The updated User entity after saving the new account status.
+   *
+   * @throws NotFoundException - Throws if no user exists with the provided userId.
+   */
+  async updateAccountStatus(
+    userId: number,
+    accountStatus: AccountStatus,
+  ): Promise<User> {
+    // Find the user entity by its ID from the database
+    const user = await this.usersRepository.findOneBy({ id: userId });
+
+    // If user does not exist, throw a 404 Not Found error
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // Update the accountStatus property of the user entity
+    user.accountStatus = accountStatus;
+
+    // Save the updated user entity back to the database and return it
     return this.usersRepository.save(user);
   }
 }

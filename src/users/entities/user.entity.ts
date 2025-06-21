@@ -25,6 +25,7 @@ import {
   MembershipPackage,
   Currency,
   AccountStatus,
+  PrivacySettings,
 } from '../enum/users.enum';
 
 @Entity('users')
@@ -182,6 +183,27 @@ export class User {
 
   @Column({ type: 'text', nullable: true })
   favoriteQuote?: string;
+
+  @Column({
+    type: 'enum',
+    enum: PrivacySettings,
+    default: PrivacySettings.EVERYONE,
+  })
+  profileVisibility?: PrivacySettings;
+
+  @Column({
+    type: 'enum',
+    enum: PrivacySettings,
+    default: PrivacySettings.EVERYONE,
+  })
+  photoVisibility?: PrivacySettings;
+
+  @Column({
+    type: 'enum',
+    enum: PrivacySettings,
+    default: PrivacySettings.EVERYONE,
+  })
+  messageAvailability?: PrivacySettings;
 
   @CreateDateColumn()
   createdAt: Date;

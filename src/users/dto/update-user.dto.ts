@@ -6,10 +6,7 @@ import {
   IsDateString,
   IsPhoneNumber,
   IsArray,
-  IsUrl,
   IsNumber,
-  IsBoolean,
-  IsObject,
   Length,
 } from 'class-validator';
 
@@ -33,20 +30,23 @@ import {
   MembershipPackage,
   Currency,
   AccountStatus,
+  PrivacySettings,
 } from '../enum/users.enum';
 import { Transform } from 'class-transformer';
 import { isStringArray } from 'src/utils/helpers';
 
 export class UpdateUserDto {
+  @IsOptional()
   @IsString()
-  firstName: string;
+  firstName?: string;
 
+  @IsOptional()
   @IsString()
-  lastName: string;
+  lastName?: string;
 
   @IsOptional()
   @IsEmail()
-  email: string;
+  email?: string;
 
   @IsOptional()
   @IsPhoneNumber()
@@ -55,7 +55,7 @@ export class UpdateUserDto {
   @IsOptional()
   @IsString()
   @Length(6, 100)
-  password: string;
+  password?: string;
 
   @IsOptional()
   @IsEnum(UserRole)
@@ -65,23 +65,29 @@ export class UpdateUserDto {
   @IsString()
   bio?: string;
 
+  @IsOptional()
   @IsDateString()
-  dateOfBirth: string;
+  dateOfBirth?: string;
 
+  @IsOptional()
   @IsEnum(Gender)
-  gender: Gender;
+  gender?: Gender;
 
+  @IsOptional()
   @IsString()
-  nationality: string;
+  nationality?: string;
 
+  @IsOptional()
   @IsString()
   motherTongue?: string;
 
+  @IsOptional()
   @IsString()
-  city: string;
+  city?: string;
 
+  @IsOptional()
   @IsEnum(MaritalStatus)
-  maritalStatus: MaritalStatus;
+  maritalStatus?: MaritalStatus;
 
   @IsOptional()
   profilePicture?: string;
@@ -145,42 +151,53 @@ export class UpdateUserDto {
   @IsString()
   timeZone?: string;
 
+  @IsOptional()
   @IsString()
-  highestEducation: string;
+  highestEducation?: string;
 
+  @IsOptional()
   @IsString()
-  institutionName: string;
+  institutionName?: string;
 
+  @IsOptional()
   @IsString()
-  profession: string;
+  profession?: string;
 
+  @IsOptional()
   @IsString()
-  companyName: string;
+  companyName?: string;
 
+  @IsOptional()
   @Transform(({ value }) => {
     const val = Number(value);
     return isNaN(val) ? null : val;
   })
   @IsNumber()
-  monthlyIncome: number;
+  monthlyIncome?: number;
 
+  @IsOptional()
   @IsEnum(Currency)
-  incomeCurrency: Currency;
+  incomeCurrency?: Currency;
 
+  @IsOptional()
   @IsEnum(Religion)
-  religion: Religion;
+  religion?: Religion;
 
+  @IsOptional()
   @IsEnum(PoliticalView)
-  politicalView: PoliticalView;
+  politicalView?: PoliticalView;
 
+  @IsOptional()
   @IsEnum(LivingArrangement)
-  livingArrangement: LivingArrangement;
+  livingArrangement?: LivingArrangement;
 
+  @IsOptional()
   @IsString()
-  interestedInGender: string;
+  interestedInGender?: string;
 
+  @IsOptional()
   @IsEnum(LookingFor)
-  lookingFor: LookingFor;
+  lookingFor?: LookingFor;
 
   @IsOptional()
   preferredAgeRange?: string;
@@ -215,38 +232,45 @@ export class UpdateUserDto {
   @IsString()
   partnerExpectations?: string;
 
+  @IsOptional()
   @Transform(({ value }) => {
     const val = Number(value);
     return isNaN(val) ? null : val;
   })
   @IsNumber()
-  weightKg: number;
+  weightKg?: number;
 
+  @IsOptional()
   @Transform(({ value }) => {
     const val = Number(value);
     return isNaN(val) ? null : val;
   })
   @IsNumber()
-  heightCm: number;
+  heightCm?: number;
 
+  @IsOptional()
   @IsEnum(BodyType)
-  bodyType: BodyType;
+  bodyType?: BodyType;
 
+  @IsOptional()
   @IsEnum(DrinkingHabit)
-  drinkingHabit: DrinkingHabit;
+  drinkingHabit?: DrinkingHabit;
 
+  @IsOptional()
   @IsEnum(SmokingHabit)
-  smokingHabit: SmokingHabit;
+  smokingHabit?: SmokingHabit;
 
   @IsOptional()
   @IsString()
   pets?: string;
 
+  @IsOptional()
   @IsString()
-  healthCondition: string;
+  healthCondition?: string;
 
+  @IsOptional()
   @IsEnum(DietaryPreference)
-  dietaryPreference: DietaryPreference;
+  dietaryPreference?: DietaryPreference;
 
   @IsOptional()
   @Transform(({ value }) => {
@@ -254,13 +278,15 @@ export class UpdateUserDto {
     return isNaN(val) ? null : val;
   })
   @IsNumber()
-  children: number;
+  children?: number;
 
+  @IsOptional()
   @IsEnum(FamilyBackground)
-  familyBackground: FamilyBackground;
+  familyBackground?: FamilyBackground;
 
+  @IsOptional()
   @IsEnum(CulturalPractices)
-  culturalPractices: CulturalPractices;
+  culturalPractices?: CulturalPractices;
 
   @IsOptional()
   @IsEnum(AstrologicalSign)
@@ -273,4 +299,16 @@ export class UpdateUserDto {
   @IsOptional()
   @IsString()
   favoriteQuote?: string;
+
+  @IsOptional()
+  @IsEnum(PrivacySettings)
+  profileVisibility?: PrivacySettings;
+
+  @IsOptional()
+  @IsEnum(PrivacySettings)
+  photoVisibility?: PrivacySettings;
+
+  @IsOptional()
+  @IsEnum(PrivacySettings)
+  messageAvailability?: PrivacySettings;
 }

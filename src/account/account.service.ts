@@ -6,6 +6,7 @@ import { CreateAccountDto } from './dto/create-account.dto';
 import { EmailService } from '../common/email/email.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
+import { AccountStatus } from 'src/users/enum/users.enum';
 
 @Injectable()
 export class AccountService {
@@ -146,6 +147,7 @@ export class AccountService {
       email: string;
       phoneNumber: string | null;
       userRole: string;
+      accountStatus: AccountStatus;
     };
   }> {
     const account = await this.accountRepo.findOne({ where: { email } });
@@ -153,9 +155,24 @@ export class AccountService {
       throw new Error('Invalid credentials');
     }
 
+    // Check if account status is blocked or deleted
+    if (account.accountStatus === AccountStatus.BLOCK) {
+      throw new Error(
+        'Your account has been blocked. Please contact support for assistance.',
+      );
+    } else if (account.accountStatus === AccountStatus.DELETE) {
+      throw new Error('Your account has been deleted and cannot be accessed.');
+    }
+
     const passwordValid = await bcrypt.compare(password, account.password);
     if (!passwordValid) {
       throw new Error('Invalid credentials');
+    }
+
+    // If account is inactive, update status to active
+    if (account.accountStatus === AccountStatus.INACTIVE) {
+      account.accountStatus = AccountStatus.ACTIVE;
+      await this.accountRepo.save(account);
     }
 
     const payload = {
@@ -177,6 +194,7 @@ export class AccountService {
         email: account.email,
         phoneNumber: account.phoneNumber ?? null,
         userRole: account.userRole,
+        accountStatus: account.accountStatus,
       },
       accessToken,
     };

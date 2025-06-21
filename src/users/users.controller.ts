@@ -19,6 +19,7 @@ import { sanitizeError } from 'src/utils/helpers';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { DeletePhotoDto } from 'src/common/media/dto/delete-photo.dto';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
+import { UpdateAccountStatusDto } from './dto/update-account-status.dto';
 
 @Controller('v1/users')
 export class UsersController {
@@ -183,6 +184,100 @@ export class UsersController {
           status: HttpStatus.BAD_REQUEST,
           success: false,
           message: 'Failed to delete photo',
+          data: {},
+          error: sanitizedError,
+        },
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
+
+  /**
+   * Updates the logged-in user's account status.
+   * @param user - The currently authenticated user object injected from the token (contains user id).
+   * @param updateAccountStatusDto - DTO containing the new account status.
+   *
+   * @returns A response object containing the updated user data (excluding the password).
+   *
+   * @throws HttpException with status 400 if the update fails for any reason.
+   */
+  @Patch('profile/account-status')
+  @Roles(UserRole.USER, UserRole.ADMIN)
+  async updateAccountStatus(
+    @CurrentUser() user: { id: number },
+    @Body() updateAccountStatusDto: UpdateAccountStatusDto,
+  ) {
+    try {
+      console.log('Triggered');
+      // Call service method to update the account status of the current user
+      const updatedUser = await this.usersService.updateAccountStatus(
+        user.id,
+        updateAccountStatusDto.accountStatus,
+      );
+
+      // Exclude the password field before sending the response
+      const { password, ...safeUser } = updatedUser;
+
+      return {
+        status: HttpStatus.OK,
+        success: true,
+        message: 'Account status updated successfully',
+        data: safeUser,
+      };
+    } catch (error: unknown) {
+      const sanitizedError = sanitizeError(error);
+
+      throw new HttpException(
+        {
+          status: HttpStatus.BAD_REQUEST,
+          success: false,
+          message: 'Failed to update account status',
+          data: {},
+          error: sanitizedError,
+        },
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
+
+  /**
+   * Admin-only endpoint to update account status of any user by user ID.
+   *
+   * @param id - The ID of the user whose account status is to be updated.
+   * @param updateAccountStatusDto - DTO containing the new account status.
+   *
+   * @returns A response object containing the updated user data (excluding the password).
+   *
+   * @throws HttpException with status 400 if the update fails.
+   */
+  @Patch(':id/account-status')
+  @Roles(UserRole.ADMIN)
+  async updateUserAccountStatus(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() updateAccountStatusDto: UpdateAccountStatusDto,
+  ) {
+    try {
+      const updatedUser = await this.usersService.updateAccountStatus(
+        id,
+        updateAccountStatusDto.accountStatus,
+      );
+
+      const { password, ...safeUser } = updatedUser;
+
+      return {
+        status: HttpStatus.OK,
+        success: true,
+        message: 'User account status updated successfully',
+        data: safeUser,
+      };
+    } catch (error: unknown) {
+      const sanitizedError = sanitizeError(error);
+
+      throw new HttpException(
+        {
+          status: HttpStatus.BAD_REQUEST,
+          success: false,
+          message: 'Failed to update user account status',
           data: {},
           error: sanitizedError,
         },
