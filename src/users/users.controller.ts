@@ -10,6 +10,7 @@ import {
   UploadedFiles,
   Delete,
   Get,
+  Query,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -20,6 +21,7 @@ import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { DeletePhotoDto } from 'src/common/media/dto/delete-photo.dto';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { UpdateAccountStatusDto } from './dto/update-account-status.dto';
+import { SearchUserDto } from './dto/search-user.dto';
 
 @Controller('v1/users')
 export class UsersController {
@@ -284,5 +286,66 @@ export class UsersController {
         HttpStatus.BAD_REQUEST,
       );
     }
+  }
+
+  @Get()
+  @Roles(UserRole.USER, UserRole.ADMIN)
+  async getAllUsers(@Query() query: SearchUserDto) {
+    const {
+      page,
+      pageSize,
+      sort,
+      age,
+      height,
+      weight,
+      monthlyIncome,
+      lookingFor,
+      religion,
+      politicalView,
+      country,
+      languageSpoken,
+      education,
+      profession,
+      familyMember,
+      maritalStatus,
+      hasChildren,
+      hasPet,
+      dietaryPreference,
+      smokingHabit,
+      drinkingHabit,
+    } = query;
+
+    const data = await this.usersService.findAllPaginated(
+      page,
+      pageSize,
+      sort,
+      {
+        age,
+        height,
+        weight,
+        monthlyIncome,
+        lookingFor,
+        religion,
+        politicalView,
+        country,
+        languageSpoken,
+        education,
+        profession,
+        familyMember,
+        maritalStatus,
+        hasChildren,
+        hasPet,
+        dietaryPreference,
+        smokingHabit,
+        drinkingHabit,
+      },
+    );
+
+    return {
+      status: HttpStatus.OK,
+      success: true,
+      message: 'Users retrieved successfully',
+      data,
+    };
   }
 }

@@ -8,11 +8,11 @@ import {
   IsArray,
   IsUrl,
   IsNumber,
-  IsBoolean,
   IsObject,
   Length,
   Min,
   Max,
+  IsBoolean,
 } from 'class-validator';
 
 import {
@@ -36,6 +36,7 @@ import {
   Currency,
   AccountStatus,
 } from '../../users/enum/users.enum';
+import { Transform } from 'class-transformer';
 
 export class CreateAccountDto {
   @IsString()
@@ -70,6 +71,10 @@ export class CreateAccountDto {
   @IsOptional()
   @IsString()
   nationality?: string;
+
+  @IsOptional()
+  @IsString()
+  country?: string;
 
   @IsOptional()
   @IsString()
@@ -155,6 +160,10 @@ export class CreateAccountDto {
   livingArrangement?: LivingArrangement;
 
   @IsOptional()
+  @IsNumber()
+  familyMemberCount?: number;
+
+  @IsOptional()
   @IsString()
   interestedInGender?: string;
 
@@ -204,8 +213,9 @@ export class CreateAccountDto {
   smokingHabit?: SmokingHabit;
 
   @IsOptional()
-  @IsString()
-  pets?: string;
+  @Transform(({ value }) => value === 'true')
+  @IsBoolean()
+  hasPets?: boolean;
 
   @IsOptional()
   @IsString()

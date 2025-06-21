@@ -64,6 +64,9 @@ export class User {
   nationality?: string;
 
   @Column({ nullable: true })
+  country?: string;
+
+  @Column({ nullable: true })
   city?: string;
 
   @Column({ type: 'enum', enum: MaritalStatus, nullable: true })
@@ -124,6 +127,9 @@ export class User {
   @Column({ type: 'enum', enum: LivingArrangement, nullable: true })
   livingArrangement?: LivingArrangement;
 
+  @Column({ type: 'float', nullable: true })
+  familyMemberCount?: number;
+
   @Column({ nullable: true })
   interestedInGender?: string;
 
@@ -157,8 +163,8 @@ export class User {
   @Column({ type: 'enum', enum: SmokingHabit, nullable: true })
   smokingHabit?: SmokingHabit;
 
-  @Column({ nullable: true })
-  pets?: string;
+  @Column({ type: 'boolean', nullable: true })
+  hasPet?: boolean;
 
   @Column({ nullable: true })
   healthCondition?: string;

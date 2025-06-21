@@ -8,6 +8,7 @@ import {
   IsArray,
   IsNumber,
   Length,
+  IsBoolean,
 } from 'class-validator';
 
 import {
@@ -76,6 +77,10 @@ export class UpdateUserDto {
   @IsOptional()
   @IsString()
   nationality?: string;
+
+  @IsOptional()
+  @IsString()
+  country?: string;
 
   @IsOptional()
   @IsString()
@@ -192,6 +197,10 @@ export class UpdateUserDto {
   livingArrangement?: LivingArrangement;
 
   @IsOptional()
+  @IsNumber()
+  familyMemberCount?: number;
+
+  @IsOptional()
   @IsString()
   interestedInGender?: string;
 
@@ -261,8 +270,9 @@ export class UpdateUserDto {
   smokingHabit?: SmokingHabit;
 
   @IsOptional()
-  @IsString()
-  pets?: string;
+  @Transform(({ value }) => value === 'true')
+  @IsBoolean()
+  hasPets?: boolean;
 
   @IsOptional()
   @IsString()
