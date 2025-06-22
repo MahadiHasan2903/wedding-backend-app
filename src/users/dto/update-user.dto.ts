@@ -95,10 +95,10 @@ export class UpdateUserDto {
   maritalStatus?: MaritalStatus;
 
   @IsOptional()
-  profilePicture?: string;
+  profilePicture?: number;
 
   @IsOptional()
-  additionalPhotos?: string[];
+  additionalPhotos?: number[];
 
   @IsOptional()
   @IsArray()

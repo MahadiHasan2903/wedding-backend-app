@@ -4,6 +4,10 @@ import {
   UpdateDateColumn,
   CreateDateColumn,
   PrimaryGeneratedColumn,
+  ManyToOne,
+  JoinColumn,
+  OneToMany,
+  OneToOne,
 } from 'typeorm';
 import {
   Gender,
@@ -27,6 +31,7 @@ import {
   AccountStatus,
   PrivacySettings,
 } from '../enum/users.enum';
+import { Media } from 'src/media/entities/media.entity';
 
 @Entity('users')
 export class User {
@@ -72,11 +77,19 @@ export class User {
   @Column({ type: 'enum', enum: MaritalStatus, nullable: true })
   maritalStatus?: MaritalStatus;
 
-  @Column({ nullable: true })
-  profilePicture?: string;
+  @OneToOne(() => Media, (media) => media.userProfilePicture, {
+    nullable: true,
+    cascade: true,
+    eager: true,
+  })
+  @JoinColumn()
+  profilePicture: Media | null;
 
-  @Column('simple-array', { nullable: true })
-  additionalPhotos?: string[];
+  @OneToMany(() => Media, (media) => media.userAdditionalPhotos, {
+    cascade: true,
+    eager: true,
+  })
+  additionalPhotos?: Media[];
 
   @Column('text', { array: true, nullable: true })
   socialMediaLinks: string[];

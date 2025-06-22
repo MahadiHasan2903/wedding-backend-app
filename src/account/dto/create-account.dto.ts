@@ -89,13 +89,10 @@ export class CreateAccountDto {
   maritalStatus?: MaritalStatus;
 
   @IsOptional()
-  @IsUrl()
-  profilePicture?: string;
+  profilePicture?: number;
 
   @IsOptional()
-  @IsArray()
-  @IsUrl({}, { each: true })
-  additionalPhotos?: string[];
+  additionalPhotos?: number[];
 
   @IsOptional()
   @IsArray()

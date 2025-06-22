@@ -117,8 +117,10 @@ export class AccountService {
 
     const hashedPassword = await bcrypt.hash(record.userData.password, 10);
 
+    const { profilePicture, additionalPhotos, ...rest } = record.userData;
+
     const account = this.accountRepo.create({
-      ...record.userData,
+      ...rest,
       password: hashedPassword,
     });
 

@@ -3,7 +3,6 @@ import { Brackets, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
-import { MediaService } from 'src/common/media/media.service';
 import {
   AccountStatus,
   DietaryPreference,
@@ -15,11 +14,18 @@ import {
   SmokingHabit,
 } from './enum/users.enum';
 import { subYears } from 'date-fns';
+import { MediaService } from 'src/media/media.service';
+import { Media } from 'src/media/entities/media.entity';
 
 @Injectable()
 export class UsersService {
   constructor(
-    @InjectRepository(User) private readonly usersRepository: Repository<User>,
+    @InjectRepository(User)
+    private readonly usersRepository: Repository<User>,
+
+    @InjectRepository(Media)
+    private readonly mediaRepository: Repository<Media>,
+
     private readonly mediaService: MediaService,
   ) {}
 
@@ -302,78 +308,79 @@ export class UsersService {
       additionalPhotos?: Express.Multer.File[];
     },
   ): Promise<User> {
-    const user = await this.usersRepository.findOneBy({ id });
+    const user = await this.usersRepository.findOne({
+      where: { id },
+      relations: ['profilePicture', 'additionalPhotos'],
+    });
 
     if (!user) {
       throw new NotFoundException(`User with id ${id} not found`);
     }
 
-    // Handle profile picture
-    if (files?.profilePicture?.length) {
-      const file = files.profilePicture[0];
-      const uploadedUrl = await this.mediaService.uploadMedia(
-        file.buffer,
-        file.originalname,
-        file.mimetype,
-        `users/${id}/profile`,
-      );
+    // ✅ Remove old profile picture (if any)
+    if (files?.profilePicture?.[0]) {
+      if (user.profilePicture) {
+        const oldProfilePictureId = user.profilePicture.id;
+        user.profilePicture = null;
+        await this.usersRepository.save(user);
 
-      // Delete old one if different
-      if (user.profilePicture && user.profilePicture !== uploadedUrl) {
-        await this.mediaService.deleteMedia(user.profilePicture);
+        await this.mediaService.deleteMediaById(oldProfilePictureId);
       }
 
-      updateUserDto.profilePicture = uploadedUrl;
+      // Upload new profile picture
+      const media = await this.mediaService.handleUpload(
+        files.profilePicture[0],
+        `users/${id}/user-profile`,
+        `users/${id}/user-profile`,
+      );
+      user.profilePicture = media;
     }
 
-    // Handle additional photos
+    // ✅ Upload new additional photos
     if (files?.additionalPhotos?.length) {
-      const uploadedUrls: string[] = [];
-      for (const file of files.additionalPhotos) {
-        const url = await this.mediaService.uploadMedia(
-          file.buffer,
-          file.originalname,
-          file.mimetype,
-          `users/${id}/additional-photo-album`,
-        );
-        uploadedUrls.push(url);
-      }
-      updateUserDto.additionalPhotos = uploadedUrls;
-    }
-
-    const updatedUser = this.usersRepository.merge(user, updateUserDto);
-    return this.usersRepository.save(updatedUser);
-  }
-
-  /**
-   * Deletes a specific photo URL from the user's additionalPhotos array.
-   *
-   * @param id - The unique ID of the user whose photo is to be deleted.
-   * @param photoUrl - The exact URL of the photo to be removed.
-   * @returns The updated User entity after the photo has been removed and deleted from storage.
-   *
-   * @throws NotFoundException if the user does not exist or if the photo URL is not found in the user's additionalPhotos.
-   */
-  async deleteAdditionalPhoto(id: number, photoUrl: string): Promise<User> {
-    const user = await this.usersRepository.findOneBy({ id });
-
-    if (!user) {
-      throw new NotFoundException(`User with id ${id} not found`);
-    }
-
-    if (!user.additionalPhotos || !user.additionalPhotos.includes(photoUrl)) {
-      throw new NotFoundException(
-        'Photo not found in user additional photo album',
+      const mediaList = await Promise.all(
+        files.additionalPhotos.map((file) =>
+          this.mediaService.handleUpload(
+            file,
+            `users/${id}/user-gallery`,
+            `users/${id}/user-gallery`,
+          ),
+        ),
       );
+      user.additionalPhotos = mediaList;
     }
 
-    // Remove the photo URL from the array
-    user.additionalPhotos = user.additionalPhotos.filter(
-      (url) => url !== photoUrl,
-    );
+    // ✅ Profile picture update via ID
+    if (updateUserDto.profilePicture) {
+      const media = await this.mediaRepository.findOneBy({
+        id: updateUserDto.profilePicture,
+      });
+      if (!media) {
+        throw new NotFoundException('Invalid profile picture ID');
+      }
 
-    // Delete photo from storage
-    await this.mediaService.deleteMedia(photoUrl);
+      if (user.profilePicture && user.profilePicture.id !== media.id) {
+        const oldProfilePictureId = user.profilePicture.id;
+        user.profilePicture = null;
+        await this.usersRepository.save(user);
+
+        await this.mediaService.deleteMediaById(oldProfilePictureId);
+      }
+
+      user.profilePicture = media;
+    }
+
+    // ✅ Additional photos update via ID
+    if (updateUserDto.additionalPhotos?.length) {
+      const photos = await this.mediaRepository.findByIds(
+        updateUserDto.additionalPhotos,
+      );
+      user.additionalPhotos = photos;
+    }
+
+    // ✅ Merge remaining data
+    const { profilePicture, additionalPhotos, ...rest } = updateUserDto;
+    this.usersRepository.merge(user, rest);
 
     return this.usersRepository.save(user);
   }

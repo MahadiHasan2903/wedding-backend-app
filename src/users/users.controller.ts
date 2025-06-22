@@ -8,7 +8,6 @@ import {
   HttpStatus,
   HttpException,
   UploadedFiles,
-  Delete,
   Get,
   Query,
 } from '@nestjs/common';
@@ -18,10 +17,10 @@ import { UserRole } from './enum/users.enum';
 import { Roles } from 'src/common/decorators/roles.decorator';
 import { sanitizeError } from 'src/utils/helpers';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
-import { DeletePhotoDto } from 'src/common/media/dto/delete-photo.dto';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { UpdateAccountStatusDto } from './dto/update-account-status.dto';
 import { SearchUserDto } from './dto/search-user.dto';
+import { AuthenticatedRequest } from 'src/types/common.types';
 
 @Controller('v1/users')
 export class UsersController {
@@ -113,7 +112,7 @@ export class UsersController {
    *
    * @throws HttpException - If an error occurs during the update, a 400 Bad Request is thrown with error details.
    */
-  @Patch(':id')
+  @Patch('profile')
   @Roles(UserRole.USER, UserRole.ADMIN)
   @UseInterceptors(
     FileFieldsInterceptor([
@@ -122,7 +121,7 @@ export class UsersController {
     ]),
   )
   async update(
-    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser() req: AuthenticatedRequest,
     @Body() updateUserDto: UpdateUserDto,
     @UploadedFiles()
     files: {
@@ -130,8 +129,10 @@ export class UsersController {
       additionalPhotos?: Express.Multer.File[];
     },
   ) {
+    const userId = req.user.userId;
+
     try {
-      const user = await this.usersService.update(id, updateUserDto, files);
+      const user = await this.usersService.update(userId, updateUserDto, files);
       const { password, ...safeUser } = user;
 
       return {
@@ -148,44 +149,6 @@ export class UsersController {
           status: HttpStatus.BAD_REQUEST,
           success: false,
           message: 'Failed to update user',
-          data: {},
-          error: sanitizedError,
-        },
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-  }
-
-  /**
-   * Delete a specific photo from user's additionalPhotos.
-   */
-  @Delete(':id/additional-photo')
-  @Roles(UserRole.USER, UserRole.ADMIN)
-  async deleteAdditionalPhoto(
-    @Param('id', ParseIntPipe) id: number,
-    @Body() deletePhotoDto: DeletePhotoDto,
-  ) {
-    try {
-      const updatedUser = await this.usersService.deleteAdditionalPhoto(
-        id,
-        deletePhotoDto.photoUrl,
-      );
-      const { password, ...safeUser } = updatedUser;
-
-      return {
-        status: HttpStatus.OK,
-        success: true,
-        message: 'Photo deleted successfully',
-        data: safeUser,
-      };
-    } catch (error: unknown) {
-      const sanitizedError = sanitizeError(error);
-
-      throw new HttpException(
-        {
-          status: HttpStatus.BAD_REQUEST,
-          success: false,
-          message: 'Failed to delete photo',
           data: {},
           error: sanitizedError,
         },
