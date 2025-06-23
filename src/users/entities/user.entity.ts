@@ -1,9 +1,13 @@
 import {
   Entity,
-  PrimaryGeneratedColumn,
   Column,
-  CreateDateColumn,
   UpdateDateColumn,
+  CreateDateColumn,
+  PrimaryGeneratedColumn,
+  ManyToOne,
+  JoinColumn,
+  OneToMany,
+  OneToOne,
 } from 'typeorm';
 import {
   Gender,
@@ -22,10 +26,15 @@ import {
   CulturalPractices,
   AstrologicalSign,
   LoveLanguage,
-} from '../enum/account.enum';
+  MembershipPackage,
+  Currency,
+  AccountStatus,
+  PrivacySettings,
+} from '../enum/users.enum';
+import { Media } from 'src/media/entities/media.entity';
 
-@Entity('account')
-export class Account {
+@Entity('users')
+export class User {
   @PrimaryGeneratedColumn()
   id: number;
 
@@ -35,8 +44,20 @@ export class Account {
   @Column()
   lastName: string;
 
+  @Column({ unique: true })
+  email: string;
+
+  @Column({ nullable: true })
+  phoneNumber?: string;
+
+  @Column()
+  password: string;
+
   @Column({ type: 'text', nullable: true })
   bio?: string;
+
+  @Column({ type: 'text', nullable: true })
+  motherTongue?: string;
 
   @Column({ type: 'date', nullable: true })
   dateOfBirth?: Date;
@@ -48,34 +69,46 @@ export class Account {
   nationality?: string;
 
   @Column({ nullable: true })
+  country?: string;
+
+  @Column({ nullable: true })
   city?: string;
 
   @Column({ type: 'enum', enum: MaritalStatus, nullable: true })
   maritalStatus?: MaritalStatus;
 
-  @Column({ nullable: true })
-  profilePicture?: string;
+  @OneToOne(() => Media, (media) => media.userProfilePicture, {
+    nullable: true,
+    cascade: true,
+    eager: true,
+  })
+  @JoinColumn()
+  profilePicture: Media | null;
 
-  @Column('simple-array', { nullable: true })
-  additionalPhotos?: string[];
+  @OneToMany(() => Media, (media) => media.userAdditionalPhotos, {
+    cascade: true,
+    eager: true,
+  })
+  additionalPhotos?: Media[];
 
-  @Column('simple-array', { nullable: true })
-  socialMediaLinks?: string[];
+  @Column('text', { array: true, nullable: true })
+  socialMediaLinks: string[];
 
-  @Column('simple-array', { nullable: true })
+  @Column('text', { array: true, nullable: true })
   preferredLanguages?: string[];
-
-  @Column({ nullable: true })
-  phoneNumber?: string;
-
-  @Column({ unique: true })
-  email: string;
-
-  @Column()
-  password: string;
 
   @Column({ type: 'enum', enum: UserRole, default: UserRole.USER })
   userRole: UserRole;
+
+  @Column({ type: 'enum', enum: AccountStatus, default: AccountStatus.ACTIVE })
+  accountStatus: AccountStatus;
+
+  @Column({
+    type: 'enum',
+    enum: MembershipPackage,
+    default: MembershipPackage.BASIC,
+  })
+  membershipPackage: MembershipPackage;
 
   @Column({ nullable: true })
   timeZone?: string;
@@ -95,8 +128,8 @@ export class Account {
   @Column({ type: 'float', nullable: true })
   monthlyIncome?: number;
 
-  @Column({ nullable: true })
-  incomeCurrency?: string;
+  @Column({ type: 'enum', enum: Currency, nullable: true })
+  incomeCurrency?: Currency;
 
   @Column({ type: 'enum', enum: Religion, nullable: true })
   religion?: Religion;
@@ -107,16 +140,19 @@ export class Account {
   @Column({ type: 'enum', enum: LivingArrangement, nullable: true })
   livingArrangement?: LivingArrangement;
 
+  @Column({ type: 'float', nullable: true })
+  familyMemberCount?: number;
+
   @Column({ nullable: true })
   interestedInGender?: string;
 
   @Column({ type: 'enum', enum: LookingFor, nullable: true })
   lookingFor?: LookingFor;
 
-  @Column({ type: 'json', nullable: true })
-  preferredAgeRange?: string | { min: number; max: number };
+  @Column({ type: 'text', nullable: true })
+  preferredAgeRange?: string;
 
-  @Column('simple-array', { nullable: true })
+  @Column('text', { array: true, nullable: true })
   preferredNationality?: string[];
 
   @Column({ type: 'enum', enum: ReligionPreference, nullable: true })
@@ -140,8 +176,8 @@ export class Account {
   @Column({ type: 'enum', enum: SmokingHabit, nullable: true })
   smokingHabit?: SmokingHabit;
 
-  @Column({ nullable: true })
-  pets?: string;
+  @Column({ type: 'boolean', nullable: true })
+  hasPet?: boolean;
 
   @Column({ nullable: true })
   healthCondition?: string;
@@ -149,8 +185,8 @@ export class Account {
   @Column({ type: 'enum', enum: DietaryPreference, nullable: true })
   dietaryPreference?: DietaryPreference;
 
-  @Column({ default: false })
-  hasChildren: boolean;
+  @Column({ type: 'float', nullable: true })
+  children?: number;
 
   @Column({ type: 'enum', enum: FamilyBackground, nullable: true })
   familyBackground?: FamilyBackground;
@@ -166,6 +202,27 @@ export class Account {
 
   @Column({ type: 'text', nullable: true })
   favoriteQuote?: string;
+
+  @Column({
+    type: 'enum',
+    enum: PrivacySettings,
+    default: PrivacySettings.EVERYONE,
+  })
+  profileVisibility?: PrivacySettings;
+
+  @Column({
+    type: 'enum',
+    enum: PrivacySettings,
+    default: PrivacySettings.EVERYONE,
+  })
+  photoVisibility?: PrivacySettings;
+
+  @Column({
+    type: 'enum',
+    enum: PrivacySettings,
+    default: PrivacySettings.EVERYONE,
+  })
+  messageAvailability?: PrivacySettings;
 
   @CreateDateColumn()
   createdAt: Date;

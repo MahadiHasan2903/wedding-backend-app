@@ -6,12 +6,8 @@ import {
   IsDateString,
   IsPhoneNumber,
   IsArray,
-  IsUrl,
   IsNumber,
-  IsObject,
   Length,
-  Min,
-  Max,
   IsBoolean,
 } from 'class-validator';
 
@@ -35,26 +31,36 @@ import {
   MembershipPackage,
   Currency,
   AccountStatus,
-} from '../../users/enum/users.enum';
+  PrivacySettings,
+} from '../enum/users.enum';
 import { Transform } from 'class-transformer';
+import { isStringArray } from 'src/utils/helpers';
 
-export class CreateAccountDto {
+export class UpdateUserDto {
+  @IsOptional()
   @IsString()
-  firstName: string;
+  firstName?: string;
 
+  @IsOptional()
   @IsString()
-  lastName: string;
+  lastName?: string;
 
+  @IsOptional()
   @IsEmail()
-  email: string;
+  email?: string;
 
   @IsOptional()
   @IsPhoneNumber()
   phoneNumber?: string;
 
+  @IsOptional()
   @IsString()
   @Length(6, 100)
-  password: string;
+  password?: string;
+
+  @IsOptional()
+  @IsEnum(UserRole)
+  userRole?: UserRole;
 
   @IsOptional()
   @IsString()
@@ -96,17 +102,47 @@ export class CreateAccountDto {
 
   @IsOptional()
   @IsArray()
-  @IsUrl({}, { each: true })
+  @IsString({ each: true })
+  @Transform(({ value }) => {
+    if (typeof value === 'string') {
+      try {
+        const parsed: unknown = JSON.parse(value);
+        if (isStringArray(parsed)) {
+          return parsed;
+        }
+        return [];
+      } catch {
+        return [];
+      }
+    }
+    if (isStringArray(value)) {
+      return value;
+    }
+    return [];
+  })
   socialMediaLinks?: string[];
 
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
+  @Transform(({ value }) => {
+    if (typeof value === 'string') {
+      try {
+        const parsed: unknown = JSON.parse(value);
+        if (isStringArray(parsed)) {
+          return parsed;
+        }
+        return [];
+      } catch {
+        return [];
+      }
+    }
+    if (isStringArray(value)) {
+      return value;
+    }
+    return [];
+  })
   preferredLanguages?: string[];
-
-  @IsOptional()
-  @IsEnum(UserRole)
-  userRole?: UserRole;
 
   @IsOptional()
   @IsEnum(AccountStatus)
@@ -137,6 +173,10 @@ export class CreateAccountDto {
   companyName?: string;
 
   @IsOptional()
+  @Transform(({ value }) => {
+    const val = Number(value);
+    return isNaN(val) ? null : val;
+  })
   @IsNumber()
   monthlyIncome?: number;
 
@@ -169,12 +209,28 @@ export class CreateAccountDto {
   lookingFor?: LookingFor;
 
   @IsOptional()
-  @IsObject()
   preferredAgeRange?: string;
 
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
+  @Transform(({ value }) => {
+    if (typeof value === 'string') {
+      try {
+        const parsed: unknown = JSON.parse(value);
+        if (isStringArray(parsed)) {
+          return parsed;
+        }
+        return [];
+      } catch {
+        return [];
+      }
+    }
+    if (isStringArray(value)) {
+      return value;
+    }
+    return [];
+  })
   preferredNationality?: string[];
 
   @IsOptional()
@@ -186,15 +242,19 @@ export class CreateAccountDto {
   partnerExpectations?: string;
 
   @IsOptional()
+  @Transform(({ value }) => {
+    const val = Number(value);
+    return isNaN(val) ? null : val;
+  })
   @IsNumber()
-  @Min(20)
-  @Max(300)
   weightKg?: number;
 
   @IsOptional()
+  @Transform(({ value }) => {
+    const val = Number(value);
+    return isNaN(val) ? null : val;
+  })
   @IsNumber()
-  @Min(50)
-  @Max(250)
   heightCm?: number;
 
   @IsOptional()
@@ -223,8 +283,12 @@ export class CreateAccountDto {
   dietaryPreference?: DietaryPreference;
 
   @IsOptional()
+  @Transform(({ value }) => {
+    const val = Number(value);
+    return isNaN(val) ? null : val;
+  })
   @IsNumber()
-  children: number;
+  children?: number;
 
   @IsOptional()
   @IsEnum(FamilyBackground)
@@ -245,4 +309,16 @@ export class CreateAccountDto {
   @IsOptional()
   @IsString()
   favoriteQuote?: string;
+
+  @IsOptional()
+  @IsEnum(PrivacySettings)
+  profileVisibility?: PrivacySettings;
+
+  @IsOptional()
+  @IsEnum(PrivacySettings)
+  photoVisibility?: PrivacySettings;
+
+  @IsOptional()
+  @IsEnum(PrivacySettings)
+  messageAvailability?: PrivacySettings;
 }
