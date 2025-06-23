@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { MsPackageRepository } from './repositories/msPackage.repository';
 import { CreateMsPackageDto } from './dto/create-ms-package.dto';
 import { UpdateMsPackageDto } from './dto/update-ms-package.dto';
@@ -45,10 +45,10 @@ export class MsPackageService {
   async update(
     id: number,
     updateMsPackageDto: UpdateMsPackageDto,
-  ): Promise<MsPackage | null> {
+  ): Promise<MsPackage> {
     const msPackage = await this.msPackageRepo.findOneBy({ id });
     if (!msPackage) {
-      return null;
+      throw new NotFoundException(`Package with id ${id} not found`);
     }
     Object.assign(msPackage, updateMsPackageDto);
     return this.msPackageRepo.save(msPackage);

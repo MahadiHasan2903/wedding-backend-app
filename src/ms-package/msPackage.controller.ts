@@ -90,7 +90,8 @@ export class MsPackageController {
    * @param createMsPackageDto - DTO containing package creation data
    * @returns The created package.
    */
-  @Roles(UserRole.ADMIN)
+  @Public()
+  // @Roles(UserRole.ADMIN)
   @Post()
   async create(@Body() createMsPackageDto: CreateMsPackageDto) {
     try {
@@ -131,6 +132,18 @@ export class MsPackageController {
   ) {
     try {
       const data = await this.msPackageService.update(+id, updateMsPackageDto);
+
+      if (!data) {
+        throw new HttpException(
+          {
+            status: HttpStatus.NOT_FOUND,
+            success: false,
+            message: `Package with id ${id} not found`,
+          },
+          HttpStatus.NOT_FOUND,
+        );
+      }
+
       return {
         status: HttpStatus.OK,
         success: true,
@@ -138,7 +151,6 @@ export class MsPackageController {
         data,
       };
     } catch (error: unknown) {
-      // Handle and sanitize error before returning
       const sanitizedError = sanitizeError(error);
       throw new HttpException(
         {

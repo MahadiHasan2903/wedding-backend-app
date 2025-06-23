@@ -20,6 +20,6 @@ import { MsPackageRepository } from './repositories/msPackage.repository';
       inject: [getDataSourceToken()],
     },
   ],
-  exports: [MsPackageService],
+  exports: [MsPackageService, MsPackageRepository],
 })
 export class MsPackageModule {}
