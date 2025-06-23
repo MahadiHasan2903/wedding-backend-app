@@ -1,12 +1,11 @@
+import * as bcrypt from 'bcrypt';
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { User } from '../users/entities/user.entity';
+import { AccountRepository } from './repositories/account.repository';
 import { CreateAccountDto } from './dto/create-account.dto';
 import { EmailService } from '../common/email/email.service';
 import { JwtService } from '@nestjs/jwt';
-import * as bcrypt from 'bcrypt';
 import { AccountStatus } from 'src/users/enum/users.enum';
+import { User } from 'src/users/entities/user.entity';
 
 @Injectable()
 export class AccountService {
@@ -26,8 +25,7 @@ export class AccountService {
   private forgetPasswordOtpStore = new Map<string, string>();
 
   constructor(
-    @InjectRepository(User)
-    private readonly accountRepo: Repository<User>,
+    private readonly accountRepo: AccountRepository,
     private readonly emailService: EmailService,
     private readonly jwtService: JwtService,
   ) {}
@@ -42,9 +40,7 @@ export class AccountService {
     email: string,
     phone?: string,
   ): Promise<User | null> {
-    return this.accountRepo.findOne({
-      where: [{ email }, ...(phone ? [{ phoneNumber: phone }] : [])],
-    });
+    return this.accountRepo.findByEmailOrPhone(email, phone);
   }
 
   /**
@@ -152,7 +148,7 @@ export class AccountService {
       accountStatus: AccountStatus;
     };
   }> {
-    const account = await this.accountRepo.findOne({ where: { email } });
+    const account = await this.accountRepo.findByEmail(email);
     if (!account) {
       throw new Error('Invalid credentials');
     }
@@ -214,7 +210,7 @@ export class AccountService {
     currentPassword: string,
     newPassword: string,
   ) {
-    const account = await this.accountRepo.findOne({ where: { id: userId } });
+    const account = await this.accountRepo.findById(userId);
     if (!account) throw new Error('Account not found');
 
     const passwordValid = await bcrypt.compare(
@@ -233,7 +229,7 @@ export class AccountService {
    * @returns void (even if account is not found, to prevent info leakage).
    */
   async forgetPasswordRequest(email: string) {
-    const account = await this.accountRepo.findOne({ where: { email } });
+    const account = await this.accountRepo.findByEmail(email);
     if (!account) {
       // For security, don't reveal if email exists or not
       return;
@@ -266,7 +262,7 @@ export class AccountService {
    * @throws If the account is not found or OTP hasn't been verified.
    */
   async resetPassword(email: string, newPassword: string) {
-    const account = await this.accountRepo.findOne({ where: { email } });
+    const account = await this.accountRepo.findByEmail(email);
     if (!account) {
       throw new Error('Account not found');
     }
