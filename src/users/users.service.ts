@@ -336,7 +336,7 @@ export class UsersService {
       user.profilePicture = media;
     }
 
-    // ✅ Upload new additional photos
+    // ✅ Upload new additional photos (append instead of overwrite)
     if (files?.additionalPhotos?.length) {
       const mediaList = await Promise.all(
         files.additionalPhotos.map((file) =>
@@ -347,7 +347,7 @@ export class UsersService {
           ),
         ),
       );
-      user.additionalPhotos = mediaList;
+      user.additionalPhotos = [...(user.additionalPhotos || []), ...mediaList];
     }
 
     // ✅ Profile picture update via ID

@@ -4,17 +4,16 @@ import {
   Body,
   HttpException,
   HttpStatus,
-  Req,
 } from '@nestjs/common';
 import { AccountService } from './account.service';
 import { CreateAccountDto } from './dto/create-account.dto';
 import { ConfirmRegistrationDto } from './dto/confirm-registration.dto';
 import { SigninDto } from './dto/signin.dto';
-import { AuthenticatedRequest } from 'src/types/common.types';
 import { Roles } from 'src/common/decorators/roles.decorator';
 import { UserRole } from 'src/users/enum/users.enum';
 import { Public } from 'src/common/decorators/public.decorator';
 import { sanitizeError } from 'src/utils/helpers';
+import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 
 @Controller('v1/account')
 export class AccountController {
@@ -144,9 +143,9 @@ export class AccountController {
    * @returns Success message.
    */
   @Post('logout')
-  @Roles(UserRole.USER)
+  @Roles(UserRole.USER, UserRole.ADMIN)
   async logout() {
-    await Promise.resolve(); // to satisfy linting rule requiring await in async function
+    await Promise.resolve();
     return {
       status: HttpStatus.OK,
       success: true,
@@ -165,11 +164,11 @@ export class AccountController {
   @Post('change-password')
   @Roles(UserRole.USER)
   async changePassword(
-    @Req() req: AuthenticatedRequest,
+    @CurrentUser() user: { userId: number },
     @Body() body: { currentPassword: string; newPassword: string },
   ) {
     try {
-      const userId = Number(req.user.userId);
+      const userId = Number(user.userId);
       const { currentPassword, newPassword } = body;
 
       await this.accountService.changePassword(

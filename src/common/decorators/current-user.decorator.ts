@@ -5,6 +5,6 @@ import { AuthenticatedRequest } from 'src/types/common.types';
 export const CurrentUser = createParamDecorator(
   (_data: unknown, ctx: ExecutionContext): AuthenticatedRequest => {
     const request = ctx.switchToHttp().getRequest<Request>();
-    return request as AuthenticatedRequest;
+    return request.user as AuthenticatedRequest;
   },
 );

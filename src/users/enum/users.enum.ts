@@ -1,9 +1,9 @@
 export enum Gender {
   MALE = 'male',
   FEMALE = 'female',
-  NON_BINARY = 'non-binary',
+  NON_BINARY = 'non_binary',
   OTHER = 'other',
-  NOT_SHARED = 'not-shared',
+  NOT_SHARED = 'not_shared',
 }
 
 export enum MaritalStatus {
@@ -38,48 +38,48 @@ export enum Currency {
 }
 
 export enum Religion {
-  ISLAM = 'Islam',
-  HINDUISM = 'Hinduism',
-  CHRISTIANITY = 'Christianity',
-  BUDDHISM = 'Buddhism',
-  JUDAISM = 'Judaism',
-  NONE = 'None',
-  OTHER = 'Other',
+  ISLAM = 'islam',
+  HINDUISM = 'hinduism',
+  CHRISTIANITY = 'christianity',
+  BUDDHISM = 'buddhism',
+  JUDAISM = 'judaism',
+  NONE = 'none',
+  OTHER = 'other',
 }
 
 export enum PoliticalView {
-  LIBERAL = 'Liberal',
-  CONSERVATIVE = 'Conservative',
-  MODERATE = 'Moderate',
-  APOLITICAL = 'Apolitical',
-  OTHER = 'Other',
-  NOT_SHARED = 'not-shared',
+  LIBERAL = 'liberal',
+  CONSERVATIVE = 'conservative',
+  MODERATE = 'moderate',
+  APOLITICAL = 'apolitical',
+  OTHER = 'other',
+  NOT_SHARED = 'not_shared',
 }
 
 export enum LivingArrangement {
-  WITH_FAMILY = 'Lives with family',
-  OWN_APARTMENT = 'Own apartment',
-  SHARED = 'Shared accommodation',
-  DORMITORY = 'Dormitory',
-  OTHER = 'Other',
+  WITH_FAMILY = 'with_family',
+  OWN_APARTMENT = 'own_apartment',
+  SHARED = 'shared_accommodation',
+  DORMITORY = 'dormitory',
+  OTHER = 'other',
 }
 
 export enum LookingFor {
   MARRIAGE = 'marriage',
-  LONG_TERM = 'long-term relationship',
+  LONG_TERM = 'long_term_relationship',
   FRIENDSHIP = 'friendship',
-  CASUAL = 'casual dating',
+  CASUAL = 'casual_dating',
   OTHER = 'other',
 }
 
 export enum ReligionPreference {
-  SAME_RELIGION = 'Same religion',
-  ISLAM = 'Islam',
-  HINDUISM = 'Hinduism',
-  CHRISTIANITY = 'Christianity',
-  BUDDHISM = 'Buddhism',
-  JUDAISM = 'Judaism',
-  ANY = 'Any',
+  SAME_RELIGION = 'same_religion',
+  ISLAM = 'islam',
+  HINDUISM = 'hinduism',
+  CHRISTIANITY = 'christianity',
+  BUDDHISM = 'buddhism',
+  JUDAISM = 'judaism',
+  ANY = 'any',
 }
 
 export enum BodyType {
@@ -98,14 +98,14 @@ export enum DrinkingHabit {
 }
 
 export enum SmokingHabit {
-  NON_SMOKER = 'non-smoker',
-  SOCIAL_SMOKER = 'social smoker',
-  REGULAR_SMOKER = 'regular smoker',
+  NON_SMOKER = 'non_smoker',
+  SOCIAL_SMOKER = 'social_smoker',
+  REGULAR_SMOKER = 'regular_smoker',
 }
 
 export enum DietaryPreference {
   VEGETARIAN = 'vegetarian',
-  NON_VEGETARIAN = 'non-vegetarian',
+  NON_VEGETARIAN = 'non_vegetarian',
   VEGAN = 'vegan',
   HALAL = 'halal',
   KOSHER = 'kosher',
@@ -113,47 +113,47 @@ export enum DietaryPreference {
 }
 
 export enum FamilyBackground {
-  TRADITIONAL = 'Traditional',
-  MODERN = 'Modern',
-  MIDDLE_CLASS = 'Middle-class',
-  UPPER_CLASS = 'Upper-class',
-  WORKING_CLASS = 'Working-class',
+  TRADITIONAL = 'traditional',
+  MODERN = 'modern',
+  MIDDLE_CLASS = 'middle_class',
+  UPPER_CLASS = 'upper_class',
+  WORKING_CLASS = 'working_class',
 }
 
 export enum CulturalPractices {
-  MODERN = 'Modern lifestyle',
-  MIXED = 'Mixed culture',
-  TRADITIONAL = 'Traditional lifestyle',
-  CONSERVATIVE = 'Conservative values',
-  LIBERAL = 'Liberal values',
-  URBAN = 'Urban culture',
-  RURAL = 'Rural culture',
-  FAMILY_ORIENTED = 'Family-oriented',
-  SPIRITUAL = 'Spiritual practices',
-  GLOBAL = 'Global/international outlook',
+  MODERN = 'modern_lifestyle',
+  MIXED = 'mixed_culture',
+  TRADITIONAL = 'traditional_lifestyle',
+  CONSERVATIVE = 'conservative_values',
+  LIBERAL = 'liberal_values',
+  URBAN = 'urban_culture',
+  RURAL = 'rural_culture',
+  FAMILY_ORIENTED = 'family_oriented',
+  SPIRITUAL = 'spiritual_practices',
+  GLOBAL = 'global_outlook',
 }
 
 export enum AstrologicalSign {
-  ARIES = 'Aries',
-  TAURUS = 'Taurus',
-  GEMINI = 'Gemini',
-  CANCER = 'Cancer',
-  LEO = 'Leo',
-  VIRGO = 'Virgo',
-  LIBRA = 'Libra',
-  SCORPIO = 'Scorpio',
-  SAGITTARIUS = 'Sagittarius',
-  CAPRICORN = 'Capricorn',
-  AQUARIUS = 'Aquarius',
-  PISCES = 'Pisces',
+  ARIES = 'aries',
+  TAURUS = 'taurus',
+  GEMINI = 'gemini',
+  CANCER = 'cancer',
+  LEO = 'leo',
+  VIRGO = 'virgo',
+  LIBRA = 'libra',
+  SCORPIO = 'scorpio',
+  SAGITTARIUS = 'sagittarius',
+  CAPRICORN = 'capricorn',
+  AQUARIUS = 'aquarius',
+  PISCES = 'pisces',
 }
 
 export enum LoveLanguage {
-  WORDS = 'Words of affirmation',
-  ACTS = 'Acts of service',
-  GIFTS = 'Receiving gifts',
-  TIME = 'Quality time',
-  TOUCH = 'Physical touch',
+  WORDS = 'words_of_affirmation',
+  ACTS = 'acts_of_service',
+  GIFTS = 'receiving_gifts',
+  TIME = 'quality_time',
+  TOUCH = 'physical_touch',
 }
 
 export enum PrivacySettings {

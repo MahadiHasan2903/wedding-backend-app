@@ -42,17 +42,17 @@ export class Media {
   @Column()
   url: string;
 
-  @ManyToOne(() => User, (user) => user.additionalPhotos, {
-    nullable: true,
-  })
-  @JoinColumn({ name: 'albumOwnerId' })
-  userAdditionalPhotos: User;
-
   @OneToOne(() => User, (user) => user.profilePicture, {
     nullable: true,
   })
   @JoinColumn({ name: 'profilePictureOwnerId' })
   userProfilePicture: User;
+
+  @ManyToOne(() => User, (user) => user.additionalPhotos, {
+    nullable: true,
+  })
+  @JoinColumn({ name: 'albumOwnerId' })
+  userAdditionalPhotos: User;
 
   @CreateDateColumn()
   createdAt: Date;

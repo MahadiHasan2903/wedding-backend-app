@@ -13,6 +13,8 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { MediaService } from './media.service';
 import { sanitizeError } from 'src/utils/helpers';
 import { Public } from 'src/common/decorators/public.decorator';
+import { Roles } from 'src/common/decorators/roles.decorator';
+import { UserRole } from 'src/users/enum/users.enum';
 
 @Controller('v1/media')
 export class MediaController {
@@ -94,8 +96,8 @@ export class MediaController {
    * @param id - ID of the media to delete.
    * @returns Deletion confirmation message.
    */
-  @Public()
   @Delete(':id')
+  @Roles(UserRole.USER, UserRole.ADMIN)
   async delete(@Param('id') id: string) {
     try {
       await this.mediaService.delete(+id);
@@ -103,6 +105,7 @@ export class MediaController {
         success: true,
         message: 'Media deleted successfully',
         status: HttpStatus.OK,
+        data: {},
       };
     } catch (error: unknown) {
       const sanitizedError = sanitizeError(error);
@@ -128,8 +131,8 @@ export class MediaController {
    * @param file - File object uploaded via multipart/form-data.
    * @returns Uploaded media metadata.
    */
-  @Public()
   @Post('upload')
+  @Roles(UserRole.USER, UserRole.ADMIN)
   @UseInterceptors(FileInterceptor('file'))
   async upload(@UploadedFile() file: Express.Multer.File) {
     if (!file) {
@@ -138,8 +141,8 @@ export class MediaController {
           success: false,
           message: 'File is required',
           status: HttpStatus.BAD_REQUEST,
-          data: {},
-          error: 'MissingFileUpload',
+          error:
+            'No files were uploaded. Please attach the required file(s) before submitting.',
         },
         HttpStatus.BAD_REQUEST,
       );

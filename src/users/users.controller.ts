@@ -20,7 +20,6 @@ import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { UpdateAccountStatusDto } from './dto/update-account-status.dto';
 import { SearchUserDto } from './dto/search-user.dto';
-import { AuthenticatedRequest } from 'src/types/common.types';
 
 @Controller('v1/users')
 export class UsersController {
@@ -34,9 +33,9 @@ export class UsersController {
    */
   @Get('profile')
   @Roles(UserRole.USER, UserRole.ADMIN)
-  async getProfile(@CurrentUser() user: { id: number }) {
+  async getProfile(@CurrentUser() user: { userId: number }) {
     try {
-      const foundUser = await this.usersService.findById(user.id);
+      const foundUser = await this.usersService.findById(user.userId);
 
       return {
         status: HttpStatus.OK,
@@ -56,7 +55,6 @@ export class UsersController {
           status: HttpStatus.BAD_REQUEST,
           success: false,
           message: 'Failed to retrieve profile',
-          data: {},
           error: sanitizedError,
         },
         HttpStatus.BAD_REQUEST,
@@ -71,7 +69,7 @@ export class UsersController {
    * @returns The user's profile excluding password.
    */
   @Get(':id')
-  @Roles(UserRole.ADMIN)
+  @Roles(UserRole.USER, UserRole.ADMIN)
   async getUserById(@Param('id', ParseIntPipe) id: number) {
     try {
       const foundUser = await this.usersService.findById(id);
@@ -94,7 +92,6 @@ export class UsersController {
           status: HttpStatus.BAD_REQUEST,
           success: false,
           message: 'Failed to retrieve user',
-          data: {},
           error: sanitizedError,
         },
         HttpStatus.BAD_REQUEST,
@@ -121,7 +118,7 @@ export class UsersController {
     ]),
   )
   async update(
-    @CurrentUser() req: AuthenticatedRequest,
+    @CurrentUser() user: { userId: number },
     @Body() updateUserDto: UpdateUserDto,
     @UploadedFiles()
     files: {
@@ -129,7 +126,7 @@ export class UsersController {
       additionalPhotos?: Express.Multer.File[];
     },
   ) {
-    const userId = req.user.userId;
+    const userId = user.userId;
 
     try {
       const user = await this.usersService.update(userId, updateUserDto, files);
@@ -149,7 +146,6 @@ export class UsersController {
           status: HttpStatus.BAD_REQUEST,
           success: false,
           message: 'Failed to update user',
-          data: {},
           error: sanitizedError,
         },
         HttpStatus.BAD_REQUEST,
@@ -169,14 +165,13 @@ export class UsersController {
   @Patch('profile/account-status')
   @Roles(UserRole.USER, UserRole.ADMIN)
   async updateAccountStatus(
-    @CurrentUser() user: { id: number },
+    @CurrentUser() user: { userId: number },
     @Body() updateAccountStatusDto: UpdateAccountStatusDto,
   ) {
     try {
-      console.log('Triggered');
       // Call service method to update the account status of the current user
       const updatedUser = await this.usersService.updateAccountStatus(
-        user.id,
+        user.userId,
         updateAccountStatusDto.accountStatus,
       );
 
@@ -197,7 +192,6 @@ export class UsersController {
           status: HttpStatus.BAD_REQUEST,
           success: false,
           message: 'Failed to update account status',
-          data: {},
           error: sanitizedError,
         },
         HttpStatus.BAD_REQUEST,
@@ -243,7 +237,6 @@ export class UsersController {
           status: HttpStatus.BAD_REQUEST,
           success: false,
           message: 'Failed to update user account status',
-          data: {},
           error: sanitizedError,
         },
         HttpStatus.BAD_REQUEST,
@@ -254,35 +247,11 @@ export class UsersController {
   @Get()
   @Roles(UserRole.USER, UserRole.ADMIN)
   async getAllUsers(@Query() query: SearchUserDto) {
-    const {
-      page,
-      pageSize,
-      sort,
-      age,
-      height,
-      weight,
-      monthlyIncome,
-      lookingFor,
-      religion,
-      politicalView,
-      country,
-      languageSpoken,
-      education,
-      profession,
-      familyMember,
-      maritalStatus,
-      hasChildren,
-      hasPet,
-      dietaryPreference,
-      smokingHabit,
-      drinkingHabit,
-    } = query;
-
-    const data = await this.usersService.findAllPaginated(
-      page,
-      pageSize,
-      sort,
-      {
+    try {
+      const {
+        page,
+        pageSize,
+        sort,
         age,
         height,
         weight,
@@ -301,14 +270,52 @@ export class UsersController {
         dietaryPreference,
         smokingHabit,
         drinkingHabit,
-      },
-    );
+      } = query;
 
-    return {
-      status: HttpStatus.OK,
-      success: true,
-      message: 'Users retrieved successfully',
-      data,
-    };
+      const data = await this.usersService.findAllPaginated(
+        page,
+        pageSize,
+        sort,
+        {
+          age,
+          height,
+          weight,
+          monthlyIncome,
+          lookingFor,
+          religion,
+          politicalView,
+          country,
+          languageSpoken,
+          education,
+          profession,
+          familyMember,
+          maritalStatus,
+          hasChildren,
+          hasPet,
+          dietaryPreference,
+          smokingHabit,
+          drinkingHabit,
+        },
+      );
+
+      return {
+        status: HttpStatus.OK,
+        success: true,
+        message: 'Users retrieved successfully',
+        data,
+      };
+    } catch (error) {
+      const sanitizedError = sanitizeError(error);
+
+      throw new HttpException(
+        {
+          status: HttpStatus.BAD_REQUEST,
+          success: false,
+          message: 'Failed to retrieve users',
+          error: sanitizedError,
+        },
+        HttpStatus.BAD_REQUEST,
+      );
+    }
   }
 }
