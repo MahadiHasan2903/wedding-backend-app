@@ -24,9 +24,7 @@ import { AccountRepository } from './repositories/account.repository';
     {
       provide: AccountRepository,
       useFactory: (dataSource: DataSource) => {
-        return dataSource
-          .getRepository(User)
-          .extend(AccountRepository.prototype);
+        return new AccountRepository(dataSource);
       },
       inject: [getDataSourceToken()],
     },
