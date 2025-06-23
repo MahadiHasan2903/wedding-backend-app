@@ -4,6 +4,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AccountModule } from './account/account.module';
 import { UsersModule } from './users/users.module';
 import { MediaModule } from './media/media.module';
+import { MsPackageModule } from './ms-package/msPackage.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { MediaModule } from './media/media.module';
     AccountModule,
     UsersModule,
     MediaModule,
+    MsPackageModule,
   ],
 })
 export class AppModule {}
