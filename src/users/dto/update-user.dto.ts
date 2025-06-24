@@ -9,6 +9,7 @@ import {
   IsNumber,
   Length,
   IsBoolean,
+  ValidateNested,
 } from 'class-validator';
 
 import {
@@ -33,8 +34,9 @@ import {
   AccountStatus,
   PrivacySettings,
 } from '../enum/users.enum';
-import { Transform } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import { isStringArray } from 'src/utils/helpers';
+import { MembershipPackageDto } from './membership-package.dto';
 
 export class UpdateUserDto {
   @IsOptional()
@@ -149,8 +151,9 @@ export class UpdateUserDto {
   accountStatus?: AccountStatus;
 
   @IsOptional()
-  @IsEnum(MembershipPackage)
-  membershipPackage?: MembershipPackage;
+  @ValidateNested()
+  @Type(() => MembershipPackageDto)
+  membershipPackage?: MembershipPackageDto;
 
   @IsOptional()
   @IsString()

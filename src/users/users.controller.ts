@@ -244,6 +244,15 @@ export class UsersController {
     }
   }
 
+  /**
+   * Retrieves a paginated list of users, optionally filtered and sorted based on query parameters.
+   *
+   * Supports filtering by various user attributes, sorting, and pagination.
+   * Access restricted to users with roles USER and ADMIN.
+   *
+   * @param {SearchUserDto} query - The query parameters including pagination, sorting, and filters.
+   * @returns {Promise<PaginatedUsersResponse>} Paginated list of users with their profile pictures and additional photos populated.
+   */
   @Get()
   @Roles(UserRole.USER, UserRole.ADMIN)
   async getAllUsers(@Query() query: SearchUserDto) {
@@ -272,7 +281,7 @@ export class UsersController {
         drinkingHabit,
       } = query;
 
-      const data = await this.usersService.findAllPaginated(
+      const data = await this.usersService.findUsersWithRelatedMediaPaginated(
         page,
         pageSize,
         sort,

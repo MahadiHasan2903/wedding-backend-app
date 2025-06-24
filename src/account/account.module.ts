@@ -8,11 +8,13 @@ import { JwtStrategy } from '../common/guards/jwt/jwt.strategy';
 import { User } from 'src/users/entities/user.entity';
 import { DataSource } from 'typeorm';
 import { AccountRepository } from './repositories/account.repository';
+import { MsPackageModule } from 'src/ms-package/msPackage.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([User]),
     EmailModule,
+    MsPackageModule,
     JwtModule.register({
       secret: process.env.JWT_SECRET,
       signOptions: { expiresIn: process.env.JWT_EXPIRES_IN || '1d' },

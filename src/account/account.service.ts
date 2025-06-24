@@ -6,6 +6,7 @@ import { EmailService } from '../common/email/email.service';
 import { JwtService } from '@nestjs/jwt';
 import { AccountStatus } from 'src/users/enum/users.enum';
 import { User } from 'src/users/entities/user.entity';
+import { MsPackageRepository } from 'src/ms-package/repositories/msPackage.repository';
 
 @Injectable()
 export class AccountService {
@@ -25,6 +26,7 @@ export class AccountService {
   private forgetPasswordOtpStore = new Map<string, string>();
 
   constructor(
+    private readonly msPackageRepo: MsPackageRepository,
     private readonly accountRepo: AccountRepository,
     private readonly emailService: EmailService,
     private readonly jwtService: JwtService,
@@ -103,21 +105,33 @@ export class AccountService {
    */
   async verifyOtp(email: string, otp: string): Promise<User> {
     const record = this.otpStore.get(email);
-    if (!record) {
-      throw new Error('No OTP request found for this email');
-    }
-
-    if (record.otp !== otp) {
-      throw new Error('Invalid OTP');
-    }
+    if (!record) throw new Error('No OTP request found for this email');
+    if (record.otp !== otp) throw new Error('Invalid OTP');
 
     const hashedPassword = await bcrypt.hash(record.userData.password, 10);
-
     const { profilePicture, additionalPhotos, ...rest } = record.userData;
+
+    // 👉 Fetch the default MsPackage (id = 1, or based on title if preferred)
+    const defaultPackage = await this.msPackageRepo.findOne({
+      where: { id: 1 },
+    });
+
+    if (!defaultPackage) {
+      throw new Error('Default membership package not found');
+    }
+
+    const [firstPriceOption] = defaultPackage.priceOptions;
 
     const account = this.accountRepo.create({
       ...rest,
       password: hashedPassword,
+      membershipPackage: {
+        id: defaultPackage.id,
+        title: defaultPackage.title,
+        category: firstPriceOption?.category,
+        originalPrice: firstPriceOption?.originalPrice,
+        sellPrice: firstPriceOption?.sellPrice,
+      },
     });
 
     const savedAccount = await this.accountRepo.save(account);

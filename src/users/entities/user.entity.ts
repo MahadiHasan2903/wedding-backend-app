@@ -77,19 +77,25 @@ export class User {
   @Column({ type: 'enum', enum: MaritalStatus, nullable: true })
   maritalStatus?: MaritalStatus;
 
-  @OneToOne(() => Media, (media) => media.userProfilePicture, {
-    nullable: true,
-    cascade: true,
-    eager: true,
-  })
-  @JoinColumn()
-  profilePicture: Media | null;
+  // @OneToOne(() => Media, (media) => media.userProfilePicture, {
+  //   nullable: true,
+  //   cascade: true,
+  //   eager: true,
+  // })
+  // @JoinColumn()
+  // profilePicture: Media | null;
 
-  @OneToMany(() => Media, (media) => media.userAdditionalPhotos, {
-    cascade: true,
-    eager: true,
-  })
-  additionalPhotos?: Media[];
+  // @OneToMany(() => Media, (media) => media.userAdditionalPhotos, {
+  //   cascade: true,
+  //   eager: true,
+  // })
+  // additionalPhotos?: Media[];
+
+  @Column({ type: 'int', nullable: true })
+  profilePicture: number | null;
+
+  @Column({ type: 'int', array: true, nullable: true })
+  additionalPhotos?: number[];
 
   @Column('text', { array: true, nullable: true })
   socialMediaLinks: string[];
@@ -103,12 +109,14 @@ export class User {
   @Column({ type: 'enum', enum: AccountStatus, default: AccountStatus.ACTIVE })
   accountStatus: AccountStatus;
 
-  @Column({
-    type: 'enum',
-    enum: MembershipPackage,
-    default: MembershipPackage.BASIC,
-  })
-  membershipPackage: MembershipPackage;
+  @Column('json', { nullable: true })
+  membershipPackage: {
+    id: number;
+    title: string;
+    category: string;
+    originalPrice: number;
+    sellPrice: number;
+  };
 
   @Column({ nullable: true })
   timeZone?: string;
