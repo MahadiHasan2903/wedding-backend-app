@@ -2,19 +2,18 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { UserRepository } from './repositories/user.repository';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { MediaService } from 'src/media/media.service';
+import { AccountStatus } from './enum/users.enum';
 import { Media } from 'src/media/entities/media.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
-import { AccountStatus } from './enum/users.enum';
+import { FiltersType } from 'src/types/filter.types';
 
 @Injectable()
 export class UsersService {
   constructor(
     private readonly usersRepository: UserRepository,
-
     @InjectRepository(Media)
     private readonly mediaRepository: Repository<Media>,
-
     private readonly mediaService: MediaService,
   ) {}
 
@@ -30,7 +29,25 @@ export class UsersService {
     if (!user) {
       throw new NotFoundException(`User with id ${id} not found`);
     }
-    return user;
+
+    let fullProfilePicture: Media | null = null;
+    let fullAdditionalPhotos: Media[] = [];
+
+    if (user.profilePicture) {
+      fullProfilePicture = await this.mediaService.getOne(user.profilePicture);
+    }
+
+    if (user.additionalPhotos?.length) {
+      fullAdditionalPhotos = await this.mediaRepository.findByIds(
+        user.additionalPhotos,
+      );
+    }
+
+    return {
+      ...user,
+      profilePicture: fullProfilePicture,
+      additionalPhotos: fullAdditionalPhotos,
+    };
   }
 
   /**
@@ -43,25 +60,71 @@ export class UsersService {
    * @returns A Promise resolving to an object containing:
    *
    */
-  async findAllPaginated(
+  async findUsersWithRelatedMediaPaginated(
     page = 1,
     pageSize = 10,
     sort = 'id,DESC',
-    filters = {},
+    filters: FiltersType = {},
   ) {
-    return this.usersRepository.findAllPaginated(page, pageSize, sort, filters);
+    const { items, totalItems, itemsPerPage, currentPage, totalPages } =
+      await this.usersRepository.findAllPaginated(
+        page,
+        pageSize,
+        sort,
+        filters,
+      );
+
+    const enrichedItems = await Promise.all(
+      items.map(async (user) => {
+        let fullProfilePicture: Media | null = null;
+        let fullAdditionalPhotos: Media[] = [];
+
+        if (user.profilePicture) {
+          try {
+            fullProfilePicture = await this.mediaService.getOne(
+              user.profilePicture,
+            );
+          } catch {
+            fullProfilePicture = null;
+          }
+        }
+
+        if (user.additionalPhotos?.length) {
+          fullAdditionalPhotos = await this.mediaRepository.findByIds(
+            user.additionalPhotos,
+          );
+        }
+
+        return {
+          ...user,
+          profilePicture: fullProfilePicture,
+          additionalPhotos: fullAdditionalPhotos,
+        };
+      }),
+    );
+
+    return {
+      items: enrichedItems,
+      totalItems,
+      itemsPerPage,
+      currentPage,
+      totalPages,
+    };
   }
 
   /**
-   * Updates a user's profile information, including optional profile picture and additional photo uploads.
+   * Updates user information including optional profile picture and additional photos.
    *
-   * @param id - The unique identifier of the user to update.
-   * @param updateUserDto - Data Transfer Object containing the fields to update (e.g., name, email, profilePicture ID).
-   * @param files - Optional uploaded files, including a profile picture and/or additional photos.
-   * @returns A Promise resolving to the updated User entity.
-   * @throws NotFoundException - Thrown if the user with the specified ID does not exist or if a referenced media ID is invalid.
+   * - If `files.profilePicture` is provided, it uploads and replaces the existing profile picture.
+   * - If `files.additionalPhotos` are provided, it uploads and appends them to existing ones.
+   * - If `updateUserDto.profilePicture` is provided (as ID), it directly sets the profile picture.
+   * - If `updateUserDto.additionalPhotos` is provided (array of IDs), it sets them directly.
+   *
+   * @param id - User ID
+   * @param updateUserDto - Fields to update in the user
+   * @param files - Uploaded files for profile picture and additional photos
+   * @returns The updated user entity
    */
-
   async update(
     id: number,
     updateUserDto: UpdateUserDto,
@@ -72,81 +135,90 @@ export class UsersService {
   ) {
     const user = await this.usersRepository.findOne({
       where: { id },
-      relations: ['profilePicture', 'additionalPhotos'],
     });
 
     if (!user) {
       throw new NotFoundException(`User with id ${id} not found`);
     }
 
-    // Remove old profile picture (if any)
+    // === Upload new profile picture ===
     if (files?.profilePicture?.[0]) {
       if (user.profilePicture) {
-        const oldProfilePictureId = user.profilePicture.id;
-        user.profilePicture = null;
-        await this.usersRepository.save(user);
-
-        await this.mediaService.deleteMediaById(oldProfilePictureId);
+        await this.mediaService.deleteMediaById(user.profilePicture);
       }
 
-      // Upload new profile picture
       const media = await this.mediaService.handleUpload(
         files.profilePicture[0],
-        `users/${id}/user-profile`,
+        `user-profile`,
         `users/${id}/user-profile`,
       );
-      user.profilePicture = media;
+
+      user.profilePicture = media.id;
+    } else if (updateUserDto.profilePicture) {
+      user.profilePicture = updateUserDto.profilePicture;
     }
 
-    // Upload new additional photos (append instead of overwrite)
+    // === Upload new additional photos ===
     if (files?.additionalPhotos?.length) {
       const mediaList = await Promise.all(
         files.additionalPhotos.map((file) =>
           this.mediaService.handleUpload(
             file,
-            `users/${id}/user-gallery`,
+            `user-gallery`,
             `users/${id}/user-gallery`,
           ),
         ),
       );
-      user.additionalPhotos = [...(user.additionalPhotos || []), ...mediaList];
-    }
 
-    // Profile picture update via ID
-    if (updateUserDto.profilePicture) {
-      const media = await this.mediaRepository.findOneBy({
-        id: updateUserDto.profilePicture,
-      });
-      if (!media) {
-        throw new NotFoundException('Invalid profile picture ID');
-      }
-
-      if (user.profilePicture && user.profilePicture.id !== media.id) {
-        const oldProfilePictureId = user.profilePicture.id;
-        user.profilePicture = null;
-        await this.usersRepository.save(user);
-
-        await this.mediaService.deleteMediaById(oldProfilePictureId);
-      }
-
-      user.profilePicture = media;
-    }
-
-    // Additional photos update via ID
-    if (updateUserDto.additionalPhotos?.length) {
+      const uploadedIds = mediaList.map((media) => media.id);
+      const existingIds = user.additionalPhotos || [];
+      user.additionalPhotos = Array.from(
+        new Set([...existingIds, ...uploadedIds]),
+      );
+    } else if (updateUserDto.additionalPhotos?.length) {
       const photos = await this.mediaRepository.find({
         where: {
           id: In(updateUserDto.additionalPhotos),
         },
       });
-      user.additionalPhotos = photos;
+
+      if (photos.length !== updateUserDto.additionalPhotos.length) {
+        throw new NotFoundException(
+          'One or more additional photo IDs are invalid',
+        );
+      }
+
+      user.additionalPhotos = updateUserDto.additionalPhotos;
     }
 
-    // Merge remaining data
+    // === Merge other update fields ===
     const { profilePicture, additionalPhotos, ...rest } = updateUserDto;
     this.usersRepository.merge(user, rest);
 
-    return this.usersRepository.save(user);
+    const savedUser = await this.usersRepository.save(user);
+
+    // === Fetch media entities for profilePicture and additionalPhotos before returning ===
+    let fullProfilePicture: Media | null = null;
+
+    let fullAdditionalPhotos: Media[] = [];
+
+    if (savedUser.profilePicture) {
+      fullProfilePicture = await this.mediaService.getOne(
+        savedUser.profilePicture,
+      );
+    }
+
+    if (savedUser.additionalPhotos?.length) {
+      fullAdditionalPhotos = await this.mediaRepository.findByIds(
+        savedUser.additionalPhotos,
+      );
+    }
+
+    return {
+      ...savedUser,
+      profilePicture: fullProfilePicture,
+      additionalPhotos: fullAdditionalPhotos,
+    };
   }
 
   /**
