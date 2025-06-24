@@ -1,6 +1,4 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 import {
   S3Client,
@@ -8,8 +6,8 @@ import {
   DeleteObjectCommand,
 } from '@aws-sdk/client-s3';
 import { randomUUID } from 'crypto';
-import * as path from 'path';
 import { Media } from './entities/media.entity';
+import { MediaRepository } from './repositories/media.repository';
 
 @Injectable()
 export class MediaService {
@@ -26,8 +24,7 @@ export class MediaService {
    */
   constructor(
     private readonly configService: ConfigService,
-    @InjectRepository(Media)
-    private readonly mediaRepository: Repository<Media>,
+    private readonly mediaRepository: MediaRepository,
   ) {
     this.region = this.configService.getOrThrow<string>('AWS_REGION');
     this.bucket = this.configService.getOrThrow<string>('AWS_S3_BUCKET_NAME');
@@ -49,7 +46,7 @@ export class MediaService {
    * @returns Promise resolving to an array of Media entities.
    */
   async getAll(): Promise<Media[]> {
-    return this.mediaRepository.find();
+    return this.mediaRepository.findAll();
   }
 
   /**
@@ -60,7 +57,7 @@ export class MediaService {
    * @returns Promise resolving to the Media entity.
    */
   async getOne(id: number): Promise<Media> {
-    const media = await this.mediaRepository.findOne({ where: { id } });
+    const media = await this.mediaRepository.findById(id);
     if (!media) {
       throw new NotFoundException(`Media with ID ${id} not found`);
     }
@@ -77,8 +74,11 @@ export class MediaService {
    *
    * @param id - The ID of the Media record to delete.
    */
-  async delete(id: number): Promise<void> {
-    const media = await this.getOne(id);
+  async deleteMediaById(id: number): Promise<void> {
+    const media = await this.mediaRepository.findById(id);
+    if (!media) {
+      throw new NotFoundException();
+    }
     await this.deleteFromS3(media.url);
     await this.mediaRepository.remove(media);
   }
@@ -105,24 +105,12 @@ export class MediaService {
       folder,
     );
 
-    // Extract a filename portion from the S3 URL for record keeping
-    const filename = path.basename(s3Url, path.extname(s3Url));
-
-    // Create a new Media entity instance with file metadata and S3 info
-    const media = this.mediaRepository.create({
+    return this.mediaRepository.createAndSaveMedia(
+      s3Url,
+      file,
       collectionName,
-      filename,
-      originalName: file.originalname,
-      extension: path.extname(file.originalname),
-      mimetype: file.mimetype,
-      size: file.size,
-      directory: folder,
-      disk: 's3',
-      url: s3Url,
-    });
-
-    // Persist the Media record in the database
-    return this.mediaRepository.save(media);
+      folder,
+    );
   }
 
   /**
@@ -143,7 +131,6 @@ export class MediaService {
   ): Promise<string> {
     const filename = `${folder}/${Date.now()}-${randomUUID()}-${originalName}`;
 
-    // Upload the file buffer to S3 with the constructed key and content type
     await this.s3.send(
       new PutObjectCommand({
         Bucket: this.bucket,
@@ -153,16 +140,7 @@ export class MediaService {
       }),
     );
 
-    // Return the publicly accessible URL to the uploaded object
     return `https://${this.bucket}.s3.${this.region}.amazonaws.com/${filename}`;
-  }
-
-  async deleteMediaById(id: number): Promise<void> {
-    const media = await this.mediaRepository.findOneBy({ id });
-    if (!media) return;
-
-    await this.deleteFromS3(media.url);
-    await this.mediaRepository.remove(media);
   }
 
   /**
@@ -172,13 +150,11 @@ export class MediaService {
    * @param s3Url - Full public URL of the file to delete.
    */
   private async deleteFromS3(s3Url: string): Promise<void> {
-    // Remove the S3 URL prefix to get the relative object key
     const key = s3Url.replace(
       `https://${this.bucket}.s3.${this.region}.amazonaws.com/`,
       '',
     );
 
-    // Send a delete command to S3 for the object key
     await this.s3.send(
       new DeleteObjectCommand({
         Bucket: this.bucket,

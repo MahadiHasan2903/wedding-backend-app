@@ -4,16 +4,15 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { MediaService } from 'src/media/media.service';
 import { AccountStatus } from './enum/users.enum';
 import { Media } from 'src/media/entities/media.entity';
-import { InjectRepository } from '@nestjs/typeorm';
-import { In, Repository } from 'typeorm';
+import { In } from 'typeorm';
 import { FiltersType } from 'src/types/filter.types';
+import { MediaRepository } from 'src/media/repositories/media.repository';
 
 @Injectable()
 export class UsersService {
   constructor(
     private readonly usersRepository: UserRepository,
-    @InjectRepository(Media)
-    private readonly mediaRepository: Repository<Media>,
+    private readonly mediaRepository: MediaRepository,
     private readonly mediaService: MediaService,
   ) {}
 
@@ -149,7 +148,7 @@ export class UsersService {
 
       const media = await this.mediaService.handleUpload(
         files.profilePicture[0],
-        `user-profile`,
+        `user_profile`,
         `users/${id}/user-profile`,
       );
 
@@ -164,7 +163,7 @@ export class UsersService {
         files.additionalPhotos.map((file) =>
           this.mediaService.handleUpload(
             file,
-            `user-gallery`,
+            `user_gallery`,
             `users/${id}/user-gallery`,
           ),
         ),

@@ -100,7 +100,7 @@ export class MediaController {
   @Roles(UserRole.USER, UserRole.ADMIN)
   async delete(@Param('id') id: string) {
     try {
-      await this.mediaService.delete(+id);
+      await this.mediaService.deleteMediaById(+id);
       return {
         success: true,
         message: 'Media deleted successfully',
