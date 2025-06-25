@@ -1,4 +1,5 @@
 import { IsNumber, IsString } from 'class-validator';
+
 export class MembershipPackageDto {
   @IsNumber()
   id: number;

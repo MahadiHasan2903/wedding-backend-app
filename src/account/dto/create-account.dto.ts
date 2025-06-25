@@ -13,6 +13,7 @@ import {
   Min,
   Max,
   IsBoolean,
+  ValidateNested,
 } from 'class-validator';
 
 import {
@@ -32,11 +33,11 @@ import {
   CulturalPractices,
   AstrologicalSign,
   LoveLanguage,
-  MembershipPackage,
   Currency,
   AccountStatus,
 } from '../../users/enum/users.enum';
-import { Transform } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
+import { MembershipPackageDto } from 'src/users/dto/membership-package.dto';
 
 export class CreateAccountDto {
   @IsString()
@@ -113,8 +114,9 @@ export class CreateAccountDto {
   accountStatus?: AccountStatus;
 
   @IsOptional()
-  @IsEnum(MembershipPackage)
-  membershipPackage?: MembershipPackage;
+  @ValidateNested()
+  @Type(() => MembershipPackageDto)
+  membershipPackage?: MembershipPackageDto;
 
   @IsOptional()
   @IsString()

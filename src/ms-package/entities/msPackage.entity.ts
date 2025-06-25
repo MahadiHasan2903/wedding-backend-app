@@ -7,7 +7,7 @@ export class PriceOption {
   sellPrice: number;
 }
 
-@Entity()
+@Entity('membership_packages')
 export class MsPackage {
   @PrimaryGeneratedColumn()
   id: number;

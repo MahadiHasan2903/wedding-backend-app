@@ -90,8 +90,7 @@ export class MsPackageController {
    * @param createMsPackageDto - DTO containing package creation data
    * @returns The created package.
    */
-  @Public()
-  // @Roles(UserRole.ADMIN)
+  @Roles(UserRole.ADMIN)
   @Post()
   async create(@Body() createMsPackageDto: CreateMsPackageDto) {
     try {

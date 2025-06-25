@@ -127,10 +127,7 @@ export class AccountService {
       password: hashedPassword,
       membershipPackage: {
         id: defaultPackage.id,
-        title: defaultPackage.title,
         category: firstPriceOption?.category,
-        originalPrice: firstPriceOption?.originalPrice,
-        sellPrice: firstPriceOption?.sellPrice,
       },
     });
 

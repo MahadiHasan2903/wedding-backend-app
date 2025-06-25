@@ -27,11 +27,6 @@ export enum AccountStatus {
   DELETE = 'delete',
 }
 
-export enum MembershipPackage {
-  BASIC = 'basic',
-  PREMIUM = 'premium',
-}
-
 export enum Currency {
   USD = 'usd',
   EURO = 'euro',
