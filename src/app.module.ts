@@ -5,6 +5,7 @@ import { AccountModule } from './account/account.module';
 import { UsersModule } from './users/users.module';
 import { MediaModule } from './media/media.module';
 import { MsPackageModule } from './ms-package/msPackage.module';
+import { PaymentModule } from './payment/payment.module';
 
 @Module({
   imports: [
@@ -22,13 +23,15 @@ import { MsPackageModule } from './ms-package/msPackage.module';
         password: configService.get<string>('DB_PASSWORD'),
         database: configService.get<string>('DB_NAME'),
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
-        synchronize: true, // ⚠️ Disable in production
+        synchronize: configService.get<string>('NODE_ENV') !== 'production',
+        // ⚠️ Disable in production
       }),
     }),
     AccountModule,
     UsersModule,
     MediaModule,
     MsPackageModule,
+    PaymentModule,
   ],
 })
 export class AppModule {}
