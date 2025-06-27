@@ -7,12 +7,18 @@ import { Media } from 'src/media/entities/media.entity';
 import { In } from 'typeorm';
 import { FiltersType } from 'src/types/filter.types';
 import { MediaRepository } from 'src/media/repositories/media.repository';
+import { MsPackageRepository } from 'src/ms-package/repositories/msPackage.repository';
+import { MsPurchaseRepository } from 'src/ms-purchase/repositories/ms-purchase.repository';
+import { PriceOptionType } from 'src/ms-package/enum/msPackage.enum';
+import { PurchasedMembershipInfo } from './types/user-ms-purchase.types';
 
 @Injectable()
 export class UsersService {
   constructor(
     private readonly usersRepository: UserRepository,
     private readonly mediaRepository: MediaRepository,
+    private readonly msPackageRepository: MsPackageRepository,
+    private readonly msPurchaseRepository: MsPurchaseRepository,
     private readonly mediaService: MediaService,
   ) {}
 
@@ -23,7 +29,7 @@ export class UsersService {
    * @returns A Promise resolving to the user object without the password field.
    * @throws NotFoundException - Thrown if no user exists with the provided ID.
    */
-  async findById(id: number) {
+  async findUserById(id: number) {
     const user = await this.usersRepository.findByIdWithoutPassword(id);
     if (!user) {
       throw new NotFoundException(`User with id ${id} not found`);
@@ -42,10 +48,54 @@ export class UsersService {
       );
     }
 
+    let purchasedMembershipInfo: PurchasedMembershipInfo | null = null;
+
+    // Fetch purchasedMembership details if available
+    if (user.purchasedMembership) {
+      const purchaseInfo = await this.msPurchaseRepository.findOne({
+        where: { id: user.purchasedMembership },
+      });
+
+      if (purchaseInfo) {
+        const {
+          packageId,
+          purchasePackageCategory,
+          ...purchaseWithoutPackage
+        } = purchaseInfo;
+
+        if (packageId) {
+          const msPackage = await this.msPackageRepository.findOne({
+            where: { id: packageId },
+          });
+
+          if (msPackage) {
+            // Find priceOption matching the purchasePackageCategory
+            const priceOption =
+              msPackage.priceOptions.find(
+                (option) =>
+                  option.category ===
+                  (purchasePackageCategory as unknown as PriceOptionType),
+              ) || null;
+
+            purchasedMembershipInfo = {
+              ...purchaseWithoutPackage,
+              membershipPackageInfo: {
+                id: msPackage.id,
+                title: msPackage.title,
+                description: msPackage.description,
+                priceOption,
+              },
+            };
+          }
+        }
+      }
+    }
+
     return {
       ...user,
       profilePicture: fullProfilePicture,
       additionalPhotos: fullAdditionalPhotos,
+      purchasedMembership: purchasedMembershipInfo,
     };
   }
 
@@ -94,10 +144,54 @@ export class UsersService {
           );
         }
 
+        let purchasedMembershipInfo: PurchasedMembershipInfo | null = null;
+
+        // Fetch purchasedMembership details if available
+        if (user.purchasedMembership) {
+          const purchaseInfo = await this.msPurchaseRepository.findOne({
+            where: { id: user.purchasedMembership },
+          });
+
+          if (purchaseInfo) {
+            const {
+              packageId,
+              purchasePackageCategory,
+              ...purchaseWithoutPackage
+            } = purchaseInfo;
+
+            if (packageId) {
+              const msPackage = await this.msPackageRepository.findOne({
+                where: { id: packageId },
+              });
+
+              if (msPackage) {
+                // Find priceOption matching the purchasePackageCategory
+                const priceOption =
+                  msPackage.priceOptions.find(
+                    (option) =>
+                      option.category ===
+                      (purchasePackageCategory as unknown as PriceOptionType),
+                  ) || null;
+
+                purchasedMembershipInfo = {
+                  ...purchaseWithoutPackage,
+                  membershipPackageInfo: {
+                    id: msPackage.id,
+                    title: msPackage.title,
+                    description: msPackage.description,
+                    priceOption,
+                  },
+                };
+              }
+            }
+          }
+        }
+
         return {
           ...user,
           profilePicture: fullProfilePicture,
           additionalPhotos: fullAdditionalPhotos,
+          purchasedMembership: purchasedMembershipInfo,
         };
       }),
     );
@@ -213,10 +307,54 @@ export class UsersService {
       );
     }
 
+    let purchasedMembershipInfo: PurchasedMembershipInfo | null = null;
+
+    // Fetch purchasedMembership details if available
+    if (user.purchasedMembership) {
+      const purchaseInfo = await this.msPurchaseRepository.findOne({
+        where: { id: user.purchasedMembership },
+      });
+
+      if (purchaseInfo) {
+        const {
+          packageId,
+          purchasePackageCategory,
+          ...purchaseWithoutPackage
+        } = purchaseInfo;
+
+        if (packageId) {
+          const msPackage = await this.msPackageRepository.findOne({
+            where: { id: packageId },
+          });
+
+          if (msPackage) {
+            // Find priceOption matching the purchasePackageCategory
+            const priceOption =
+              msPackage.priceOptions.find(
+                (option) =>
+                  option.category ===
+                  (purchasePackageCategory as unknown as PriceOptionType),
+              ) || null;
+
+            purchasedMembershipInfo = {
+              ...purchaseWithoutPackage,
+              membershipPackageInfo: {
+                id: msPackage.id,
+                title: msPackage.title,
+                description: msPackage.description,
+                priceOption,
+              },
+            };
+          }
+        }
+      }
+    }
+
     return {
       ...savedUser,
       profilePicture: fullProfilePicture,
       additionalPhotos: fullAdditionalPhotos,
+      purchasedMembership: purchasedMembershipInfo,
     };
   }
 

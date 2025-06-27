@@ -13,12 +13,6 @@ export class Payment {
   id: string;
 
   @Column({ type: 'uuid' })
-  packageId: string;
-
-  @Column({ nullable: true })
-  packageCategory?: string;
-
-  @Column({ type: 'uuid' })
   userId: string;
 
   @Column({
@@ -40,14 +34,11 @@ export class Payment {
   @Column({ type: 'numeric' })
   amount: number;
 
-  @Column({ default: 'use' })
+  @Column({ default: 'usd' })
   currency: string;
 
   @Column({ nullable: true })
   transactionId?: string;
-
-  @Column({ type: 'boolean', default: true })
-  isTestMode: boolean;
 
   @CreateDateColumn()
   createdAt: Date;

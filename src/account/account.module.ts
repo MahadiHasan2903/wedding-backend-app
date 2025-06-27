@@ -9,12 +9,14 @@ import { User } from 'src/users/entities/user.entity';
 import { DataSource } from 'typeorm';
 import { AccountRepository } from './repositories/account.repository';
 import { MsPackageModule } from 'src/ms-package/msPackage.module';
+import { MsPurchaseModule } from 'src/ms-purchase/ms-purchase.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([User]),
     EmailModule,
     MsPackageModule,
+    MsPurchaseModule,
     JwtModule.register({
       secret: process.env.JWT_SECRET,
       signOptions: { expiresIn: process.env.JWT_EXPIRES_IN },

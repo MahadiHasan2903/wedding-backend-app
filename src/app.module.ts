@@ -6,6 +6,7 @@ import { UsersModule } from './users/users.module';
 import { MediaModule } from './media/media.module';
 import { MsPackageModule } from './ms-package/msPackage.module';
 import { PaymentModule } from './payment/payment.module';
+import { MsPurchaseModule } from './ms-purchase/ms-purchase.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { PaymentModule } from './payment/payment.module';
     MediaModule,
     MsPackageModule,
     PaymentModule,
+    MsPurchaseModule,
   ],
 })
 export class AppModule {}

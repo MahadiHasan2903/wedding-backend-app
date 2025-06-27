@@ -35,7 +35,7 @@ export class UsersController {
   @Roles(UserRole.USER, UserRole.ADMIN)
   async getProfile(@CurrentUser() user: { userId: number }) {
     try {
-      const foundUser = await this.usersService.findById(user.userId);
+      const foundUser = await this.usersService.findUserById(user.userId);
 
       return {
         status: HttpStatus.OK,
@@ -72,7 +72,7 @@ export class UsersController {
   @Roles(UserRole.USER, UserRole.ADMIN)
   async getUserById(@Param('id', ParseIntPipe) id: number) {
     try {
-      const foundUser = await this.usersService.findById(id);
+      const foundUser = await this.usersService.findUserById(id);
 
       return {
         status: HttpStatus.OK,

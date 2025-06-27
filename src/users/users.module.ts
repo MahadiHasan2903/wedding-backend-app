@@ -6,9 +6,16 @@ import { User } from './entities/user.entity';
 import { MediaModule } from 'src/media/media.module';
 import { UserRepository } from './repositories/user.repository';
 import { DataSource } from 'typeorm';
+import { MsPackageModule } from 'src/ms-package/msPackage.module';
+import { MsPurchaseModule } from 'src/ms-purchase/ms-purchase.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([User]), MediaModule],
+  imports: [
+    TypeOrmModule.forFeature([User]),
+    MediaModule,
+    MsPackageModule,
+    MsPurchaseModule,
+  ],
   controllers: [UsersController],
   providers: [
     UsersService,
