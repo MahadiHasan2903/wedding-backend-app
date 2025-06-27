@@ -130,13 +130,12 @@ export class UsersController {
 
     try {
       const user = await this.usersService.update(userId, updateUserDto, files);
-      const { password, ...safeUser } = user;
 
       return {
         status: HttpStatus.OK,
         success: true,
         message: 'User updated successfully',
-        data: safeUser,
+        data: user,
       };
     } catch (error: unknown) {
       const sanitizedError = sanitizeError(error);

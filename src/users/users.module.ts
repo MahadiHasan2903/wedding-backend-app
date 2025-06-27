@@ -8,6 +8,10 @@ import { UserRepository } from './repositories/user.repository';
 import { DataSource } from 'typeorm';
 import { MsPackageModule } from 'src/ms-package/msPackage.module';
 import { MsPurchaseModule } from 'src/ms-purchase/ms-purchase.module';
+import { MediaService } from 'src/media/media.service';
+import { MediaRepository } from 'src/media/repositories/media.repository';
+import { MsPackageRepository } from 'src/ms-package/repositories/msPackage.repository';
+import { MsPurchaseRepository } from 'src/ms-purchase/repositories/ms-purchase.repository';
 
 @Module({
   imports: [
@@ -21,10 +25,28 @@ import { MsPurchaseModule } from 'src/ms-purchase/ms-purchase.module';
     UsersService,
     {
       provide: UserRepository,
-      useFactory: (dataSource: DataSource) => {
-        return new UserRepository(dataSource);
+      useFactory: (
+        dataSource: DataSource,
+        mediaService: MediaService,
+        mediaRepository: MediaRepository,
+        msPackageRepository: MsPackageRepository,
+        msPurchaseRepository: MsPurchaseRepository,
+      ) => {
+        return new UserRepository(
+          dataSource,
+          mediaService,
+          mediaRepository,
+          msPackageRepository,
+          msPurchaseRepository,
+        );
       },
-      inject: [DataSource],
+      inject: [
+        DataSource,
+        MediaService,
+        MediaRepository,
+        MsPackageRepository,
+        MsPurchaseRepository,
+      ],
     },
   ],
   exports: [UsersService],

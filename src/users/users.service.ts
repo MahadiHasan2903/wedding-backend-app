@@ -35,68 +35,7 @@ export class UsersService {
       throw new NotFoundException(`User with id ${id} not found`);
     }
 
-    let fullProfilePicture: Media | null = null;
-    let fullAdditionalPhotos: Media[] = [];
-
-    if (user.profilePicture) {
-      fullProfilePicture = await this.mediaService.getOne(user.profilePicture);
-    }
-
-    if (user.additionalPhotos?.length) {
-      fullAdditionalPhotos = await this.mediaRepository.findByIds(
-        user.additionalPhotos,
-      );
-    }
-
-    let purchasedMembershipInfo: PurchasedMembershipInfo | null = null;
-
-    // Fetch purchasedMembership details if available
-    if (user.purchasedMembership) {
-      const purchaseInfo = await this.msPurchaseRepository.findOne({
-        where: { id: user.purchasedMembership },
-      });
-
-      if (purchaseInfo) {
-        const {
-          packageId,
-          purchasePackageCategory,
-          ...purchaseWithoutPackage
-        } = purchaseInfo;
-
-        if (packageId) {
-          const msPackage = await this.msPackageRepository.findOne({
-            where: { id: packageId },
-          });
-
-          if (msPackage) {
-            // Find priceOption matching the purchasePackageCategory
-            const priceOption =
-              msPackage.priceOptions.find(
-                (option) =>
-                  option.category ===
-                  (purchasePackageCategory as unknown as PriceOptionType),
-              ) || null;
-
-            purchasedMembershipInfo = {
-              ...purchaseWithoutPackage,
-              membershipPackageInfo: {
-                id: msPackage.id,
-                title: msPackage.title,
-                description: msPackage.description,
-                priceOption,
-              },
-            };
-          }
-        }
-      }
-    }
-
-    return {
-      ...user,
-      profilePicture: fullProfilePicture,
-      additionalPhotos: fullAdditionalPhotos,
-      purchasedMembership: purchasedMembershipInfo,
-    };
+    return this.usersRepository.enrichUserRelations(user);
   }
 
   /**
@@ -124,76 +63,7 @@ export class UsersService {
       );
 
     const enrichedItems = await Promise.all(
-      items.map(async (user) => {
-        let fullProfilePicture: Media | null = null;
-        let fullAdditionalPhotos: Media[] = [];
-
-        if (user.profilePicture) {
-          try {
-            fullProfilePicture = await this.mediaService.getOne(
-              user.profilePicture,
-            );
-          } catch {
-            fullProfilePicture = null;
-          }
-        }
-
-        if (user.additionalPhotos?.length) {
-          fullAdditionalPhotos = await this.mediaRepository.findByIds(
-            user.additionalPhotos,
-          );
-        }
-
-        let purchasedMembershipInfo: PurchasedMembershipInfo | null = null;
-
-        // Fetch purchasedMembership details if available
-        if (user.purchasedMembership) {
-          const purchaseInfo = await this.msPurchaseRepository.findOne({
-            where: { id: user.purchasedMembership },
-          });
-
-          if (purchaseInfo) {
-            const {
-              packageId,
-              purchasePackageCategory,
-              ...purchaseWithoutPackage
-            } = purchaseInfo;
-
-            if (packageId) {
-              const msPackage = await this.msPackageRepository.findOne({
-                where: { id: packageId },
-              });
-
-              if (msPackage) {
-                // Find priceOption matching the purchasePackageCategory
-                const priceOption =
-                  msPackage.priceOptions.find(
-                    (option) =>
-                      option.category ===
-                      (purchasePackageCategory as unknown as PriceOptionType),
-                  ) || null;
-
-                purchasedMembershipInfo = {
-                  ...purchaseWithoutPackage,
-                  membershipPackageInfo: {
-                    id: msPackage.id,
-                    title: msPackage.title,
-                    description: msPackage.description,
-                    priceOption,
-                  },
-                };
-              }
-            }
-          }
-        }
-
-        return {
-          ...user,
-          profilePicture: fullProfilePicture,
-          additionalPhotos: fullAdditionalPhotos,
-          purchasedMembership: purchasedMembershipInfo,
-        };
-      }),
+      items.map((user) => this.usersRepository.enrichUserRelations(user)),
     );
 
     return {
@@ -290,72 +160,8 @@ export class UsersService {
 
     const savedUser = await this.usersRepository.save(user);
 
-    // === Fetch media entities for profilePicture and additionalPhotos before returning ===
-    let fullProfilePicture: Media | null = null;
-
-    let fullAdditionalPhotos: Media[] = [];
-
-    if (savedUser.profilePicture) {
-      fullProfilePicture = await this.mediaService.getOne(
-        savedUser.profilePicture,
-      );
-    }
-
-    if (savedUser.additionalPhotos?.length) {
-      fullAdditionalPhotos = await this.mediaRepository.findByIds(
-        savedUser.additionalPhotos,
-      );
-    }
-
-    let purchasedMembershipInfo: PurchasedMembershipInfo | null = null;
-
-    // Fetch purchasedMembership details if available
-    if (user.purchasedMembership) {
-      const purchaseInfo = await this.msPurchaseRepository.findOne({
-        where: { id: user.purchasedMembership },
-      });
-
-      if (purchaseInfo) {
-        const {
-          packageId,
-          purchasePackageCategory,
-          ...purchaseWithoutPackage
-        } = purchaseInfo;
-
-        if (packageId) {
-          const msPackage = await this.msPackageRepository.findOne({
-            where: { id: packageId },
-          });
-
-          if (msPackage) {
-            // Find priceOption matching the purchasePackageCategory
-            const priceOption =
-              msPackage.priceOptions.find(
-                (option) =>
-                  option.category ===
-                  (purchasePackageCategory as unknown as PriceOptionType),
-              ) || null;
-
-            purchasedMembershipInfo = {
-              ...purchaseWithoutPackage,
-              membershipPackageInfo: {
-                id: msPackage.id,
-                title: msPackage.title,
-                description: msPackage.description,
-                priceOption,
-              },
-            };
-          }
-        }
-      }
-    }
-
-    return {
-      ...savedUser,
-      profilePicture: fullProfilePicture,
-      additionalPhotos: fullAdditionalPhotos,
-      purchasedMembership: purchasedMembershipInfo,
-    };
+    const safeUser = (({ password, ...rest }) => rest)(savedUser);
+    return this.usersRepository.enrichUserRelations(safeUser);
   }
 
   /**

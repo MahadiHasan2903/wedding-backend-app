@@ -141,7 +141,7 @@ export class MsPurchaseController {
    * @access ADMIN
    */
   @Get()
-  @Roles(UserRole.USER, UserRole.ADMIN)
+  @Roles(UserRole.ADMIN)
   async getAll() {
     try {
       const purchases = await this.msPurchaseService.findAll();
@@ -173,7 +173,7 @@ export class MsPurchaseController {
    * @access ADMIN
    */
   @Delete(':id')
-  @Roles(UserRole.USER, UserRole.ADMIN)
+  @Roles(UserRole.ADMIN)
   async delete(@Param('id') id: string) {
     try {
       const deleted = await this.msPurchaseService.delete(id);

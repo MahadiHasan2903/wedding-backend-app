@@ -1,6 +1,8 @@
 import { DataSource, Repository } from 'typeorm';
+import { Injectable } from '@nestjs/common';
 import { MsPurchase } from '../entities/ms-purchase.entity';
 
+@Injectable()
 export class MsPurchaseRepository extends Repository<MsPurchase> {
   constructor(private dataSource: DataSource) {
     super(MsPurchase, dataSource.createEntityManager());
