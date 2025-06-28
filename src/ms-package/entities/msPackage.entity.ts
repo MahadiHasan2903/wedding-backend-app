@@ -1,5 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
-import { PriceOptionType } from '../enum/msPackage.enum';
+import { PackageStatus, PriceOptionType } from '../enum/msPackage.enum';
 
 export class PriceOption {
   category: PriceOptionType;
@@ -17,6 +17,13 @@ export class MsPackage {
 
   @Column('text')
   description: string;
+
+  @Column({
+    type: 'enum',
+    enum: PackageStatus,
+    default: PackageStatus.ACTIVE,
+  })
+  status: PackageStatus;
 
   @Column('json')
   priceOptions: PriceOption[];

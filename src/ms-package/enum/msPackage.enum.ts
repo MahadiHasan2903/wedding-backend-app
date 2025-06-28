@@ -3,3 +3,8 @@ export enum PriceOptionType {
   YEARLY = 'yearly',
   LIFETIME = 'life_time',
 }
+
+export enum PackageStatus {
+  ACTIVE = 'active',
+  INACTIVE = 'inactive',
+}

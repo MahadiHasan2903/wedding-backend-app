@@ -47,9 +47,11 @@ export class MsPackageService {
     updateMsPackageDto: UpdateMsPackageDto,
   ): Promise<MsPackage> {
     const msPackage = await this.msPackageRepo.findOneBy({ id });
+
     if (!msPackage) {
       throw new NotFoundException(`Package with id ${id} not found`);
     }
+
     Object.assign(msPackage, updateMsPackageDto);
     return this.msPackageRepo.save(msPackage);
   }

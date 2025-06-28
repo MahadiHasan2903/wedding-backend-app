@@ -92,14 +92,23 @@ export class MsPurchaseService {
         option.category ===
         (packagePurchasedCategory as unknown as PriceOptionType),
     );
+    if (!priceOption) {
+      throw new NotFoundException('Price option not found');
+    }
 
-    // Create and save the new purchase record
+    const amount = priceOption.originalPrice || 0;
+    const discount = amount - priceOption.sellPrice || 0;
+    const payable = amount - discount;
+
     const purchase = this.msPurchaseRepo.create({
       userId,
       packageId: msPackageId,
       purchasePackageCategory: packagePurchasedCategory,
       purchasedAt,
       expiresAt,
+      amount,
+      discount,
+      payable,
     });
 
     const savedPurchase = await this.msPurchaseRepo.save(purchase);

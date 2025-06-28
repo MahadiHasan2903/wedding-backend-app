@@ -4,7 +4,14 @@ export enum PurchasePackageCategory {
   LIFETIME = 'life_time',
 }
 
-export enum paymentGateWay {
-  STRIPE = 'stripe',
-  PAYPAL = 'paypal',
+export enum PurchaseStatus {
+  PENDING = 'pending',
+  SUCCEEDED = 'succeeded',
+  FAILED = 'failed',
+}
+
+export enum PaymentStatus {
+  PENDING = 'pending',
+  SUCCEEDED = 'succeeded',
+  FAILED = 'failed',
 }
