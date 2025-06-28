@@ -182,6 +182,7 @@ export class PaymentController {
    * @param sessionId - The Stripe Checkout Session ID passed by Stripe as a query param
    * @returns Redirect URL to the client with transaction ID and status
    */
+  // @Public()
   @Get('stripe/payment-callback')
   async membershipPaymentCallback(@Query('session_id') sessionId: string) {
     const response = await this.paymentService.paymentCallback(sessionId);
