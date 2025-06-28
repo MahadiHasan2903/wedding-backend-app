@@ -9,11 +9,17 @@ import { PaymentGateway, PaymentStatus } from '../enum/payment.enum';
 
 @Entity('payments')
 export class Payment {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
+  @PrimaryGeneratedColumn()
+  id: number;
 
-  @Column({ type: 'uuid' })
-  userId: string;
+  @Column()
+  userId: number;
+
+  @Column({ nullable: true })
+  transactionId?: string;
+
+  @Column({ default: 'usd' })
+  currency: string;
 
   @Column({
     type: 'enum',
@@ -21,24 +27,27 @@ export class Payment {
   })
   gateway: PaymentGateway;
 
-  @Column({ type: 'jsonb' })
-  paymentInfo: Record<string, any>;
+  @Column()
+  servicePurchaseId: number;
 
   @Column({
     type: 'enum',
     enum: PaymentStatus,
     default: PaymentStatus.PENDING,
   })
-  status: PaymentStatus;
+  paymentStatus: PaymentStatus;
 
-  @Column({ type: 'numeric' })
+  @Column('decimal', { precision: 10, scale: 2 })
   amount: number;
 
-  @Column({ default: 'usd' })
-  currency: string;
+  @Column('decimal', { precision: 10, scale: 2 })
+  discount: number;
 
-  @Column({ nullable: true })
-  transactionId?: string;
+  @Column('decimal', { precision: 10, scale: 2 })
+  payable: number;
+
+  @Column('decimal', { precision: 10, scale: 2, nullable: true })
+  storeAmount: number | null;
 
   @CreateDateColumn()
   createdAt: Date;

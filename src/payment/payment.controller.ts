@@ -1,34 +1,175 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  HttpStatus,
+  HttpException,
+  Get,
+  Param,
+  Query,
+} from '@nestjs/common';
 import { PaymentService } from './payment.service';
-import { CreatePaymentDto } from './dto/create-payment.dto';
-import { UpdatePaymentDto } from './dto/update-payment.dto';
+import { CreateMembershipPaymentDto } from './dto/create-membership-payment.dto';
+import { Roles } from 'src/common/decorators/roles.decorator';
+import { UserRole } from 'src/users/enum/users.enum';
+import { sanitizeError } from 'src/utils/helpers';
+import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 
-@Controller('payment')
+@Controller('v1/payment')
 export class PaymentController {
   constructor(private readonly paymentService: PaymentService) {}
 
-  @Post()
-  create(@Body() createPaymentDto: CreatePaymentDto) {
-    return this.paymentService.create(createPaymentDto);
+  /**
+   * @route POST /v1/payment/membership-purchase
+   * @desc Create a payment intent for a membership purchase
+   * @access User, Admin
+   * @param {CreateMembershipPaymentDto} dto - Data required to create membership payment
+   * @returns {object} clientSecret, transactionId, paymentStatus
+   */
+  @Post('membership-purchase')
+  @Roles(UserRole.USER, UserRole.ADMIN)
+  async purchaseMembership(@Body() dto: CreateMembershipPaymentDto) {
+    try {
+      const result = await this.paymentService.createMembershipPayment(dto);
+
+      return {
+        status: HttpStatus.CREATED,
+        success: true,
+        message: 'Membership payment intent created successfully',
+        data: result,
+      };
+    } catch (error) {
+      throw new HttpException(
+        {
+          status: HttpStatus.BAD_REQUEST,
+          success: false,
+          message: 'Failed to create membership payment',
+          error: sanitizeError(error),
+        },
+        HttpStatus.BAD_REQUEST,
+      );
+    }
   }
 
+  /**
+   * Controller endpoint to retrieve all payments in the system.
+   * Accessible only by users with ADMIN role.
+   * @returns A response object containing all payments with membership purchase details
+   *
+   */
   @Get()
-  findAll() {
-    return this.paymentService.findAll();
+  @Roles(UserRole.ADMIN)
+  async getAllPayments(
+    @Query('page') page = 1,
+    @Query('pageSize') pageSize = 10,
+    @Query('sort') sort = 'id,DESC',
+  ) {
+    try {
+      // Call the payment service to fetch all payments along with membership purchase data
+      const payments = await this.paymentService.getAllPayments({
+        page: Number(page),
+        pageSize: Number(pageSize),
+        sort,
+      });
+
+      // Return a successful HTTP response with the payments data
+      return {
+        status: 200,
+        success: true,
+        message: 'Payments retrieved successfully',
+        data: payments,
+      };
+    } catch (error) {
+      // On error, throw an HTTP exception with BAD_REQUEST status and sanitized error message
+      throw new HttpException(
+        {
+          status: HttpStatus.BAD_REQUEST,
+          success: false,
+          message: 'Failed to retrieve payments',
+          error: sanitizeError(error),
+        },
+        HttpStatus.BAD_REQUEST,
+      );
+    }
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.paymentService.findOne(+id);
+  /**
+   * Controller endpoint to retrieve the payment history of the currently authenticated user.
+   * Accessible by users with USER or ADMIN roles.
+   *
+   * @param user - The currently authenticated user object injected by @CurrentUser decorator,
+   * @returns A response object with the user's payment history and status indicators.
+   */
+  @Get('history')
+  @Roles(UserRole.USER, UserRole.ADMIN)
+  async getUserPaymentHistory(
+    @Query('page') page = 1,
+    @Query('pageSize') pageSize = 10,
+    @Query('sort') sort = 'id,DESC',
+    @CurrentUser() user: { userId: string },
+  ) {
+    try {
+      // Convert userId to a number and fetch payments for that user from the service
+      const payments = await this.paymentService.getPaymentsByUserId(
+        Number(user.userId),
+        {
+          page: Number(page),
+          pageSize: Number(pageSize),
+          sort,
+        },
+      );
+
+      // Return a successful response with the user's payment history data
+      return {
+        status: 200,
+        success: true,
+        message: 'User payment history retrieved successfully',
+        data: payments,
+      };
+    } catch (error) {
+      // On error, throw an HTTP exception with BAD_REQUEST status and sanitized error message
+      throw new HttpException(
+        {
+          status: HttpStatus.BAD_REQUEST,
+          success: false,
+          message: 'Failed to retrieve user payment history',
+          error: sanitizeError(error),
+        },
+        HttpStatus.BAD_REQUEST,
+      );
+    }
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updatePaymentDto: UpdatePaymentDto) {
-    return this.paymentService.update(+id, updatePaymentDto);
-  }
+  /**
+   * @route GET /v1/payment/:transactionId
+   * @desc Retrieve payment details by transaction ID
+   * @access User, Admin
+   * @param {string} transactionId - Stripe transaction/checkout session ID
+   * @returns {object} payment details if found
+   */
+  @Get('history/:transactionId')
+  @Roles(UserRole.USER, UserRole.ADMIN)
+  async getPaymentDetails(@Param('transactionId') transactionId: string) {
+    try {
+      const payment =
+        await this.paymentService.getPaymentByTransactionId(transactionId);
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.paymentService.remove(+id);
+      return {
+        status: HttpStatus.OK,
+        success: true,
+        message: 'Payment details retrieved successfully',
+        data: payment,
+      };
+    } catch (error) {
+      throw new HttpException(
+        {
+          status: HttpStatus.BAD_REQUEST,
+          success: false,
+          message: 'Failed to retrieve payment details',
+          error: sanitizeError(error),
+        },
+        HttpStatus.BAD_REQUEST,
+      );
+    }
   }
 }

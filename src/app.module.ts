@@ -7,6 +7,7 @@ import { MediaModule } from './media/media.module';
 import { MsPackageModule } from './ms-package/msPackage.module';
 import { PaymentModule } from './payment/payment.module';
 import { MsPurchaseModule } from './ms-purchase/ms-purchase.module';
+import { StripeModule } from './common/stripe/stripe.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { MsPurchaseModule } from './ms-purchase/ms-purchase.module';
         // ⚠️ Disable in production
       }),
     }),
+    StripeModule,
     AccountModule,
     UsersModule,
     MediaModule,
