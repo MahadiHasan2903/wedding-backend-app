@@ -14,42 +14,11 @@ import { Roles } from 'src/common/decorators/roles.decorator';
 import { UserRole } from 'src/users/enum/users.enum';
 import { sanitizeError } from 'src/utils/helpers';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
+import { Public } from 'src/common/decorators/public.decorator';
 
 @Controller('v1/payment')
 export class PaymentController {
   constructor(private readonly paymentService: PaymentService) {}
-
-  /**
-   * @route POST /v1/payment/membership-purchase
-   * @desc Create a payment intent for a membership purchase
-   * @access User, Admin
-   * @param {CreateMembershipPaymentDto} dto - Data required to create membership payment
-   * @returns {object} clientSecret, transactionId, paymentStatus
-   */
-  @Post('membership-purchase')
-  @Roles(UserRole.USER, UserRole.ADMIN)
-  async purchaseMembership(@Body() dto: CreateMembershipPaymentDto) {
-    try {
-      const result = await this.paymentService.createMembershipPayment(dto);
-
-      return {
-        status: HttpStatus.CREATED,
-        success: true,
-        message: 'Membership payment intent created successfully',
-        data: result,
-      };
-    } catch (error) {
-      throw new HttpException(
-        {
-          status: HttpStatus.BAD_REQUEST,
-          success: false,
-          message: 'Failed to create membership payment',
-          error: sanitizeError(error),
-        },
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-  }
 
   /**
    * Controller endpoint to retrieve all payments in the system.
@@ -171,5 +140,51 @@ export class PaymentController {
         HttpStatus.BAD_REQUEST,
       );
     }
+  }
+
+  /**
+   * @route POST /v1/payment/membership-purchase
+   * @desc Create a payment intent for a membership purchase
+   * @access User, Admin
+   * @param {CreateMembershipPaymentDto} dto - Data required to create membership payment
+   * @returns {object} clientSecret, transactionId, paymentStatus
+   */
+  // @Public()
+  @Post('stripe/payment')
+  @Roles(UserRole.USER, UserRole.ADMIN)
+  async purchaseMembership(@Body() dto: CreateMembershipPaymentDto) {
+    try {
+      const result = await this.paymentService.createMembershipPayment(dto);
+
+      return {
+        status: HttpStatus.CREATED,
+        success: true,
+        message: 'Membership payment intent created successfully',
+        data: result,
+      };
+    } catch (error) {
+      throw new HttpException(
+        {
+          status: HttpStatus.BAD_REQUEST,
+          success: false,
+          message: 'Failed to create membership payment',
+          error: sanitizeError(error),
+        },
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
+
+  /**
+   * Stripe payment callback endpoint.
+   *
+   * This endpoint is triggered when Stripe redirects the user after completing a payment.
+   * @param sessionId - The Stripe Checkout Session ID passed by Stripe as a query param
+   * @returns Redirect URL to the client with transaction ID and status
+   */
+  @Get('stripe/payment-callback')
+  async membershipPaymentCallback(@Query('session_id') sessionId: string) {
+    const response = await this.paymentService.paymentCallback(sessionId);
+    return response;
   }
 }

@@ -11,6 +11,7 @@ import {
 import { CreateMembershipPaymentDto } from './dto/create-membership-payment.dto';
 import { MsPurchaseRepository } from 'src/ms-purchase/repositories/ms-purchase.repository';
 import { PaginationOptions } from 'src/types/common.types';
+import { PurchaseStatus } from 'src/ms-purchase/enum/ms-purchase.enum';
 
 @Injectable()
 export class PaymentService {
@@ -31,77 +32,130 @@ export class PaymentService {
   async createMembershipPayment(dto: CreateMembershipPaymentDto) {
     const { membershipPurchaseId, gateway, currency } = dto;
 
-    // Ensure only Stripe gateway is supported
     if (gateway !== PaymentGateway.STRIPE) {
       throw new BadRequestException('Only Stripe is supported for now');
     }
 
-    // Fetch the membership purchase from the database by ID
     const membershipPurchase = await this.msPurchaseRepo.findOne({
       where: { id: membershipPurchaseId },
     });
 
-    // If purchase does not exist, throw error
     if (!membershipPurchase) {
       throw new BadRequestException('Membership purchase not found');
     }
 
-    const { userId, amount, discount, payable } = membershipPurchase;
+    const { userId, amount, discount, payable, id } = membershipPurchase;
 
-    // Create a Stripe Checkout Session
-    // This returns a session ID starting with cs_test_ (test mode)
+    // Build the return/callback URL for Stripe to redirect after payment
+    const RETURN_URL =
+      this.configService.get<string>('BASE_URL') +
+      `/v1/payment/stripe/payment-callback`;
+
+    // Create Stripe Checkout session
     const session = await this.stripe.checkout.sessions.create({
-      payment_method_types: ['card'], // Accept card payments
-      mode: 'payment', // One-time payment mode
+      payment_method_types: ['card'],
+      mode: 'payment',
+      ui_mode: 'custom',
       line_items: [
         {
           price_data: {
-            currency, // e.g. 'usd'
+            currency,
             product_data: {
-              name: `Membership Purchase #${membershipPurchaseId}`, // Description on checkout
+              name: `Membership Package #${membershipPurchase.packageId}`,
             },
-            unit_amount: Math.round(payable * 100), // Stripe expects amount in cents
+            unit_amount: Math.round(payable * 100),
           },
           quantity: 1,
         },
       ],
+      return_url: `${RETURN_URL}?session_id={CHECKOUT_SESSION_ID}`,
       metadata: {
-        membershipPurchaseId: membershipPurchaseId.toString(),
+        membershipPurchaseId: id.toString(),
         userId: userId.toString(),
       },
-      // URL to redirect after successful payment, frontend will read session ID & status
-      success_url: `${this.configService.get<string>(
-        'CLIENT_BASE_URL',
-      )}?transactionId={CHECKOUT_SESSION_ID}&status=${PaymentStatus.PENDING}`,
     });
 
-    // Save payment details into database
-    // `storeAmount` here is from the Stripe session subtotal, can be null
+    // Save a new Payment transaction record with status pending
     const payment = this.paymentRepo.create({
       userId,
-      transactionId: session.id,
       currency,
       gateway,
-      servicePurchaseId: membershipPurchaseId,
+      servicePurchaseId: id,
+      paymentStatus: PaymentStatus.PENDING,
       amount,
       discount,
       payable,
-      paymentStatus: PaymentStatus.PENDING,
-      storeAmount: session.amount_subtotal,
+      transactionId: session.id,
+      storeAmount: null,
     });
 
     await this.paymentRepo.save(payment);
 
-    // Update the membership purchase to reflect that payment is pending
-    await this.msPurchaseRepo.update(membershipPurchaseId, {
-      paymentStatus: PaymentStatus.PENDING,
+    return {
+      clientSecret: session.client_secret,
+      transactionId: session.id,
+      paymentStatus: 'pending',
+    };
+  }
+
+  /**
+   * Handles the payment callback from Stripe after user completes checkout.
+   *
+   * This method performs the following actions:
+   *
+   * @param sessionId - The Stripe Checkout Session ID received from the callback
+   * @returns An object containing the redirect URL with payment status and transaction ID
+   *
+   * @throws BadRequestException if session retrieval fails
+   * @throws NotFoundException if the associated Payment record is not found
+   */
+  async paymentCallback(sessionId: string) {
+    const session = await this.stripe.checkout.sessions.retrieve(sessionId);
+
+    if (!session) {
+      throw new BadRequestException('Invalid session ID');
+    }
+
+    const paymentIntent = await this.stripe.paymentIntents.retrieve(
+      session.payment_intent as string,
+    );
+
+    const updatedStatus =
+      paymentIntent.status === 'succeeded'
+        ? PaymentStatus.PAID
+        : PaymentStatus.FAILED;
+
+    // Update Payment record
+    const updatedPayment =
+      await this.paymentRepo.findOneByTransactionId(sessionId);
+
+    if (!updatedPayment) {
+      throw new NotFoundException('Payment record not found');
+    }
+
+    updatedPayment.paymentStatus = updatedStatus;
+    await this.paymentRepo.save(updatedPayment);
+
+    // Update membership purchase status if needed
+    const purchase = await this.msPurchaseRepo.findOne({
+      where: { id: updatedPayment.servicePurchaseId },
     });
 
-    // Return data required by frontend to complete checkout
+    if (purchase) {
+      purchase.paymentStatus = updatedStatus;
+      purchase.status =
+        updatedStatus === PaymentStatus.PAID
+          ? PurchaseStatus.SUCCEEDED
+          : PurchaseStatus.FAILED;
+
+      await this.msPurchaseRepo.save(purchase);
+    }
+
+    // Return redirect URL to frontend
     return {
-      sessionId: session.id,
-      transactionId: session.id,
-      paymentStatus: payment.paymentStatus,
+      url:
+        this.configService.get<string>('CLIENT_BASE_URL') +
+        `/payment/invoice?transactionId=${sessionId}&status=${paymentIntent.status}`,
     };
   }
 

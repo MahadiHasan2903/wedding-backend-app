@@ -5,6 +5,6 @@ export enum PaymentGateway {
 
 export enum PaymentStatus {
   PENDING = 'pending',
-  SUCCEEDED = 'succeeded',
+  PAID = 'paid',
   FAILED = 'failed',
 }

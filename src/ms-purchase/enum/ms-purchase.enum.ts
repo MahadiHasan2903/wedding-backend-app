@@ -12,6 +12,6 @@ export enum PurchaseStatus {
 
 export enum PaymentStatus {
   PENDING = 'pending',
-  SUCCEEDED = 'succeeded',
+  PAID = 'paid',
   FAILED = 'failed',
 }
