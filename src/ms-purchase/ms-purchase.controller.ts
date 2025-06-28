@@ -7,6 +7,7 @@ import {
   HttpStatus,
   Post,
   Body,
+  Query,
 } from '@nestjs/common';
 import { MsPurchaseService } from './ms-purchase.service';
 import { sanitizeError } from 'src/utils/helpers';
@@ -28,9 +29,18 @@ export class MsPurchaseController {
    */
   @Get('my-purchases')
   @Roles(UserRole.USER, UserRole.ADMIN)
-  async getMyPurchases(@CurrentUser() user: { userId: number }) {
+  async getMyPurchases(
+    @Query('page') page = 1,
+    @Query('pageSize') pageSize = 10,
+    @Query('sort') sort = 'id,DESC',
+    @CurrentUser() user: { userId: number },
+  ) {
     try {
-      const purchases = await this.msPurchaseService.findByUserId(user.userId);
+      const purchases = await this.msPurchaseService.findByUserId(user.userId, {
+        page: Number(page),
+        pageSize: Number(pageSize),
+        sort,
+      });
 
       return {
         status: HttpStatus.OK,
@@ -142,9 +152,17 @@ export class MsPurchaseController {
    */
   @Get()
   @Roles(UserRole.ADMIN)
-  async getAll() {
+  async getAll(
+    @Query('page') page = 1,
+    @Query('pageSize') pageSize = 10,
+    @Query('sort') sort = 'id,DESC',
+  ) {
     try {
-      const purchases = await this.msPurchaseService.findAll();
+      const purchases = await this.msPurchaseService.findAll({
+        page: Number(page),
+        pageSize: Number(pageSize),
+        sort,
+      });
 
       return {
         status: HttpStatus.OK,

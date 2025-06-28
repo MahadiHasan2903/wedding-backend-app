@@ -1,4 +1,4 @@
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, FindManyOptions, Repository } from 'typeorm';
 import { Injectable } from '@nestjs/common';
 import { MsPurchase } from '../entities/ms-purchase.entity';
 
@@ -18,5 +18,14 @@ export class MsPurchaseRepository extends Repository<MsPurchase> {
       where: { userId },
       order: { purchasedAt: 'DESC' },
     });
+  }
+
+  /**
+   * Find and count all purchases with optional filters (pagination + sorting)
+   */
+  override findAndCount(
+    options: FindManyOptions<MsPurchase>,
+  ): Promise<[MsPurchase[], number]> {
+    return super.findAndCount(options);
   }
 }

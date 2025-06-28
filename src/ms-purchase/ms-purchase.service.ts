@@ -4,6 +4,7 @@ import { MsPurchaseRepository } from './repositories/ms-purchase.repository';
 import { MsPackageService } from 'src/ms-package/msPackage.service';
 import { PurchasePackageCategory } from './enum/ms-purchase.enum';
 import { PriceOptionType } from 'src/ms-package/enum/msPackage.enum';
+import { PaginationOptions } from 'src/types/common.types';
 
 @Injectable()
 export class MsPurchaseService {
@@ -25,8 +26,24 @@ export class MsPurchaseService {
    * Retrieve all membership purchases.
    * @returns Promise resolving to an array of MsPurchase.
    */
-  findAll(): Promise<MsPurchase[]> {
-    return this.msPurchaseRepo.find();
+  async findAll({ page, pageSize, sort }: PaginationOptions) {
+    const [sortField, sortOrder] = sort.split(',');
+
+    const [items, totalItems] = await this.msPurchaseRepo.findAndCount({
+      order: {
+        [sortField]: sortOrder.toUpperCase() === 'DESC' ? 'DESC' : 'ASC',
+      },
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+    });
+
+    return {
+      items,
+      totalItems,
+      itemsPerPage: pageSize,
+      currentPage: page,
+      totalPages: Math.ceil(totalItems / pageSize),
+    };
   }
 
   /**
@@ -35,8 +52,28 @@ export class MsPurchaseService {
    * @param userId The user ID number.
    * @returns Promise resolving to array of MsPurchase.
    */
-  async findByUserId(userId: number): Promise<MsPurchase[]> {
-    return this.msPurchaseRepo.findByUserId(userId);
+  async findByUserId(
+    userId: number,
+    { page, pageSize, sort }: PaginationOptions,
+  ) {
+    const [sortField, sortOrder] = sort.split(',');
+
+    const [items, totalItems] = await this.msPurchaseRepo.findAndCount({
+      where: { userId },
+      order: {
+        [sortField]: sortOrder.toUpperCase() === 'DESC' ? 'DESC' : 'ASC',
+      },
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+    });
+
+    return {
+      items,
+      totalItems,
+      itemsPerPage: pageSize,
+      currentPage: page,
+      totalPages: Math.ceil(totalItems / pageSize),
+    };
   }
 
   /**
