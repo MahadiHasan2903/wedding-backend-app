@@ -13,6 +13,7 @@ import { MsPurchaseRepository } from 'src/ms-purchase/repositories/ms-purchase.r
 import { PaginationOptions } from 'src/types/common.types';
 import { PurchaseStatus } from 'src/ms-purchase/enum/ms-purchase.enum';
 import { UserRepository } from 'src/users/repositories/user.repository';
+import { AccountRepository } from 'src/account/repositories/account.repository';
 
 @Injectable()
 export class PaymentService {
@@ -20,6 +21,8 @@ export class PaymentService {
     private readonly msPurchaseRepo: MsPurchaseRepository,
     private readonly paymentRepo: PaymentRepository,
     private readonly userRepo: UserRepository,
+    private readonly accountRepo: AccountRepository,
+
     @Inject('STRIPE_CLIENT') private readonly stripe: Stripe,
     private configService: ConfigService,
   ) {}
@@ -151,6 +154,16 @@ export class PaymentService {
           : PurchaseStatus.FAILED;
 
       await this.msPurchaseRepo.save(purchase);
+
+      // Fetch the user (excluding password)
+      const fetchedUser = await this.userRepo.findByIdWithoutPassword(
+        purchase.user,
+      );
+
+      if (fetchedUser) {
+        fetchedUser.purchasedMembership = purchase.id;
+        await this.accountRepo.save(fetchedUser);
+      }
     }
 
     // Return redirect URL to frontend

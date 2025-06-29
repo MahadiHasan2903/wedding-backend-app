@@ -6,9 +6,10 @@ import { PaymentRepository } from './repositories/payment.repository';
 import { DataSource } from 'typeorm';
 import { StripeModule } from 'src/common/stripe/stripe.module';
 import { UsersModule } from 'src/users/users.module';
+import { AccountModule } from 'src/account/account.module';
 
 @Module({
-  imports: [MsPurchaseModule, StripeModule, UsersModule],
+  imports: [MsPurchaseModule, StripeModule, UsersModule, AccountModule],
   controllers: [PaymentController],
   providers: [
     PaymentService,

@@ -34,6 +34,6 @@ import { MsPurchaseModule } from 'src/ms-purchase/ms-purchase.module';
     },
   ],
   controllers: [AccountController],
-  exports: [AccountService],
+  exports: [AccountService, AccountRepository],
 })
 export class AccountModule {}

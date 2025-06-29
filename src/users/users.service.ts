@@ -3,22 +3,15 @@ import { UserRepository } from './repositories/user.repository';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { MediaService } from 'src/media/media.service';
 import { AccountStatus } from './enum/users.enum';
-import { Media } from 'src/media/entities/media.entity';
 import { In } from 'typeorm';
 import { FiltersType } from 'src/types/filter.types';
 import { MediaRepository } from 'src/media/repositories/media.repository';
-import { MsPackageRepository } from 'src/ms-package/repositories/msPackage.repository';
-import { MsPurchaseRepository } from 'src/ms-purchase/repositories/ms-purchase.repository';
-import { PriceOptionType } from 'src/ms-package/enum/msPackage.enum';
-import { PurchasedMembershipInfo } from './types/user-ms-purchase.types';
 
 @Injectable()
 export class UsersService {
   constructor(
     private readonly usersRepository: UserRepository,
     private readonly mediaRepository: MediaRepository,
-    private readonly msPackageRepository: MsPackageRepository,
-    private readonly msPurchaseRepository: MsPurchaseRepository,
     private readonly mediaService: MediaService,
   ) {}
 
