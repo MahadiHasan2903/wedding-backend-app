@@ -155,7 +155,7 @@ export class PaymentService {
     return {
       url:
         this.configService.get<string>('CLIENT_BASE_URL') +
-        `/payment/invoice?transactionId=${sessionId}&status=${paymentIntent.status}`,
+        `/payment?transactionId=${sessionId}&status=${paymentIntent.status}`,
     };
   }
 

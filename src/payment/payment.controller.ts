@@ -7,6 +7,7 @@ import {
   Get,
   Param,
   Query,
+  Res,
 } from '@nestjs/common';
 import { PaymentService } from './payment.service';
 import { CreateMembershipPaymentDto } from './dto/create-membership-payment.dto';
@@ -15,6 +16,7 @@ import { UserRole } from 'src/users/enum/users.enum';
 import { sanitizeError } from 'src/utils/helpers';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { Public } from 'src/common/decorators/public.decorator';
+import { Response } from 'express';
 
 @Controller('v1/payment')
 export class PaymentController {
@@ -149,7 +151,6 @@ export class PaymentController {
    * @param {CreateMembershipPaymentDto} dto - Data required to create membership payment
    * @returns {object} clientSecret, transactionId, paymentStatus
    */
-  // @Public()
   @Post('stripe/payment')
   @Roles(UserRole.USER, UserRole.ADMIN)
   async purchaseMembership(@Body() dto: CreateMembershipPaymentDto) {
@@ -182,10 +183,13 @@ export class PaymentController {
    * @param sessionId - The Stripe Checkout Session ID passed by Stripe as a query param
    * @returns Redirect URL to the client with transaction ID and status
    */
-  // @Public()
+  @Public()
   @Get('stripe/payment-callback')
-  async membershipPaymentCallback(@Query('session_id') sessionId: string) {
+  async membershipPaymentCallback(
+    @Query('session_id') sessionId: string,
+    @Res() res: Response,
+  ) {
     const response = await this.paymentService.paymentCallback(sessionId);
-    return response;
+    return res.redirect(response.url);
   }
 }

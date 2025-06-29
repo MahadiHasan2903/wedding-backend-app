@@ -12,8 +12,8 @@ async function bootstrap() {
 
   app.enableCors({
     origin: process.env.CLIENT_BASE_URL,
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     credentials: true,
+    methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
   });
 
   // Apply global validation pipe
@@ -37,4 +37,4 @@ async function bootstrap() {
   console.log(`🚀 Application is running on: http://localhost:${port}`);
 }
 
-bootstrap();
+void bootstrap();
