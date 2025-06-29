@@ -12,12 +12,14 @@ import { CreateMembershipPaymentDto } from './dto/create-membership-payment.dto'
 import { MsPurchaseRepository } from 'src/ms-purchase/repositories/ms-purchase.repository';
 import { PaginationOptions } from 'src/types/common.types';
 import { PurchaseStatus } from 'src/ms-purchase/enum/ms-purchase.enum';
+import { UserRepository } from 'src/users/repositories/user.repository';
 
 @Injectable()
 export class PaymentService {
   constructor(
     private readonly msPurchaseRepo: MsPurchaseRepository,
     private readonly paymentRepo: PaymentRepository,
+    private readonly userRepo: UserRepository,
     @Inject('STRIPE_CLIENT') private readonly stripe: Stripe,
     private configService: ConfigService,
   ) {}
@@ -44,7 +46,7 @@ export class PaymentService {
       throw new BadRequestException('Membership purchase not found');
     }
 
-    const { userId, amount, discount, payable, id } = membershipPurchase;
+    const { user, amount, discount, payable, id } = membershipPurchase;
 
     // Build the return/callback URL for Stripe to redirect after payment
     const RETURN_URL =
@@ -71,13 +73,13 @@ export class PaymentService {
       return_url: `${RETURN_URL}?session_id={CHECKOUT_SESSION_ID}`,
       metadata: {
         membershipPurchaseId: id.toString(),
-        userId: userId.toString(),
+        userId: user.toString(),
       },
     });
 
     // Save a new Payment transaction record with status pending
     const payment = this.paymentRepo.create({
-      userId,
+      user,
       currency,
       gateway,
       servicePurchaseId: id,
@@ -182,9 +184,13 @@ export class PaymentService {
       where: { id: payment.servicePurchaseId },
     });
 
+    // Fetch the user (excluding password)
+    const user = await this.userRepo.findByIdWithoutPassword(payment.user);
+
     // Return combined data with payment info and related membership purchase details
     return {
       ...payment,
+      userId: user,
       servicePurchaseId: membershipPurchase,
     };
   }
@@ -212,8 +218,12 @@ export class PaymentService {
           where: { id: payment.servicePurchaseId },
         });
 
+        // Fetch the user (excluding password)
+        const user = await this.userRepo.findByIdWithoutPassword(payment.user);
+
         return {
           ...payment,
+          user: user,
           servicePurchaseId: membershipPurchase,
         };
       }),
@@ -231,17 +241,17 @@ export class PaymentService {
    * Retrieves all payments made by a specific user,
    * and enriches each payment with its associated membership purchase details.
    *
-   * @param userId - The unique identifier of the user whose payments are being fetched.
+   * @param user - The unique identifier of the user whose payments are being fetched.
    * @returns A list of payment objects, each including the corresponding membership purchase information.
    */
   async getPaymentsByUserId(
-    userId: number,
+    user: number,
     { page, pageSize, sort }: PaginationOptions,
   ) {
     const [sortField, sortOrder] = sort.split(',');
 
     const [items, totalItems] = await this.paymentRepo.findAndCount({
-      where: { userId },
+      where: { user },
       order: {
         [sortField]: sortOrder.toUpperCase() === 'DESC' ? 'DESC' : 'ASC',
       },

@@ -49,6 +49,6 @@ import { MsPurchaseRepository } from 'src/ms-purchase/repositories/ms-purchase.r
       ],
     },
   ],
-  exports: [UsersService],
+  exports: [UsersService, UserRepository],
 })
 export class UsersModule {}

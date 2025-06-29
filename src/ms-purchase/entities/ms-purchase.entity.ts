@@ -11,7 +11,7 @@ export class MsPurchase {
   id: number;
 
   @Column()
-  userId: number;
+  user: number;
 
   @Column()
   packageId: number;

@@ -13,7 +13,7 @@ export class Payment {
   id: number;
 
   @Column()
-  userId: number;
+  user: number;
 
   @Column({ nullable: true })
   transactionId?: string;

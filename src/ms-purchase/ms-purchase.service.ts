@@ -49,17 +49,17 @@ export class MsPurchaseService {
   /**
    * Find all membership purchases made by a specific user.
    * Delegates to repository.
-   * @param userId The user ID number.
+   * @param user The user ID number.
    * @returns Promise resolving to array of MsPurchase.
    */
   async findByUserId(
-    userId: number,
+    user: number,
     { page, pageSize, sort }: PaginationOptions,
   ) {
     const [sortField, sortOrder] = sort.split(',');
 
     const [items, totalItems] = await this.msPurchaseRepo.findAndCount({
-      where: { userId },
+      where: { user },
       order: {
         [sortField]: sortOrder.toUpperCase() === 'DESC' ? 'DESC' : 'ASC',
       },
@@ -91,14 +91,14 @@ export class MsPurchaseService {
    * Generates a unique transaction ID and calculates expiry based on package type.
    * Also enriches the response with package title, description, and pricing info.
    *
-   * @param userId User ID number
+   * @param user User ID number
    * @param msPackageId Package ID number
    * @param packageType PackageType enum
    * @returns Promise resolving to the saved purchase plus package info.
    * @throws NotFoundException if package not found.
    */
   async createPurchase(
-    userId: number,
+    user: number,
     msPackageId: number,
     packagePurchasedCategory: PurchasePackageCategory,
   ) {
@@ -138,7 +138,7 @@ export class MsPurchaseService {
     const payable = amount - discount;
 
     const purchase = this.msPurchaseRepo.create({
-      userId,
+      user,
       packageId: msPackageId,
       purchasePackageCategory: packagePurchasedCategory,
       purchasedAt,

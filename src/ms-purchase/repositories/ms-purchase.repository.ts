@@ -10,12 +10,12 @@ export class MsPurchaseRepository extends Repository<MsPurchase> {
 
   /**
    * Find all purchases by a given user ID, ordered by purchase date desc.
-   * @param userId The user ID as string.
+   * @param user The user ID as string.
    * @returns Promise resolving to an array of MsPurchase.
    */
-  findByUserId(userId: number): Promise<MsPurchase[]> {
+  findByUserId(user: number): Promise<MsPurchase[]> {
     return this.find({
-      where: { userId },
+      where: { user },
       order: { purchasedAt: 'DESC' },
     });
   }

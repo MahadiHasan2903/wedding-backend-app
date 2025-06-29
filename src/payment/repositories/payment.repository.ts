@@ -36,11 +36,11 @@ export class PaymentRepository {
 
   /**
    *
-   * @param userId
+   * @param user
    * @returns
    */
-  findByUserId(userId: number): Promise<Payment[]> {
-    return this.repo.find({ where: { userId } });
+  findByUserId(user: number): Promise<Payment[]> {
+    return this.repo.find({ where: { user } });
   }
 
   /**
