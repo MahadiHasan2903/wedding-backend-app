@@ -151,7 +151,7 @@ export class PaymentController {
    * @param {CreateMembershipPaymentDto} dto - Data required to create membership payment
    * @returns {object} clientSecret, transactionId, paymentStatus
    */
-  @Post('stripe/payment')
+  @Post('initiate-payment')
   @Roles(UserRole.USER, UserRole.ADMIN)
   async purchaseMembership(@Body() dto: CreateMembershipPaymentDto) {
     try {
@@ -184,7 +184,7 @@ export class PaymentController {
    * @returns Redirect URL to the client with transaction ID and status
    */
   @Public()
-  @Get('stripe/payment-callback')
+  @Get('payment-callback')
   async membershipPaymentCallback(
     @Query('session_id') sessionId: string,
     @Res() res: Response,

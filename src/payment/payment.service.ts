@@ -37,70 +37,68 @@ export class PaymentService {
   async createMembershipPayment(dto: CreateMembershipPaymentDto) {
     const { membershipPurchaseId, gateway, currency } = dto;
 
-    if (gateway !== PaymentGateway.STRIPE) {
-      throw new BadRequestException('Only Stripe is supported for now');
-    }
+    if (gateway === PaymentGateway.STRIPE) {
+      const membershipPurchase = await this.msPurchaseRepo.findOne({
+        where: { id: membershipPurchaseId },
+      });
 
-    const membershipPurchase = await this.msPurchaseRepo.findOne({
-      where: { id: membershipPurchaseId },
-    });
+      if (!membershipPurchase) {
+        throw new BadRequestException('Membership purchase not found');
+      }
 
-    if (!membershipPurchase) {
-      throw new BadRequestException('Membership purchase not found');
-    }
+      const { user, amount, discount, payable, id } = membershipPurchase;
 
-    const { user, amount, discount, payable, id } = membershipPurchase;
+      // Build the return/callback URL for Stripe to redirect after payment
+      const RETURN_URL =
+        this.configService.get<string>('BASE_URL') +
+        `/v1/payment/payment-callback`;
 
-    // Build the return/callback URL for Stripe to redirect after payment
-    const RETURN_URL =
-      this.configService.get<string>('BASE_URL') +
-      `/v1/payment/stripe/payment-callback`;
-
-    // Create Stripe Checkout session
-    const session = await this.stripe.checkout.sessions.create({
-      payment_method_types: ['card'],
-      mode: 'payment',
-      ui_mode: 'custom',
-      line_items: [
-        {
-          price_data: {
-            currency,
-            product_data: {
-              name: `Membership Package #${membershipPurchase.packageId}`,
+      // Create Stripe Checkout session
+      const session = await this.stripe.checkout.sessions.create({
+        payment_method_types: ['card'],
+        mode: 'payment',
+        ui_mode: 'custom',
+        line_items: [
+          {
+            price_data: {
+              currency,
+              product_data: {
+                name: `Membership Package #${membershipPurchase.packageId}`,
+              },
+              unit_amount: Math.round(payable * 100),
             },
-            unit_amount: Math.round(payable * 100),
+            quantity: 1,
           },
-          quantity: 1,
+        ],
+        return_url: `${RETURN_URL}?session_id={CHECKOUT_SESSION_ID}`,
+        metadata: {
+          membershipPurchaseId: id.toString(),
+          userId: user.toString(),
         },
-      ],
-      return_url: `${RETURN_URL}?session_id={CHECKOUT_SESSION_ID}`,
-      metadata: {
-        membershipPurchaseId: id.toString(),
-        userId: user.toString(),
-      },
-    });
+      });
 
-    // Save a new Payment transaction record with status pending
-    const payment = this.paymentRepo.create({
-      user,
-      currency,
-      gateway,
-      servicePurchaseId: id,
-      paymentStatus: PaymentStatus.PENDING,
-      amount,
-      discount,
-      payable,
-      transactionId: session.id,
-      storeAmount: null,
-    });
+      // Save a new Payment transaction record with status pending
+      const payment = this.paymentRepo.create({
+        user,
+        currency,
+        gateway,
+        servicePurchaseId: id,
+        paymentStatus: PaymentStatus.PENDING,
+        amount,
+        discount,
+        payable,
+        transactionId: session.id,
+        storeAmount: null,
+      });
 
-    await this.paymentRepo.save(payment);
+      await this.paymentRepo.save(payment);
 
-    return {
-      clientSecret: session.client_secret,
-      transactionId: session.id,
-      paymentStatus: 'pending',
-    };
+      return {
+        clientSecret: session.client_secret,
+        transactionId: session.id,
+        paymentStatus: 'pending',
+      };
+    }
   }
 
   /**
