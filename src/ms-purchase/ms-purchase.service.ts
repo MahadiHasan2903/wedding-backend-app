@@ -2,7 +2,11 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { MsPurchase } from './entities/ms-purchase.entity';
 import { MsPurchaseRepository } from './repositories/ms-purchase.repository';
 import { MsPackageService } from 'src/ms-package/msPackage.service';
-import { PurchasePackageCategory } from './enum/ms-purchase.enum';
+import {
+  PaymentStatus,
+  PurchasePackageCategory,
+  PurchaseStatus,
+} from './enum/ms-purchase.enum';
 import { PriceOptionType } from 'src/ms-package/enum/msPackage.enum';
 import { PaginationOptions } from 'src/types/common.types';
 
@@ -146,6 +150,10 @@ export class MsPurchaseService {
       amount,
       discount,
       payable,
+      status:
+        msPackageId === 1 ? PurchaseStatus.SUCCEEDED : PurchaseStatus.PENDING,
+      paymentStatus:
+        msPackageId === 1 ? PaymentStatus.PAID : PaymentStatus.PENDING,
     });
 
     const savedPurchase = await this.msPurchaseRepo.save(purchase);
