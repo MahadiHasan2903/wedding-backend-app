@@ -4,8 +4,8 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { MediaService } from 'src/media/media.service';
 import { AccountStatus } from './enum/users.enum';
 import { In } from 'typeorm';
-import { FiltersType } from 'src/types/filter.types';
 import { MediaRepository } from 'src/media/repositories/media.repository';
+import { FiltersOptions } from './types/user.types';
 
 @Injectable()
 export class UsersService {
@@ -45,7 +45,7 @@ export class UsersService {
     page = 1,
     pageSize = 10,
     sort = 'id,DESC',
-    filters: FiltersType = {},
+    filters: FiltersOptions = {},
   ) {
     const { items, totalItems, itemsPerPage, currentPage, totalPages } =
       await this.usersRepository.findAllPaginated(

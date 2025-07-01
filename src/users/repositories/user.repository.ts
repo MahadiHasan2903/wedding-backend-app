@@ -11,7 +11,6 @@ import {
   Religion,
   SmokingHabit,
 } from '../enum/users.enum';
-import { FiltersType } from 'src/types/filter.types';
 import { Media } from 'src/media/entities/media.entity';
 import { PurchasedMembershipInfo } from '../types/user-ms-purchase.types';
 import { MediaService } from 'src/media/media.service';
@@ -19,7 +18,7 @@ import { MediaRepository } from 'src/media/repositories/media.repository';
 import { MsPackageRepository } from 'src/ms-package/repositories/msPackage.repository';
 import { MsPurchaseRepository } from 'src/ms-purchase/repositories/ms-purchase.repository';
 import { PriceOptionType } from 'src/ms-package/enum/msPackage.enum';
-import { EnrichedUser } from '../types/user.types';
+import { EnrichedUser, FiltersOptions } from '../types/user.types';
 
 @Injectable()
 export class UserRepository extends Repository<User> {
@@ -65,7 +64,7 @@ export class UserRepository extends Repository<User> {
     page = 1,
     pageSize = 10,
     sort = 'id,DESC',
-    filters: FiltersType = {},
+    filters: FiltersOptions = {},
   ): Promise<{
     items: Omit<User, 'password'>[];
     totalItems: number;

@@ -7,9 +7,16 @@ import { DataSource } from 'typeorm';
 import { StripeModule } from './stripe/stripe.module';
 import { UsersModule } from 'src/users/users.module';
 import { AccountModule } from 'src/account/account.module';
+import { PayPalModule } from './paypal/paypal.module';
 
 @Module({
-  imports: [MsPurchaseModule, StripeModule, UsersModule, AccountModule],
+  imports: [
+    MsPurchaseModule,
+    StripeModule,
+    PayPalModule,
+    UsersModule,
+    AccountModule,
+  ],
   controllers: [PaymentController],
   providers: [
     PaymentService,

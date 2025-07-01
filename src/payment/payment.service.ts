@@ -8,11 +8,12 @@ import {
 } from '@nestjs/common';
 import { CreateMembershipPaymentDto } from './dto/create-membership-payment.dto';
 import { MsPurchaseRepository } from 'src/ms-purchase/repositories/ms-purchase.repository';
-import { PaginationOptions } from 'src/types/common.types';
 import { PurchaseStatus } from 'src/ms-purchase/enum/ms-purchase.enum';
 import { UserRepository } from 'src/users/repositories/user.repository';
 import { AccountRepository } from 'src/account/repositories/account.repository';
 import { StripeService } from './stripe/stripe.service';
+import { PayPalService } from './paypal/paypal.service';
+import { PaginationOptions } from 'src/types/common.types';
 
 @Injectable()
 export class PaymentService {
@@ -22,6 +23,7 @@ export class PaymentService {
     private readonly userRepo: UserRepository,
     private readonly accountRepo: AccountRepository,
     private readonly stripeService: StripeService,
+    private readonly paypalService: PayPalService,
     private configService: ConfigService,
   ) {}
 
@@ -46,7 +48,7 @@ export class PaymentService {
 
       const returnUrl =
         this.configService.get<string>('BASE_URL') +
-        '/v1/payment/payment-callback';
+        '/v1/payment/stripe-payment-callback';
 
       const session = await this.stripeService.createCheckoutSession({
         membershipPurchase,
@@ -75,6 +77,57 @@ export class PaymentService {
         paymentStatus: 'pending',
       };
     }
+
+    if (gateway === PaymentGateway.PAYPAL) {
+      const membershipPurchase = await this.msPurchaseRepo.findOne({
+        where: { id: membershipPurchaseId },
+      });
+
+      if (!membershipPurchase) {
+        throw new BadRequestException('Membership purchase not found');
+      }
+
+      const returnUrl =
+        this.configService.get<string>('BASE_URL') +
+        '/v1/payment/paypal-payment-callback';
+      const cancelUrl =
+        this.configService.get<string>('BASE_URL') + '/payment/cancel';
+
+      const payableAmount = Number(membershipPurchase.payable);
+
+      const order = await this.paypalService.createOrder(
+        payableAmount,
+        currency,
+        returnUrl,
+        cancelUrl,
+      );
+
+      const approvalUrl = order.links.find(
+        (link) => link.rel === 'approve',
+      )?.href;
+
+      // Save payment as pending
+      const payment = this.paymentRepo.create({
+        user: membershipPurchase.user,
+        currency,
+        gateway,
+        servicePurchaseId: membershipPurchase.id,
+        paymentStatus: PaymentStatus.PENDING,
+        amount: membershipPurchase.amount,
+        discount: membershipPurchase.discount,
+        payable: membershipPurchase.payable,
+        transactionId: order.id,
+        storeAmount: null,
+      });
+
+      await this.paymentRepo.save(payment);
+
+      return {
+        approvalUrl,
+        transactionId: order.id,
+        paymentStatus: 'pending',
+      };
+    }
   }
 
   /**
@@ -88,7 +141,7 @@ export class PaymentService {
    * @throws BadRequestException if session retrieval fails
    * @throws NotFoundException if the associated Payment record is not found
    */
-  async paymentCallback(sessionId: string) {
+  async stripePaymentCallback(sessionId: string) {
     const session = await this.stripeService.retrieveSession(sessionId);
 
     if (!session) {
@@ -141,6 +194,55 @@ export class PaymentService {
       url:
         this.configService.get<string>('CLIENT_BASE_URL') +
         `/payment?transactionId=${sessionId}&status=${paymentIntent.status}`,
+    };
+  }
+
+  async paypalPaymentCallback(orderId: string) {
+    const order = await this.paypalService.captureOrder(orderId);
+
+    console.log('Callback Order:', JSON.stringify(order, null, 2));
+
+    const status =
+      order.status === 'COMPLETED' ? PaymentStatus.PAID : PaymentStatus.FAILED;
+
+    // Update payment record
+    const payment = await this.paymentRepo.findOneByTransactionId(orderId);
+    if (!payment) {
+      throw new NotFoundException('Payment record not found');
+    }
+
+    payment.paymentStatus = status;
+    await this.paymentRepo.save(payment);
+
+    // Update membership purchase record
+    const purchase = await this.msPurchaseRepo.findOne({
+      where: { id: payment.servicePurchaseId },
+    });
+
+    if (purchase) {
+      purchase.paymentStatus = status;
+      purchase.status =
+        status === PaymentStatus.PAID
+          ? PurchaseStatus.SUCCEEDED
+          : PurchaseStatus.FAILED;
+
+      await this.msPurchaseRepo.save(purchase);
+
+      // Update user with purchased membership
+      const fetchedUser = await this.userRepo.findByIdWithoutPassword(
+        purchase.user,
+      );
+      if (fetchedUser) {
+        fetchedUser.purchasedMembership = purchase.id;
+        await this.accountRepo.save(fetchedUser);
+      }
+    }
+
+    // Return redirect URL to frontend
+    return {
+      url:
+        this.configService.get<string>('CLIENT_BASE_URL') +
+        `/payment?transactionId=${orderId}&status=${status.toLowerCase()}`,
     };
   }
 

@@ -14,5 +14,5 @@ export interface AuthenticatedRequest extends Request {
 export interface PaginationOptions {
   page: number;
   pageSize: number;
-  sort: string; // format: "column,DESC" or "column,ASC"
+  sort: string;
 }

@@ -185,12 +185,49 @@ export class PaymentController {
    * @returns Redirect URL to the client with transaction ID and status
    */
   @Public()
-  @Get('payment-callback')
-  async membershipPaymentCallback(
+  @Get('stripe-payment-callback')
+  async membershipStripePaymentCallback(
     @Query('session_id') sessionId: string,
     @Res() res: Response,
   ) {
-    const response = await this.paymentService.paymentCallback(sessionId);
+    const response = await this.paymentService.stripePaymentCallback(sessionId);
     return res.redirect(response.url);
+  }
+
+  /**
+   * PayPal payment approval callback endpoint.
+   *
+   * This route is hit by PayPal after the user approves the payment and is redirected
+   * back to the system with a `orderId` (PayPal order ID). This method finalizes the
+   * transaction by calling the appropriate service method to capture the payment.
+   *
+   * @route POST /v1/payment/paypal-payment-callback?orderId={paypal_order_id}
+   * @access Public
+   * @param orderId PayPal order ID passed as a query parameter
+   * @returns Success or failure response with relevant data or error
+   */
+  @Public()
+  @Post('paypal-payment-callback')
+  async membershipPaypalPaymentCallback(@Query('orderId') orderId: string) {
+    try {
+      const response = await this.paymentService.paypalPaymentCallback(orderId);
+
+      return {
+        status: HttpStatus.CREATED,
+        success: true,
+        message: 'PayPal membership payment completed successfully',
+        data: response,
+      };
+    } catch (error) {
+      throw new HttpException(
+        {
+          status: HttpStatus.BAD_REQUEST,
+          success: false,
+          message: 'PayPal membership payment failed',
+          error: sanitizeError(error),
+        },
+        HttpStatus.BAD_REQUEST,
+      );
+    }
   }
 }
