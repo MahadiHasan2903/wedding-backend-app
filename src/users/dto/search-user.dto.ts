@@ -64,6 +64,12 @@ export class SearchUserDto {
   monthlyIncome?: string;
 
   @IsOptional()
+  @Matches(/^\d{4}-\d{2}-\d{2} - \d{4}-\d{2}-\d{2}$/, {
+    message: 'joined must be in format "YYYY-MM-DD - YYYY-MM-DD"',
+  })
+  joined?: string;
+
+  @IsOptional()
   @IsEnum(Gender)
   lookingFor?: Gender;
 

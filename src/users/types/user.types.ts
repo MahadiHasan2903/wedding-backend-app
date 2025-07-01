@@ -15,6 +15,7 @@ export interface FiltersOptions {
   age?: string;
   height?: string;
   weight?: string;
+  joined?: string;
   monthlyIncome?: string;
   lookingFor?: string;
   religion?: string;

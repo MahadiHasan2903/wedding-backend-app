@@ -24,6 +24,7 @@ export enum AccountStatus {
   ACTIVE = 'active',
   INACTIVE = 'inactive',
   BLOCK = 'block',
+  BANNED = 'banned',
   DELETE = 'delete',
 }
 

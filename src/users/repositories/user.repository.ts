@@ -109,6 +109,22 @@ export class UserRepository extends Repository<User> {
       qb.andWhere('user.monthlyIncome BETWEEN :min AND :max', { min, max });
     }
 
+    if (filters.joined?.includes(' - ')) {
+      const [startDateStr, endDateStr] = filters.joined.split(' - ');
+      const startDate = new Date(startDateStr);
+      const endDate = new Date(endDateStr);
+
+      if (!isNaN(startDate.getTime()) && !isNaN(endDate.getTime())) {
+        // Adjust end date to include the whole day
+        endDate.setHours(23, 59, 59, 999);
+
+        qb.andWhere('user.createdAt BETWEEN :startDate AND :endDate', {
+          startDate,
+          endDate,
+        });
+      }
+    }
+
     // ENUM / EXACT MATCH FILTERS
     if (
       filters.lookingFor &&
