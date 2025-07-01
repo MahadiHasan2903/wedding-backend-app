@@ -4,7 +4,7 @@ import { PaymentController } from './payment.controller';
 import { MsPurchaseModule } from 'src/ms-purchase/ms-purchase.module';
 import { PaymentRepository } from './repositories/payment.repository';
 import { DataSource } from 'typeorm';
-import { StripeModule } from 'src/common/stripe/stripe.module';
+import { StripeModule } from './stripe/stripe.module';
 import { UsersModule } from 'src/users/users.module';
 import { AccountModule } from 'src/account/account.module';
 
