@@ -7,6 +7,8 @@ import { JwtService } from '@nestjs/jwt';
 import { AccountStatus } from 'src/users/enum/users.enum';
 import { User } from 'src/users/entities/user.entity';
 import { MsPackageRepository } from 'src/ms-package/repositories/msPackage.repository';
+import { PurchasePackageCategory } from 'src/ms-purchase/enum/ms-purchase.enum';
+import { MsPurchaseService } from 'src/ms-purchase/ms-purchase.service';
 
 @Injectable()
 export class AccountService {
@@ -27,6 +29,7 @@ export class AccountService {
 
   constructor(
     private readonly msPackageRepo: MsPackageRepository,
+    private readonly msPurchaseService: MsPurchaseService,
     private readonly accountRepo: AccountRepository,
     private readonly emailService: EmailService,
     private readonly jwtService: JwtService,
@@ -111,7 +114,14 @@ export class AccountService {
     const hashedPassword = await bcrypt.hash(record.userData.password, 10);
     const { profilePicture, additionalPhotos, ...rest } = record.userData;
 
-    // 👉 Fetch the default MsPackage (id = 1, or based on title if preferred)
+    // Create and save the user account first
+    const account = this.accountRepo.create({
+      ...rest,
+      password: hashedPassword,
+    });
+    const savedAccount = await this.accountRepo.save(account);
+
+    // Fetch the default package (id = 1)
     const defaultPackage = await this.msPackageRepo.findOne({
       where: { id: 1 },
     });
@@ -120,21 +130,26 @@ export class AccountService {
       throw new Error('Default membership package not found');
     }
 
-    const [firstPriceOption] = defaultPackage.priceOptions;
+    // Create the membership purchase for the new user
+    const purchaseInfo = await this.msPurchaseService.createPurchase(
+      savedAccount.id,
+      defaultPackage.id,
+      PurchasePackageCategory.LIFETIME,
+    );
 
-    const account = this.accountRepo.create({
-      ...rest,
-      password: hashedPassword,
-      membershipPackage: {
-        id: defaultPackage.id,
-        category: firstPriceOption?.category,
-      },
-    });
+    // Update the savedAccount with msPurchaseId and save again
+    savedAccount.purchasedMembership = purchaseInfo.id;
+    await this.accountRepo.save(savedAccount);
 
-    const savedAccount = await this.accountRepo.save(account);
+    // Attach purchase info inside the user object as `membership`
+    const userWithMembership = {
+      ...savedAccount,
+    };
+
+    // Delete OTP record
     this.otpStore.delete(email);
 
-    return savedAccount;
+    return userWithMembership;
   }
 
   /**

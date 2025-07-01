@@ -3,10 +3,9 @@ import { UserRepository } from './repositories/user.repository';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { MediaService } from 'src/media/media.service';
 import { AccountStatus } from './enum/users.enum';
-import { Media } from 'src/media/entities/media.entity';
 import { In } from 'typeorm';
-import { FiltersType } from 'src/types/filter.types';
 import { MediaRepository } from 'src/media/repositories/media.repository';
+import { FiltersOptions } from './types/user.types';
 
 @Injectable()
 export class UsersService {
@@ -23,30 +22,13 @@ export class UsersService {
    * @returns A Promise resolving to the user object without the password field.
    * @throws NotFoundException - Thrown if no user exists with the provided ID.
    */
-  async findById(id: number) {
+  async findUserById(id: number) {
     const user = await this.usersRepository.findByIdWithoutPassword(id);
     if (!user) {
       throw new NotFoundException(`User with id ${id} not found`);
     }
 
-    let fullProfilePicture: Media | null = null;
-    let fullAdditionalPhotos: Media[] = [];
-
-    if (user.profilePicture) {
-      fullProfilePicture = await this.mediaService.getOne(user.profilePicture);
-    }
-
-    if (user.additionalPhotos?.length) {
-      fullAdditionalPhotos = await this.mediaRepository.findByIds(
-        user.additionalPhotos,
-      );
-    }
-
-    return {
-      ...user,
-      profilePicture: fullProfilePicture,
-      additionalPhotos: fullAdditionalPhotos,
-    };
+    return this.usersRepository.enrichUserRelations(user);
   }
 
   /**
@@ -63,7 +45,7 @@ export class UsersService {
     page = 1,
     pageSize = 10,
     sort = 'id,DESC',
-    filters: FiltersType = {},
+    filters: FiltersOptions = {},
   ) {
     const { items, totalItems, itemsPerPage, currentPage, totalPages } =
       await this.usersRepository.findAllPaginated(
@@ -74,32 +56,7 @@ export class UsersService {
       );
 
     const enrichedItems = await Promise.all(
-      items.map(async (user) => {
-        let fullProfilePicture: Media | null = null;
-        let fullAdditionalPhotos: Media[] = [];
-
-        if (user.profilePicture) {
-          try {
-            fullProfilePicture = await this.mediaService.getOne(
-              user.profilePicture,
-            );
-          } catch {
-            fullProfilePicture = null;
-          }
-        }
-
-        if (user.additionalPhotos?.length) {
-          fullAdditionalPhotos = await this.mediaRepository.findByIds(
-            user.additionalPhotos,
-          );
-        }
-
-        return {
-          ...user,
-          profilePicture: fullProfilePicture,
-          additionalPhotos: fullAdditionalPhotos,
-        };
-      }),
+      items.map((user) => this.usersRepository.enrichUserRelations(user)),
     );
 
     return {
@@ -196,28 +153,8 @@ export class UsersService {
 
     const savedUser = await this.usersRepository.save(user);
 
-    // === Fetch media entities for profilePicture and additionalPhotos before returning ===
-    let fullProfilePicture: Media | null = null;
-
-    let fullAdditionalPhotos: Media[] = [];
-
-    if (savedUser.profilePicture) {
-      fullProfilePicture = await this.mediaService.getOne(
-        savedUser.profilePicture,
-      );
-    }
-
-    if (savedUser.additionalPhotos?.length) {
-      fullAdditionalPhotos = await this.mediaRepository.findByIds(
-        savedUser.additionalPhotos,
-      );
-    }
-
-    return {
-      ...savedUser,
-      profilePicture: fullProfilePicture,
-      additionalPhotos: fullAdditionalPhotos,
-    };
+    const safeUser = (({ password, ...rest }) => rest)(savedUser);
+    return this.usersRepository.enrichUserRelations(safeUser);
   }
 
   /**

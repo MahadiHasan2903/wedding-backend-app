@@ -89,11 +89,8 @@ export class User {
   @Column({ type: 'enum', enum: AccountStatus, default: AccountStatus.ACTIVE })
   accountStatus: AccountStatus;
 
-  @Column('json', { nullable: true })
-  membershipPackage: {
-    id: number;
-    category: string;
-  };
+  @Column({ nullable: true })
+  purchasedMembership: number;
 
   @Column({ nullable: true })
   timeZone?: string;

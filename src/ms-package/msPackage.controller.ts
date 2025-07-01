@@ -17,7 +17,7 @@ import { Roles } from 'src/common/decorators/roles.decorator';
 import { UserRole } from 'src/users/enum/users.enum';
 import { Public } from 'src/common/decorators/public.decorator';
 
-@Controller('v1/ms-package')
+@Controller('v1/membership-package')
 export class MsPackageController {
   constructor(private readonly msPackageService: MsPackageService) {}
 

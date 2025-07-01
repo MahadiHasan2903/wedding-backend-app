@@ -10,3 +10,9 @@ export interface AuthenticatedUser {
 export interface AuthenticatedRequest extends Request {
   user: AuthenticatedUser;
 }
+
+export interface PaginationOptions {
+  page: number;
+  pageSize: number;
+  sort: string;
+}

@@ -11,11 +11,24 @@ import {
   Religion,
   SmokingHabit,
 } from '../enum/users.enum';
-import { FiltersType } from 'src/types/filter.types';
+import { Media } from 'src/media/entities/media.entity';
+import { PurchasedMembershipInfo } from '../types/user-ms-purchase.types';
+import { MediaService } from 'src/media/media.service';
+import { MediaRepository } from 'src/media/repositories/media.repository';
+import { MsPackageRepository } from 'src/ms-package/repositories/msPackage.repository';
+import { MsPurchaseRepository } from 'src/ms-purchase/repositories/ms-purchase.repository';
+import { PriceOptionType } from 'src/ms-package/enum/msPackage.enum';
+import { EnrichedUser, FiltersOptions } from '../types/user.types';
 
 @Injectable()
 export class UserRepository extends Repository<User> {
-  constructor(private dataSource: DataSource) {
+  constructor(
+    private dataSource: DataSource,
+    private mediaService: MediaService,
+    private mediaRepository: MediaRepository,
+    private msPackageRepository: MsPackageRepository,
+    private msPurchaseRepository: MsPurchaseRepository,
+  ) {
     super(User, dataSource.createEntityManager());
   }
 
@@ -51,7 +64,7 @@ export class UserRepository extends Repository<User> {
     page = 1,
     pageSize = 10,
     sort = 'id,DESC',
-    filters: FiltersType = {},
+    filters: FiltersOptions = {},
   ): Promise<{
     items: Omit<User, 'password'>[];
     totalItems: number;
@@ -234,6 +247,79 @@ export class UserRepository extends Repository<User> {
       itemsPerPage: pageSize,
       currentPage: page,
       totalPages,
+    };
+  }
+
+  async enrichUserRelations(
+    user: Omit<User, 'password'>,
+  ): Promise<EnrichedUser> {
+    let fullProfilePicture: Media | null = null;
+    let fullAdditionalPhotos: Media[] = [];
+    let purchasedMembershipInfo: PurchasedMembershipInfo | null = null;
+
+    // Profile picture
+    if (user.profilePicture) {
+      try {
+        fullProfilePicture = await this.mediaService.getOne(
+          user.profilePicture,
+        );
+      } catch {
+        fullProfilePicture = null;
+      }
+    }
+
+    // Additional photos
+    if (user.additionalPhotos?.length) {
+      fullAdditionalPhotos = await this.mediaRepository.findByIds(
+        user.additionalPhotos,
+      );
+    }
+
+    // Purchased membership
+    if (user.purchasedMembership) {
+      const purchaseInfo = await this.msPurchaseRepository.findOne({
+        where: { id: user.purchasedMembership },
+      });
+
+      if (purchaseInfo) {
+        const {
+          packageId,
+          purchasePackageCategory,
+          ...purchaseWithoutPackage
+        } = purchaseInfo;
+
+        if (packageId) {
+          const msPackage = await this.msPackageRepository.findOne({
+            where: { id: packageId },
+          });
+
+          if (msPackage) {
+            const priceOption =
+              msPackage.priceOptions.find(
+                (option) =>
+                  option.category ===
+                  (purchasePackageCategory as unknown as PriceOptionType),
+              ) || null;
+
+            purchasedMembershipInfo = {
+              ...purchaseWithoutPackage,
+              membershipPackageInfo: {
+                id: msPackage.id,
+                title: msPackage.title,
+                description: msPackage.description,
+                priceOption,
+              },
+            };
+          }
+        }
+      }
+    }
+
+    return {
+      ...user,
+      profilePicture: fullProfilePicture,
+      additionalPhotos: fullAdditionalPhotos,
+      purchasedMembership: purchasedMembershipInfo,
     };
   }
 }

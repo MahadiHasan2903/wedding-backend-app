@@ -4,9 +4,10 @@ import {
   IsString,
   ValidateNested,
   IsArray,
+  IsOptional,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { PriceOptionType } from '../enum/msPackage.enum';
+import { PackageStatus, PriceOptionType } from '../enum/msPackage.enum';
 
 class PriceOptionDto {
   @IsEnum(PriceOptionType)
@@ -25,6 +26,10 @@ export class CreateMsPackageDto {
 
   @IsString()
   description: string;
+
+  @IsOptional()
+  @IsEnum(PackageStatus)
+  status?: PackageStatus;
 
   @IsArray()
   @ValidateNested({ each: true })
