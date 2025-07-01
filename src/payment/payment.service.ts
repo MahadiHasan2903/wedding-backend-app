@@ -197,29 +197,39 @@ export class PaymentService {
     };
   }
 
+  /**
+   * Handles the PayPal payment callback by capturing the order,
+   * updating the payment and purchase records, and returning the redirect URL.
+   *
+   * @param orderId - The PayPal order ID returned after user approval.
+   * @returns An object containing the redirect URL with transaction status for the frontend.
+   * @throws NotFoundException if the corresponding payment record is not found.
+   */
   async paypalPaymentCallback(orderId: string) {
+    // Capture the PayPal order using the PayPal service
     const order = await this.paypalService.captureOrder(orderId);
 
-    console.log('Callback Order:', JSON.stringify(order, null, 2));
-
+    // Determine payment status based on PayPal order status
     const status =
       order.status === 'COMPLETED' ? PaymentStatus.PAID : PaymentStatus.FAILED;
 
-    // Update payment record
+    // Find the payment record by transaction ID
     const payment = await this.paymentRepo.findOneByTransactionId(orderId);
     if (!payment) {
       throw new NotFoundException('Payment record not found');
     }
 
+    // Update the payment status
     payment.paymentStatus = status;
     await this.paymentRepo.save(payment);
 
-    // Update membership purchase record
+    // Find the related membership purchase record
     const purchase = await this.msPurchaseRepo.findOne({
       where: { id: payment.servicePurchaseId },
     });
 
     if (purchase) {
+      // Update the purchase status based on payment status
       purchase.paymentStatus = status;
       purchase.status =
         status === PaymentStatus.PAID
@@ -228,7 +238,7 @@ export class PaymentService {
 
       await this.msPurchaseRepo.save(purchase);
 
-      // Update user with purchased membership
+      // If the user exists, associate the purchased membership with their account
       const fetchedUser = await this.userRepo.findByIdWithoutPassword(
         purchase.user,
       );
@@ -238,7 +248,7 @@ export class PaymentService {
       }
     }
 
-    // Return redirect URL to frontend
+    // Return the frontend redirect URL with transaction ID and status
     return {
       url:
         this.configService.get<string>('CLIENT_BASE_URL') +
@@ -322,6 +332,7 @@ export class PaymentService {
       totalPages: Math.ceil(totalItems / pageSize),
     };
   }
+
   /**
    * Retrieves all payments made by a specific user,
    * and enriches each payment with its associated membership purchase details.
