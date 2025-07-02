@@ -19,6 +19,7 @@ import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { UpdateAccountStatusDto } from './dto/update-account-status.dto';
 import { SearchUserDto } from './dto/search-user.dto';
+import { UpdateUserRoleDto } from './dto/update-user-role.dts';
 
 @Controller('v1/users')
 export class UsersController {
@@ -321,6 +322,46 @@ export class UsersController {
           status: HttpStatus.BAD_REQUEST,
           success: false,
           message: 'Failed to retrieve users',
+          error: sanitizedError,
+        },
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
+
+  /**
+   * Updates the role of a user (e.g., USER → ADMIN) by user ID.
+   * This endpoint is restricted to admin users only.
+   * It expects a request body containing the user's ID and the new role.
+   * @param updateUserRoleDto - DTO containing the user's ID and the new role (must be a valid `UserRole` enum).
+   * @returns A response object containing the updated user data (excluding the password).
+   * @throws HttpException - Returns a 400 Bad Request with an error message if the update fails.
+   */
+  @Patch('update-role')
+  @Roles(UserRole.ADMIN)
+  async updateUserRole(@Body() updateUserRoleDto: UpdateUserRoleDto) {
+    try {
+      const updatedUser = await this.usersService.updateUserRole(
+        updateUserRoleDto.userId,
+        updateUserRoleDto.userRole,
+      );
+
+      const { password, ...safeUser } = updatedUser;
+
+      return {
+        status: HttpStatus.OK,
+        success: true,
+        message: 'User role updated successfully',
+        data: safeUser,
+      };
+    } catch (error) {
+      const sanitizedError = sanitizeError(error);
+
+      throw new HttpException(
+        {
+          status: HttpStatus.BAD_REQUEST,
+          success: false,
+          message: 'Failed to update user role',
           error: sanitizedError,
         },
         HttpStatus.BAD_REQUEST,
