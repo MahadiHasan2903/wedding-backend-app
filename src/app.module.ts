@@ -8,6 +8,8 @@ import { MsPackageModule } from './ms-package/msPackage.module';
 import { PaymentModule } from './payment/payment.module';
 import { MsPurchaseModule } from './ms-purchase/ms-purchase.module';
 import { StripeModule } from './payment/stripe/stripe.module';
+import { ConversationModule } from './conversation/conversation.module';
+import { MessageModule } from './conversation/message/message.module';
 
 @Module({
   imports: [
@@ -36,6 +38,8 @@ import { StripeModule } from './payment/stripe/stripe.module';
     MsPackageModule,
     PaymentModule,
     MsPurchaseModule,
+    ConversationModule,
+    MessageModule,
   ],
 })
 export class AppModule {}

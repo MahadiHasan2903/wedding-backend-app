@@ -1,9 +1,9 @@
-import { IsEnum, IsNumber, IsString } from 'class-validator';
+import { IsEnum, IsString } from 'class-validator';
 import { PaymentGateway } from '../enum/payment.enum';
 
 export class CreateMembershipPaymentDto {
-  @IsNumber()
-  membershipPurchaseId: number;
+  @IsString()
+  membershipPurchaseId: string;
 
   @IsEnum(PaymentGateway)
   gateway: PaymentGateway;

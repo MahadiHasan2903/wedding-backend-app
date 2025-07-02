@@ -165,7 +165,7 @@ export class AccountService {
   ): Promise<{
     accessToken: string;
     user: {
-      id: number;
+      id: string;
       firstName: string;
       lastName: string;
       email: string;
@@ -232,7 +232,7 @@ export class AccountService {
    * @throws If the account is not found or the current password is incorrect.
    */
   async changePassword(
-    userId: number,
+    userId: string,
     currentPassword: string,
     newPassword: string,
   ) {

@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { UserRepository } from './repositories/user.repository';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { MediaService } from 'src/media/media.service';
-import { AccountStatus } from './enum/users.enum';
+import { AccountStatus, UserRole } from './enum/users.enum';
 import { In } from 'typeorm';
 import { MediaRepository } from 'src/media/repositories/media.repository';
 import { FiltersOptions } from './types/user.types';
@@ -22,7 +22,7 @@ export class UsersService {
    * @returns A Promise resolving to the user object without the password field.
    * @throws NotFoundException - Thrown if no user exists with the provided ID.
    */
-  async findUserById(id: number) {
+  async findUserById(id: string) {
     const user = await this.usersRepository.findByIdWithoutPassword(id);
     if (!user) {
       throw new NotFoundException(`User with id ${id} not found`);
@@ -82,7 +82,7 @@ export class UsersService {
    * @returns The updated user entity
    */
   async update(
-    id: number,
+    id: string,
     updateUserDto: UpdateUserDto,
     files?: {
       profilePicture?: Express.Multer.File[];
@@ -166,13 +166,31 @@ export class UsersService {
    * @throws NotFoundException - Thrown if no user is found with the given ID.
    */
 
-  async updateAccountStatus(userId: number, accountStatus: AccountStatus) {
+  async updateAccountStatus(userId: string, accountStatus: AccountStatus) {
     const user = await this.usersRepository.findOneBy({ id: userId });
     if (!user) {
       throw new NotFoundException('User not found');
     }
 
     user.accountStatus = accountStatus;
+    return this.usersRepository.save(user);
+  }
+
+  /**
+   * Updates the role of a specific user.
+   *
+   * @param userId - The ID of the user whose role is to be updated.
+   * @param userRole - The new role to assign to the user (must be a valid `UserRole` enum).
+   * @returns The updated user entity after the role change.
+   * @throws NotFoundException - If no user is found with the given ID.
+   */
+  async updateUserRole(userId: string, userRole: UserRole) {
+    const user = await this.usersRepository.findOneBy({ id: userId });
+    if (!user) {
+      throw new NotFoundException(`User with id ${userId} not found`);
+    }
+
+    user.userRole = userRole;
     return this.usersRepository.save(user);
   }
 }

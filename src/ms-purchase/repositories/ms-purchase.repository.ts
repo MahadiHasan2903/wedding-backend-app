@@ -13,7 +13,7 @@ export class MsPurchaseRepository extends Repository<MsPurchase> {
    * @param user The user ID as string.
    * @returns Promise resolving to an array of MsPurchase.
    */
-  findByUserId(user: number): Promise<MsPurchase[]> {
+  findByUserId(user: string): Promise<MsPurchase[]> {
     return this.find({
       where: { user },
       order: { purchasedAt: 'DESC' },

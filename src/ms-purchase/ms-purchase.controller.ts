@@ -33,7 +33,7 @@ export class MsPurchaseController {
     @Query('page') page = 1,
     @Query('pageSize') pageSize = 10,
     @Query('sort') sort = 'id,DESC',
-    @CurrentUser() user: { userId: number },
+    @CurrentUser() user: { userId: string },
   ) {
     try {
       const purchases = await this.msPurchaseService.findByUserId(user.userId, {
@@ -77,7 +77,7 @@ export class MsPurchaseController {
   ) {
     try {
       const purchase = await this.msPurchaseService.createPurchase(
-        Number(user.userId),
+        user.userId,
         createDto.msPackageId,
         createDto.purchasePackageCategory,
       );
@@ -110,7 +110,7 @@ export class MsPurchaseController {
    */
   @Get(':id')
   @Roles(UserRole.USER, UserRole.ADMIN)
-  async getOne(@Param('id') id: number) {
+  async getOne(@Param('id') id: string) {
     try {
       const purchase = await this.msPurchaseService.findById(id);
       if (!purchase) {

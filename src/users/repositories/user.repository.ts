@@ -40,7 +40,7 @@ export class UserRepository extends Repository<User> {
    */
 
   async findByIdWithoutPassword(
-    id: number,
+    id: string,
   ): Promise<Omit<User, 'password'> | null> {
     const user = await this.findOneBy({ id });
     if (!user) {

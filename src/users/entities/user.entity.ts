@@ -29,8 +29,8 @@ import {
 
 @Entity('users')
 export class User {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
   @Column()
   firstName: string;
@@ -71,11 +71,11 @@ export class User {
   @Column({ type: 'enum', enum: MaritalStatus, nullable: true })
   maritalStatus?: MaritalStatus;
 
-  @Column({ type: 'int', nullable: true })
-  profilePicture: number | null;
+  @Column({ type: 'uuid', nullable: true })
+  profilePicture: string | null;
 
-  @Column({ type: 'int', array: true, nullable: true })
-  additionalPhotos?: number[];
+  @Column({ type: 'uuid', array: true, nullable: true })
+  additionalPhotos?: string[];
 
   @Column('text', { array: true, nullable: true })
   socialMediaLinks: string[];
@@ -90,7 +90,7 @@ export class User {
   accountStatus: AccountStatus;
 
   @Column({ nullable: true })
-  purchasedMembership: number;
+  purchasedMembership: string;
 
   @Column({ nullable: true })
   timeZone?: string;

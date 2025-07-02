@@ -7,11 +7,11 @@ import {
 
 @Entity('membership_purchases')
 export class MsPurchase {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
   @Column()
-  user: number;
+  user: string;
 
   @Column()
   packageId: number;

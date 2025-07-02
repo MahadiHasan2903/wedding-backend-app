@@ -164,11 +164,11 @@ export class AccountController {
   @Post('change-password')
   @Roles(UserRole.USER)
   async changePassword(
-    @CurrentUser() user: { userId: number },
+    @CurrentUser() user: { userId: string },
     @Body() body: { currentPassword: string; newPassword: string },
   ) {
     try {
-      const userId = Number(user.userId);
+      const userId = user.userId;
       const { currentPassword, newPassword } = body;
 
       await this.accountService.changePassword(
