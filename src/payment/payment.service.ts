@@ -341,7 +341,7 @@ export class PaymentService {
    * @returns A list of payment objects, each including the corresponding membership purchase information.
    */
   async getPaymentsByUserId(
-    user: number,
+    user: string,
     { page, pageSize, sort }: PaginationOptions,
   ) {
     const [sortField, sortOrder] = sort.split(',');

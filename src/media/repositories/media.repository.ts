@@ -26,7 +26,7 @@ export class MediaRepository extends Repository<Media> {
    * @param id - The ID of the Media entity to retrieve.
    * @returns A promise that resolves to the found Media entity, or null if not found.
    */
-  async findById(id: number): Promise<Media | null> {
+  async findById(id: string): Promise<Media | null> {
     return this.findOne({ where: { id } });
   }
 
@@ -68,7 +68,7 @@ export class MediaRepository extends Repository<Media> {
    * @param id - The ID of the Media record to delete.
    * @returns A promise that resolves to the deleted Media entity, or null if not found.
    */
-  async deleteById(id: number): Promise<Media | null> {
+  async deleteById(id: string): Promise<Media | null> {
     const media = await this.findOneBy({ id });
     if (!media) return null;
     await this.remove(media);

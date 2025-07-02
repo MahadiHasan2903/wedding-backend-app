@@ -22,7 +22,7 @@ export class MsPurchaseService {
    * @param id The purchase ID.
    * @returns Promise resolving to MsPurchase or null.
    */
-  findById(id: number): Promise<MsPurchase | null> {
+  findById(id: string): Promise<MsPurchase | null> {
     return this.msPurchaseRepo.findOne({ where: { id } });
   }
 
@@ -57,7 +57,7 @@ export class MsPurchaseService {
    * @returns Promise resolving to array of MsPurchase.
    */
   async findByUserId(
-    user: number,
+    user: string,
     { page, pageSize, sort }: PaginationOptions,
   ) {
     const [sortField, sortOrder] = sort.split(',');
@@ -102,7 +102,7 @@ export class MsPurchaseService {
    * @throws NotFoundException if package not found.
    */
   async createPurchase(
-    user: number,
+    user: string,
     msPackageId: number,
     packagePurchasedCategory: PurchasePackageCategory,
   ) {

@@ -65,7 +65,7 @@ export class MediaController {
   @Get(':id')
   async getOne(@Param('id') id: string) {
     try {
-      const media = await this.mediaService.getOne(+id);
+      const media = await this.mediaService.getOne(id);
       return {
         success: true,
         message: 'Media fetched successfully',
@@ -100,7 +100,7 @@ export class MediaController {
   @Roles(UserRole.USER, UserRole.ADMIN)
   async delete(@Param('id') id: string) {
     try {
-      await this.mediaService.deleteMediaById(+id);
+      await this.mediaService.deleteMediaById(id);
       return {
         success: true,
         message: 'Media deleted successfully',

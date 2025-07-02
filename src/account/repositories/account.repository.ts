@@ -31,7 +31,7 @@ export class AccountRepository extends Repository<User> {
   /**
    * Finds a user by ID.
    */
-  async findById(id: number): Promise<User | null> {
+  async findById(id: string): Promise<User | null> {
     return this.findOne({ where: { id } });
   }
 }

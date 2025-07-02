@@ -8,17 +8,17 @@ import {
 
 @Entity('conversations')
 export class Conversation {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
   @Column()
-  senderId: number;
+  senderId: string;
 
   @Column()
-  receiverId: number;
+  receiverId: string;
 
   @Column({ nullable: true })
-  lastMessageId: number;
+  lastMessageId: string;
 
   @Column({ type: 'text', nullable: true })
   lastMessage: string;

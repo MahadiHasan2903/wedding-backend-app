@@ -2,7 +2,7 @@ import { Request } from 'express';
 import { UserRole } from 'src/users/enum/users.enum';
 
 export interface AuthenticatedUser {
-  userId: number;
+  userId: string;
   email: string;
   userRole: UserRole;
 }

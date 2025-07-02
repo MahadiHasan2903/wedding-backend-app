@@ -56,7 +56,7 @@ export class MediaService {
    * @param id - The ID of the Media record.
    * @returns Promise resolving to the Media entity.
    */
-  async getOne(id: number): Promise<Media> {
+  async getOne(id: string): Promise<Media> {
     const media = await this.mediaRepository.findById(id);
     if (!media) {
       throw new NotFoundException(`Media with ID ${id} not found`);
@@ -74,7 +74,7 @@ export class MediaService {
    *
    * @param id - The ID of the Media record to delete.
    */
-  async deleteMediaById(id: number): Promise<void> {
+  async deleteMediaById(id: string): Promise<void> {
     const media = await this.mediaRepository.findById(id);
     if (!media) {
       throw new NotFoundException();

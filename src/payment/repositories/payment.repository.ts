@@ -39,7 +39,7 @@ export class PaymentRepository {
    * @param user
    * @returns
    */
-  findByUserId(user: number): Promise<Payment[]> {
+  findByUserId(user: string): Promise<Payment[]> {
     return this.repo.find({ where: { user } });
   }
 

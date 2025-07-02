@@ -1,8 +1,8 @@
 import { PriceOption } from 'src/ms-package/entities/msPackage.entity';
 
 export interface PurchasedMembershipInfo {
-  id: number;
-  user: number;
+  id: string;
+  user: string;
   purchasedAt: Date;
   expiresAt?: Date;
   membershipPackageInfo: {

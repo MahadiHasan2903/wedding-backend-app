@@ -9,17 +9,17 @@ import { MessageType, MessageStatus } from '../enum/message.enum';
 
 @Entity('messages')
 export class Message {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
   @Column()
-  conversationId: number;
+  conversationId: string;
 
   @Column()
-  senderId: number;
+  senderId: string;
 
   @Column()
-  receiverId: number;
+  receiverId: string;
 
   @Column('text')
   originalText: string;

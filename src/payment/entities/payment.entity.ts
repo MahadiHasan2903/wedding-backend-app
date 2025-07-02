@@ -9,11 +9,11 @@ import { PaymentGateway, PaymentStatus } from '../enum/payment.enum';
 
 @Entity('payments')
 export class Payment {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
   @Column()
-  user: number;
+  user: string;
 
   @Column({ nullable: true })
   transactionId?: string;
@@ -28,7 +28,7 @@ export class Payment {
   gateway: PaymentGateway;
 
   @Column()
-  servicePurchaseId: number;
+  servicePurchaseId: string;
 
   @Column({
     type: 'enum',

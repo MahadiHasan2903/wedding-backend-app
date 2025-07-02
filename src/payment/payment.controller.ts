@@ -82,7 +82,7 @@ export class PaymentController {
     try {
       // Convert userId to a number and fetch payments for that user from the service
       const payments = await this.paymentService.getPaymentsByUserId(
-        Number(user.userId),
+        user.userId,
         {
           page: Number(page),
           pageSize: Number(pageSize),
