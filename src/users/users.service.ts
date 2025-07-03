@@ -193,4 +193,26 @@ export class UsersService {
     user.userRole = userRole;
     return this.usersRepository.save(user);
   }
+
+  /**
+   * Retrieves all users with the specified role and enriches them with related data.
+   *
+   * @param userRole - The role to filter users by (e.g., ADMIN, CUSTOMER, etc.)
+   * @returns A promise that resolves to an array of enriched user entities.
+   */
+  async findUsersByRole(userRole: UserRole) {
+    console.log(userRole);
+
+    const users = await this.usersRepository.find({
+      where: { userRole },
+    });
+
+    console.log(users);
+
+    const enrichedUsers = await Promise.all(
+      users.map((user) => this.usersRepository.enrichUserRelations(user)),
+    );
+
+    return enrichedUsers;
+  }
 }
