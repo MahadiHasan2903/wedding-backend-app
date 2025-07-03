@@ -35,7 +35,6 @@ export class UsersController {
   @Roles(UserRole.ADMIN)
   async getAllAdmins() {
     try {
-      console.log('triggered');
       // Fetch all users with the ADMIN role from the service layer
       const admins = await this.usersService.findUsersByRole(UserRole.ADMIN);
 

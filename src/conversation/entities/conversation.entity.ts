@@ -11,10 +11,10 @@ export class Conversation {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column()
+  @Column({ type: 'uuid' })
   senderId: string;
 
-  @Column()
+  @Column({ type: 'uuid' })
   receiverId: string;
 
   @Column({ nullable: true })

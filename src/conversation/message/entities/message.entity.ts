@@ -7,6 +7,13 @@ import {
 } from 'typeorm';
 import { MessageType, MessageStatus } from '../enum/message.enum';
 
+export class MessageContent {
+  originalText: string;
+  translationEn: string;
+  translationFr: string;
+  translationEs: string;
+}
+
 @Entity('messages')
 export class Message {
   @PrimaryGeneratedColumn('uuid')
@@ -21,17 +28,8 @@ export class Message {
   @Column()
   receiverId: string;
 
-  @Column('text')
-  originalText: string;
-
-  @Column({ type: 'text', nullable: true })
-  translatedEnglish: string;
-
-  @Column({ type: 'text', nullable: true })
-  translatedFrench: string;
-
-  @Column({ type: 'text', nullable: true })
-  translatedSpanish: string;
+  @Column('json')
+  message: MessageContent;
 
   @Column({
     type: 'enum',
@@ -55,6 +53,9 @@ export class Message {
 
   @Column({ type: 'jsonb', nullable: true })
   attachments: any;
+
+  @Column({ default: false })
+  isDeleted: boolean;
 
   @CreateDateColumn()
   createdAt: Date;

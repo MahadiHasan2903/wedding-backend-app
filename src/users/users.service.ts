@@ -201,13 +201,9 @@ export class UsersService {
    * @returns A promise that resolves to an array of enriched user entities.
    */
   async findUsersByRole(userRole: UserRole) {
-    console.log(userRole);
-
     const users = await this.usersRepository.find({
       where: { userRole },
     });
-
-    console.log(users);
 
     const enrichedUsers = await Promise.all(
       users.map((user) => this.usersRepository.enrichUserRelations(user)),
