@@ -3,11 +3,14 @@ import { MessageRepository } from './repositories/message.repository';
 import { CreateMessageDto } from './dto/create-message.dto';
 import { UpdateMessageStatusDto } from './dto/update-message-status.dto';
 import { Message } from './entities/message.entity';
-import { UpdateMessageContentDto } from './dto/update-message-content.dto';
+import { GoogleTranslateService } from './translation/google-translate.service';
 
 @Injectable()
 export class MessageService {
-  constructor(private readonly messageRepository: MessageRepository) {}
+  constructor(
+    private readonly messageRepository: MessageRepository,
+    private readonly googleTranslateService: GoogleTranslateService,
+  ) {}
 
   /**
    * Creates a new message record in the database.
@@ -15,7 +18,20 @@ export class MessageService {
    * @returns The saved Message entity.
    */
   async create(dto: CreateMessageDto): Promise<Message> {
-    const message = this.messageRepository.create(dto);
+    const translations = await this.googleTranslateService.translateMessage(
+      dto.message,
+    );
+
+    const message = this.messageRepository.create({
+      ...dto,
+      message: {
+        originalText: dto.message,
+        sourceLanguage: translations.originalLanguage,
+        translationEn: translations.translationEn,
+        translationFr: translations.translationFr,
+        translationEs: translations.translationEs,
+      },
+    });
     return this.messageRepository.save(message);
   }
 
@@ -32,14 +48,25 @@ export class MessageService {
   /**
    * Updates the multilingual message content for a given message ID.
    * @param id - The UUID of the message to update.
-   * @param dto - DTO containing the new message content (translations and original text).
+   * @param message -the new message content
    * @returns The updated Message entity.
    */
-  async updateMessageContent(
-    id: string,
-    dto: UpdateMessageContentDto,
-  ): Promise<Message> {
-    return this.messageRepository.updateMessageContent(id, dto.message);
+  async updateMessageContent(id: string, message: string): Promise<Message> {
+    // Translate the new message content
+    const translations =
+      await this.googleTranslateService.translateMessage(message);
+
+    // Prepare translated content in MessageContent structure
+    const translatedContent = {
+      originalText: message,
+      sourceLanguage: translations.originalLanguage,
+      translationEn: translations.translationEn,
+      translationFr: translations.translationFr,
+      translationEs: translations.translationEs,
+    };
+
+    // Pass structured content to repository
+    return this.messageRepository.updateMessageContent(id, translatedContent);
   }
 
   /**

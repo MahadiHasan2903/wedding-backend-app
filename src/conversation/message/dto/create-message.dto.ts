@@ -1,13 +1,5 @@
-import { IsUUID, IsEnum, IsOptional, ValidateNested } from 'class-validator';
-import { Type } from 'class-transformer';
+import { IsUUID, IsEnum, IsOptional, IsString } from 'class-validator';
 import { MessageStatus, MessageType } from '../enum/message.enum';
-
-class MessageContentDto {
-  originalText: string;
-  translationEn: string;
-  translationFr: string;
-  translationEs: string;
-}
 
 export class CreateMessageDto {
   @IsUUID()
@@ -19,9 +11,8 @@ export class CreateMessageDto {
   @IsUUID()
   receiverId: string;
 
-  @ValidateNested()
-  @Type(() => MessageContentDto)
-  message: MessageContentDto;
+  @IsString()
+  message: string;
 
   @IsEnum(MessageType)
   @IsOptional()

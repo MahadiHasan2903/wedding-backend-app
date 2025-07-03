@@ -12,7 +12,6 @@ import {
 import { MessageService } from './message.service';
 import { CreateMessageDto } from './dto/create-message.dto';
 import { UpdateMessageStatusDto } from './dto/update-message-status.dto';
-import { UpdateMessageContentDto } from './dto/update-message-content.dto';
 import { sanitizeError } from 'src/utils/helpers';
 import { Roles } from 'src/common/decorators/roles.decorator';
 import { UserRole } from 'src/users/enum/users.enum';
@@ -100,12 +99,12 @@ export class MessageController {
   @Roles(UserRole.USER, UserRole.ADMIN)
   async updateMessageContent(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() dto: UpdateMessageContentDto,
+    @Body() message: string,
   ) {
     try {
       const updatedMessage = await this.messageService.updateMessageContent(
         id,
-        dto,
+        message,
       );
 
       return {

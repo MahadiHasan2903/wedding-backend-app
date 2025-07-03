@@ -5,10 +5,11 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { MessageType, MessageStatus } from '../enum/message.enum';
+import { Language, MessageType, MessageStatus } from '../enum/message.enum';
 
 export class MessageContent {
   originalText: string;
+  sourceLanguage: Language;
   translationEn: string;
   translationFr: string;
   translationEs: string;
