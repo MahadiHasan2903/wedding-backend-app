@@ -8,6 +8,8 @@ import {
   ParseUUIDPipe,
   HttpException,
   HttpStatus,
+  UseInterceptors,
+  UploadedFiles,
 } from '@nestjs/common';
 import { MessageService } from './message.service';
 import { CreateMessageDto } from './dto/create-message.dto';
@@ -15,6 +17,7 @@ import { UpdateMessageStatusDto } from './dto/update-message-status.dto';
 import { sanitizeError } from 'src/utils/helpers';
 import { Roles } from 'src/common/decorators/roles.decorator';
 import { UserRole } from 'src/users/enum/users.enum';
+import { FileFieldsInterceptor } from '@nestjs/platform-express';
 
 @Controller('v1/message')
 export class MessageController {
@@ -27,9 +30,16 @@ export class MessageController {
    */
   @Post()
   @Roles(UserRole.USER, UserRole.ADMIN)
-  async create(@Body() dto: CreateMessageDto) {
+  @UseInterceptors(FileFieldsInterceptor([{ name: 'attachments' }]))
+  async create(
+    @Body() dto: CreateMessageDto,
+    @UploadedFiles()
+    files: {
+      attachments?: Express.Multer.File[];
+    },
+  ) {
     try {
-      const message = await this.messageService.create(dto);
+      const message = await this.messageService.create(dto, files);
       return {
         success: true,
         message: 'Message created successfully',
@@ -68,7 +78,7 @@ export class MessageController {
         await this.messageService.findByConversationId(conversationId);
       return {
         success: true,
-        message: 'Messages fetched successfully',
+        message: 'Messages fetched successfully for conversation',
         status: HttpStatus.OK,
         data: messages,
       };
@@ -80,6 +90,52 @@ export class MessageController {
         {
           success: false,
           message: `Failed to fetch messages for conversationId: ${conversationId}`,
+          status: HttpStatus.INTERNAL_SERVER_ERROR,
+          data: {},
+          error: sanitizedError,
+        },
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  /**
+   * Retrieve a single message by its ID, including full attachment details.
+   * @param id - id of the message to fetch.
+   * @returns The message with full attachment media objects.
+   */
+  @Get(':id')
+  @Roles(UserRole.USER, UserRole.ADMIN)
+  async getById(@Param('id') id: string) {
+    try {
+      const message = await this.messageService.findById(id);
+
+      if (!message) {
+        throw new HttpException(
+          {
+            success: false,
+            message: `Message with ID ${id} not found`,
+            status: HttpStatus.NOT_FOUND,
+            data: {},
+          },
+          HttpStatus.NOT_FOUND,
+        );
+      }
+
+      return {
+        success: true,
+        message: 'Message fetched successfully',
+        status: HttpStatus.OK,
+        data: message,
+      };
+    } catch (error: unknown) {
+      const sanitizedError = sanitizeError(error);
+      if (error instanceof HttpException) throw error;
+
+      throw new HttpException(
+        {
+          success: false,
+          message: `Failed to fetch message with ID: ${id}`,
           status: HttpStatus.INTERNAL_SERVER_ERROR,
           data: {},
           error: sanitizedError,

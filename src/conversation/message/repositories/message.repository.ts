@@ -1,6 +1,15 @@
 import { DataSource, Repository } from 'typeorm';
 import { Injectable } from '@nestjs/common';
 import { Message } from '../entities/message.entity';
+import { Language } from '../enum/message.enum';
+
+export interface MessageContent {
+  originalText: string;
+  sourceLanguage: Language;
+  translationEn: string;
+  translationFr: string;
+  translationEs: string;
+}
 
 @Injectable()
 export class MessageRepository extends Repository<Message> {
@@ -53,7 +62,10 @@ export class MessageRepository extends Repository<Message> {
    * @param content - New message content object (translations and original text).
    * @returns Promise resolving to the updated Message entity.
    */
-  async updateMessageContent(id: string, content: any): Promise<Message> {
+  async updateMessageContent(
+    id: string,
+    content: MessageContent,
+  ): Promise<Message> {
     await this.update(id, { message: content });
     return this.findOneByOrFail({ id });
   }

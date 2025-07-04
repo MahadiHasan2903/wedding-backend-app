@@ -29,8 +29,8 @@ export class Message {
   @Column()
   receiverId: string;
 
-  @Column('json')
-  message: MessageContent;
+  @Column('json', { nullable: true })
+  message?: MessageContent;
 
   @Column({
     type: 'enum',
@@ -50,10 +50,10 @@ export class Message {
   readAt: Date;
 
   @Column({ nullable: true })
-  replyToMessageId: number;
+  replyToMessageId: string;
 
-  @Column({ type: 'jsonb', nullable: true })
-  attachments: any;
+  @Column({ type: 'uuid', array: true, nullable: true })
+  attachments?: string[];
 
   @Column({ default: false })
   isDeleted: boolean;

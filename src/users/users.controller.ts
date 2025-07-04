@@ -198,7 +198,7 @@ export class UsersController {
   @UseInterceptors(
     FileFieldsInterceptor([
       { name: 'profilePicture', maxCount: 1 },
-      { name: 'additionalPhotos', maxCount: 10 },
+      { name: 'additionalPhotos', maxCount: 20 },
     ]),
   )
   async update(
@@ -206,7 +206,7 @@ export class UsersController {
     @Body() updateUserDto: UpdateUserDto,
     @UploadedFiles()
     files: {
-      profilePicture?: Express.Multer.File[];
+      profilePicture?: Express.Multer.File;
       additionalPhotos?: Express.Multer.File[];
     },
   ) {

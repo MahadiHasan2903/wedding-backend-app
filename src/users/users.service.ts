@@ -85,7 +85,7 @@ export class UsersService {
     id: string,
     updateUserDto: UpdateUserDto,
     files?: {
-      profilePicture?: Express.Multer.File[];
+      profilePicture?: Express.Multer.File;
       additionalPhotos?: Express.Multer.File[];
     },
   ) {
@@ -98,13 +98,13 @@ export class UsersService {
     }
 
     // === Upload new profile picture ===
-    if (files?.profilePicture?.[0]) {
+    if (files?.profilePicture) {
       if (user.profilePicture) {
         await this.mediaService.deleteMediaById(user.profilePicture);
       }
 
       const media = await this.mediaService.handleUpload(
-        files.profilePicture[0],
+        files.profilePicture,
         `user_profile`,
         `users/${id}/user-profile`,
       );

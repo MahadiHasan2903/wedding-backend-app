@@ -1,4 +1,4 @@
-import { DataSource, Repository, Brackets } from 'typeorm';
+import { DataSource, Repository, Brackets, In } from 'typeorm';
 import { Injectable } from '@nestjs/common';
 import { User } from '../entities/user.entity';
 import { subYears } from 'date-fns';
@@ -286,9 +286,9 @@ export class UserRepository extends Repository<User> {
 
     // Additional photos
     if (user.additionalPhotos?.length) {
-      fullAdditionalPhotos = await this.mediaRepository.findByIds(
-        user.additionalPhotos,
-      );
+      fullAdditionalPhotos = await this.mediaRepository.find({
+        where: { id: In(user.additionalPhotos) },
+      });
     }
 
     // Purchased membership

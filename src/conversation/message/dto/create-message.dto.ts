@@ -1,18 +1,19 @@
-import { IsUUID, IsEnum, IsOptional, IsString } from 'class-validator';
+import { IsEnum, IsOptional, IsString } from 'class-validator';
 import { MessageStatus, MessageType } from '../enum/message.enum';
 
 export class CreateMessageDto {
-  @IsUUID()
+  @IsString()
   conversationId: string;
 
-  @IsUUID()
+  @IsString()
   senderId: string;
 
-  @IsUUID()
+  @IsString()
   receiverId: string;
 
+  @IsOptional()
   @IsString()
-  message: string;
+  message?: string;
 
   @IsEnum(MessageType)
   @IsOptional()
@@ -23,8 +24,8 @@ export class CreateMessageDto {
   status?: MessageStatus;
 
   @IsOptional()
-  replyToMessageId?: number;
+  replyToMessageId?: string;
 
   @IsOptional()
-  attachments?: any;
+  attachments?: string[];
 }
