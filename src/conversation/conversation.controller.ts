@@ -16,6 +16,7 @@ import { UpdateLastMessageDto } from './dto/update-last-message.dto';
 import { Roles } from '../common/decorators/roles.decorator';
 import { UserRole } from 'src/users/enum/users.enum';
 import { sanitizeError } from 'src/utils/helpers';
+import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 
 @Controller('v1/conversation')
 export class ConversationController {
@@ -59,18 +60,20 @@ export class ConversationController {
   }
 
   /**
-   * Retrieve all conversations associated with the given senderId using query param.
+   * Retrieve all conversations for the currently logged-in user.
+   *
    * Accessible to users with roles: USER and ADMIN.
    *
-   * @param senderId - The UUID of the sender
-   * @returns Array of conversations for the specified sender
+   * @param user - The currently authenticated user (injected via @CurrentUser decorator)
+   * @returns Array of conversations associated with the logged-in user
    */
-  @Get()
+  @Get('my-conversations')
   @Roles(UserRole.USER, UserRole.ADMIN)
-  async getConversationsBySenderId(@Query('senderId') senderId: string) {
+  async getConversationsBySenderId(@CurrentUser() user: { userId: string }) {
     try {
-      const conversations =
-        await this.conversationService.findBySenderId(senderId);
+      const conversations = await this.conversationService.findBySenderId(
+        user.userId,
+      );
 
       return {
         success: true,
@@ -86,7 +89,7 @@ export class ConversationController {
         {
           status: HttpStatus.INTERNAL_SERVER_ERROR,
           success: false,
-          message: `Failed to fetch conversations for senderId: ${senderId}`,
+          message: `Failed to fetch conversations for this account`,
           data: {},
           error: sanitizedError,
         },
@@ -106,7 +109,7 @@ export class ConversationController {
   @Get(':id')
   @Roles(UserRole.USER, UserRole.ADMIN)
   async getConversationByIdAndSender(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id') id: string,
     @Query('senderId') senderId: string,
   ) {
     try {
