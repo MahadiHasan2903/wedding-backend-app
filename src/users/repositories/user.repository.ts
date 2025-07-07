@@ -266,6 +266,13 @@ export class UserRepository extends Repository<User> {
     };
   }
 
+  /**
+   * Enriches a user object by loading related entities such as profile picture,
+   * additional photos, and purchased membership details.
+   *
+   * @param user - User object without the password field.
+   * @returns The enriched user object with full related entities instead of just IDs.
+   */
   async enrichUserRelations(
     user: Omit<User, 'password'>,
   ): Promise<EnrichedUser> {

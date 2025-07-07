@@ -2,10 +2,11 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { UserRepository } from './repositories/user.repository';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { MediaService } from 'src/media/media.service';
-import { AccountStatus, UserRole } from './enum/users.enum';
+import { AccountStatus, BlockStatus, UserRole } from './enum/users.enum';
 import { In } from 'typeorm';
 import { MediaRepository } from 'src/media/repositories/media.repository';
 import { FiltersOptions } from './types/user.types';
+import { BlockUnblockDto } from './dto/block-unblock.dto';
 
 @Injectable()
 export class UsersService {
@@ -210,5 +211,93 @@ export class UsersService {
     );
 
     return enrichedUsers;
+  }
+
+  /**
+   * Retrieves the list of users blocked by the specified user.
+   *
+   * @param userId - The ID of the user whose blocked users we want to find.
+   * @returns An array of user objects representing the blocked users, with sensitive data removed and relations enriched.
+   */
+  async findBlockedUsers(userId: string) {
+    // Fetch the user entity by ID, including the blockedUsers array (list of blocked user IDs)
+    const user = await this.usersRepository.findOne({
+      where: { id: userId },
+    });
+
+    // Throw an error if the user with the given ID does not exist
+    if (!user) {
+      throw new NotFoundException(`User with id ${userId} not found`);
+    }
+
+    // If the user has no blocked users, return an empty array early
+    if (!user.blockedUsers || user.blockedUsers.length === 0) {
+      return [];
+    }
+
+    // Fetch full user entities for each blocked user ID
+    // Note: Excluding password in the next step for security reasons
+    const blockedUsers = await this.usersRepository.find({
+      where: {
+        id: In(user.blockedUsers),
+      },
+    });
+
+    // Remove sensitive fields such as password from each blocked user object
+    const safeBlockedUsers = blockedUsers.map(({ password, ...rest }) => rest);
+
+    const enrichedBlockedUsers = await Promise.all(
+      safeBlockedUsers.map((blockedUser) =>
+        this.usersRepository.enrichUserRelations(blockedUser),
+      ),
+    );
+
+    // Return the fully enriched blocked user objects
+    return enrichedBlockedUsers;
+  }
+
+  /**
+   * Updates the blocked users list for a given user based on the provided action.
+   *
+   * @param userId - The ID of the user performing the block/unblock action.
+   * @param dto - Data transfer object containing the target user ID and the action status ('block' or 'unblock').
+   * @returns The updated list of blocked user IDs.
+   */
+  async updateBlockedUser(userId: string, dto: BlockUnblockDto) {
+    const { blockedUserId, status } = dto;
+
+    // Fetch the user who is performing the block/unblock action
+    const user = await this.usersRepository.findOne({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new NotFoundException(`User with id ${userId} not found`);
+    }
+
+    if (!user.blockedUsers) {
+      user.blockedUsers = [];
+    }
+
+    if (status === BlockStatus.BLOCK) {
+      // If user is already blocked, just return the existing list
+      if (user.blockedUsers.includes(blockedUserId)) {
+        return user.blockedUsers;
+      }
+
+      // Add the blockedUserId to the blockedUsers array
+      user.blockedUsers.push(blockedUserId);
+    } else if (status === BlockStatus.UNBLOCK) {
+      // Remove the blockedUserId from the blockedUsers array if present
+      user.blockedUsers = user.blockedUsers.filter(
+        (id) => id !== blockedUserId,
+      );
+    }
+
+    // Save the updated user entity
+    await this.usersRepository.save(user);
+
+    // Return the updated blockedUsers list for confirmation
+    return user.blockedUsers;
   }
 }
