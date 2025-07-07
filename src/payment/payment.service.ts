@@ -13,7 +13,7 @@ import { UserRepository } from 'src/users/repositories/user.repository';
 import { AccountRepository } from 'src/account/repositories/account.repository';
 import { StripeService } from './stripe/stripe.service';
 import { PayPalService } from './paypal/paypal.service';
-import { PaginationOptions } from 'src/types/common.types';
+import { PaymentFiltersOptions } from './types/payment.types';
 
 @Injectable()
 export class PaymentService {
@@ -296,16 +296,18 @@ export class PaymentService {
    *
    * @returns An array of payments, each including its membership purchase info.
    */
-  async getAllPayments({ page, pageSize, sort }: PaginationOptions) {
-    const [sortField, sortOrder] = sort.split(',');
-
-    const [items, totalItems] = await this.paymentRepo.findAndCount({
-      order: {
-        [sortField]: sortOrder.toUpperCase() === 'DESC' ? 'DESC' : 'ASC',
-      },
-      skip: (page - 1) * pageSize,
-      take: pageSize,
-    });
+  async getAllPayments(
+    page = 1,
+    pageSize = 10,
+    sort = 'id,DESC',
+    filters: PaymentFiltersOptions = {},
+  ) {
+    const [items, totalItems] = await this.paymentRepo.findFilteredAndPaginated(
+      page,
+      pageSize,
+      sort,
+      filters,
+    );
 
     const itemsWithMembership = await Promise.all(
       items.map(async (payment) => {
@@ -313,12 +315,11 @@ export class PaymentService {
           where: { id: payment.servicePurchaseId },
         });
 
-        // Fetch the user (excluding password)
         const user = await this.userRepo.findByIdWithoutPassword(payment.user);
 
         return {
           ...payment,
-          user: user,
+          user,
           servicePurchaseId: membershipPurchase,
         };
       }),
@@ -342,18 +343,18 @@ export class PaymentService {
    */
   async getPaymentsByUserId(
     user: string,
-    { page, pageSize, sort }: PaginationOptions,
+    page = 1,
+    pageSize = 10,
+    sort = 'id,DESC',
+    filters: PaymentFiltersOptions = {},
   ) {
-    const [sortField, sortOrder] = sort.split(',');
-
-    const [items, totalItems] = await this.paymentRepo.findAndCount({
-      where: { user },
-      order: {
-        [sortField]: sortOrder.toUpperCase() === 'DESC' ? 'DESC' : 'ASC',
-      },
-      skip: (page - 1) * pageSize,
-      take: pageSize,
-    });
+    const [items, totalItems] = await this.paymentRepo.findFilteredAndPaginated(
+      page,
+      pageSize,
+      sort,
+      filters,
+      user,
+    );
 
     const itemsWithMembership = await Promise.all(
       items.map(async (payment) => {
@@ -361,8 +362,11 @@ export class PaymentService {
           where: { id: payment.servicePurchaseId },
         });
 
+        const user = await this.userRepo.findByIdWithoutPassword(payment.user);
+
         return {
           ...payment,
+          user,
           servicePurchaseId: membershipPurchase,
         };
       }),

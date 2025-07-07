@@ -17,6 +17,7 @@ import { sanitizeError } from 'src/utils/helpers';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { Public } from 'src/common/decorators/public.decorator';
 import { Response } from 'express';
+import { SearchPaymentDto } from './dto/search-payment.dto';
 
 @Controller('v1/payment')
 export class PaymentController {
@@ -30,18 +31,21 @@ export class PaymentController {
    */
   @Get()
   @Roles(UserRole.ADMIN)
-  async getAllPayments(
-    @Query('page') page = 1,
-    @Query('pageSize') pageSize = 10,
-    @Query('sort') sort = 'id,DESC',
-  ) {
+  async getAllPayments(@Query() query: SearchPaymentDto) {
     try {
+      const { page, pageSize, sort, gateway, paymentStatus, dateRange } = query;
+
       // Call the payment service to fetch all payments along with membership purchase data
-      const payments = await this.paymentService.getAllPayments({
-        page: Number(page),
-        pageSize: Number(pageSize),
+      const payments = await this.paymentService.getAllPayments(
+        page,
+        pageSize,
         sort,
-      });
+        {
+          gateway,
+          paymentStatus,
+          dateRange,
+        },
+      );
 
       // Return a successful HTTP response with the payments data
       return {
@@ -71,22 +75,25 @@ export class PaymentController {
    * @param user - The currently authenticated user object injected by @CurrentUser decorator,
    * @returns A response object with the user's payment history and status indicators.
    */
-  @Get('history')
+  @Get('my-history')
   @Roles(UserRole.USER, UserRole.ADMIN)
   async getUserPaymentHistory(
-    @Query('page') page = 1,
-    @Query('pageSize') pageSize = 10,
-    @Query('sort') sort = 'id,DESC',
+    @Query() query: SearchPaymentDto,
     @CurrentUser() user: { userId: string },
   ) {
     try {
+      const { page, pageSize, sort, gateway, paymentStatus, dateRange } = query;
+
       // Convert userId to a number and fetch payments for that user from the service
       const payments = await this.paymentService.getPaymentsByUserId(
         user.userId,
+        page,
+        pageSize,
+        sort,
         {
-          page: Number(page),
-          pageSize: Number(pageSize),
-          sort,
+          gateway,
+          paymentStatus,
+          dateRange,
         },
       );
 
@@ -118,7 +125,7 @@ export class PaymentController {
    * @param {string} transactionId - Stripe transaction/checkout session ID
    * @returns {object} payment details if found
    */
-  @Get('history/:transactionId')
+  @Get(':transactionId')
   @Roles(UserRole.USER, UserRole.ADMIN)
   async getPaymentDetails(@Param('transactionId') transactionId: string) {
     try {
