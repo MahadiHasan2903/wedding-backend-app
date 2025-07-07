@@ -15,5 +15,6 @@ import { MessageGateway } from './message.gateway';
     MessageGateway,
     GoogleTranslateService,
   ],
+  exports: [MessageService, MessageRepository],
 })
 export class MessageModule {}
