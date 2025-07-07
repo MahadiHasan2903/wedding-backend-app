@@ -12,7 +12,7 @@ import {
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { UserRole } from './enum/users.enum';
+import { BlockStatus, UserRole } from './enum/users.enum';
 import { Roles } from 'src/common/decorators/roles.decorator';
 import { sanitizeError } from 'src/utils/helpers';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
@@ -20,6 +20,7 @@ import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { UpdateAccountStatusDto } from './dto/update-account-status.dto';
 import { SearchUserDto } from './dto/search-user.dto';
 import { UpdateUserRoleDto } from './dto/update-user-role.dts';
+import { BlockUnblockDto } from './dto/block-unblock.dto';
 
 @Controller('v1/users')
 export class UsersController {
@@ -315,6 +316,85 @@ export class UsersController {
           status: HttpStatus.BAD_REQUEST,
           success: false,
           message: 'Failed to update user role',
+          error: sanitizedError,
+        },
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
+
+  /**
+   * Retrieves the list of users blocked by the currently authenticated user.
+   * @param user - The currently authenticated user, injected via @CurrentUser decorator,
+   * @returns An object containing the status, success flag, message, and data payload
+   *
+   * @throws HttpException with status 400 if fetching blocked users fails.
+   */
+  @Get('blocked-users')
+  @Roles(UserRole.USER, UserRole.ADMIN)
+  async getBlockedUsers(@CurrentUser() user: { userId: string }) {
+    try {
+      const blockers = await this.usersService.findBlockedUsers(user.userId);
+
+      return {
+        status: HttpStatus.OK,
+        success: true,
+        message: 'All blocked users retrieved successfully',
+        data: blockers,
+      };
+    } catch (error) {
+      const sanitizedError = sanitizeError(error);
+      throw new HttpException(
+        {
+          status: HttpStatus.BAD_REQUEST,
+          success: false,
+          message: 'Failed to fetch blocked users',
+          error: sanitizedError,
+        },
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
+
+  /**
+   * Handles blocking or unblocking a user based on the provided DTO.
+   *
+   * @param user - The currently authenticated user performing the action (extracted from the request).
+   * @param dto - Data transfer object containing the ID of the user to block/unblock and the action status.
+   * @returns An object containing the updated list of blocked users and operation status.
+   */
+  @Patch('block')
+  @Roles(UserRole.USER, UserRole.ADMIN)
+  async updateBlockedUser(
+    @CurrentUser() user: { userId: string },
+    @Body() dto: BlockUnblockDto,
+  ) {
+    try {
+      const updatedBlockedUsers = await this.usersService.updateBlockedUser(
+        user.userId,
+        dto,
+      );
+
+      // Return a successful response with a message depending on the block/unblock action
+      return {
+        status: HttpStatus.OK,
+        success: true,
+        message:
+          dto.status === BlockStatus.BLOCK
+            ? 'User blocked successfully'
+            : 'User unblocked successfully',
+        data: updatedBlockedUsers,
+      };
+    } catch (error) {
+      // Sanitize the error before sending it in the response for security reasons
+      const sanitizedError = sanitizeError(error);
+
+      // Throw an HttpException with a 400 Bad Request status and error details
+      throw new HttpException(
+        {
+          status: HttpStatus.BAD_REQUEST,
+          success: false,
+          message: 'Failed to update blocked users',
           error: sanitizedError,
         },
         HttpStatus.BAD_REQUEST,

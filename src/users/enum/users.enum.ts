@@ -157,3 +157,8 @@ export enum PrivacySettings {
   CONNECTIONS = 'connections',
   PREMIUM_MEMBERS = 'premium_members',
 }
+
+export enum BlockStatus {
+  BLOCK = 'block',
+  UNBLOCK = 'unblock',
+}
