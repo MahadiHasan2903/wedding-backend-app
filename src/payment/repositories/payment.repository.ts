@@ -1,6 +1,7 @@
 import { DataSource, FindManyOptions, Repository } from 'typeorm';
 import { Injectable } from '@nestjs/common';
 import { Payment } from '../entities/payment.entity';
+import { PaymentFiltersOptions } from '../types/payment.types';
 
 @Injectable()
 export class PaymentRepository {
@@ -59,5 +60,57 @@ export class PaymentRepository {
     options: FindManyOptions<Payment>,
   ): Promise<[Payment[], number]> {
     return this.repo.findAndCount(options);
+  }
+
+  async findFilteredAndPaginated(
+    page = 1,
+    pageSize = 10,
+    sort = 'id,DESC',
+    filters: PaymentFiltersOptions = {},
+    userId?: string,
+  ): Promise<[Payment[], number]> {
+    const [sortField, sortOrder] = sort.split(',');
+
+    const qb = this.repo.createQueryBuilder('payment');
+
+    if (userId) {
+      qb.andWhere('payment.user = :userId', { userId });
+    }
+
+    // Apply other filters
+    if (filters.gateway) {
+      qb.andWhere('payment.gateway = :gateway', { gateway: filters.gateway });
+    }
+
+    if (filters.paymentStatus) {
+      qb.andWhere('payment.paymentStatus = :paymentStatus', {
+        paymentStatus: filters.paymentStatus,
+      });
+    }
+
+    if (filters.dateRange?.includes(' - ')) {
+      const [startDateStr, endDateStr] = filters.dateRange.split(' - ');
+      const startDate = new Date(startDateStr);
+      const endDate = new Date(endDateStr);
+
+      if (!isNaN(startDate.getTime()) && !isNaN(endDate.getTime())) {
+        endDate.setHours(23, 59, 59, 999);
+        qb.andWhere('payment.createdAt BETWEEN :startDate AND :endDate', {
+          startDate,
+          endDate,
+        });
+      }
+    }
+
+    // Sorting
+    qb.orderBy(
+      `payment.${sortField}`,
+      sortOrder.toUpperCase() === 'DESC' ? 'DESC' : 'ASC',
+    );
+
+    // Pagination
+    qb.skip((page - 1) * pageSize).take(pageSize);
+
+    return qb.getManyAndCount();
   }
 }

@@ -1,7 +1,9 @@
+import * as path from 'path';
 import { DataSource, Repository } from 'typeorm';
 import { Media } from '../entities/media.entity';
-import * as path from 'path';
+import { Injectable } from '@nestjs/common';
 
+@Injectable()
 export class MediaRepository extends Repository<Media> {
   /**
    * Constructs a MediaRepository using the provided DataSource.

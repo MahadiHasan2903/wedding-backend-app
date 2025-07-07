@@ -5,7 +5,15 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { MessageType, MessageStatus } from '../enum/message.enum';
+import { Language, MessageType, MessageStatus } from '../enum/message.enum';
+
+export class MessageContent {
+  originalText: string;
+  sourceLanguage: Language;
+  translationEn: string;
+  translationFr: string;
+  translationEs: string;
+}
 
 @Entity('messages')
 export class Message {
@@ -21,17 +29,8 @@ export class Message {
   @Column()
   receiverId: string;
 
-  @Column('text')
-  originalText: string;
-
-  @Column({ type: 'text', nullable: true })
-  translatedEnglish: string;
-
-  @Column({ type: 'text', nullable: true })
-  translatedFrench: string;
-
-  @Column({ type: 'text', nullable: true })
-  translatedSpanish: string;
+  @Column('json', { nullable: true })
+  message?: MessageContent;
 
   @Column({
     type: 'enum',
@@ -51,10 +50,13 @@ export class Message {
   readAt: Date;
 
   @Column({ nullable: true })
-  replyToMessageId: number;
+  replyToMessageId: string;
 
-  @Column({ type: 'jsonb', nullable: true })
-  attachments: any;
+  @Column({ type: 'uuid', array: true, nullable: true })
+  attachments?: string[];
+
+  @Column({ default: false })
+  isDeleted: boolean;
 
   @CreateDateColumn()
   createdAt: Date;

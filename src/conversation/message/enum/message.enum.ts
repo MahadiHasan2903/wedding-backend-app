@@ -11,3 +11,9 @@ export enum MessageStatus {
   DELIVERED = 'delivered',
   READ = 'read',
 }
+
+export enum Language {
+  EN = 'en',
+  FR = 'fr',
+  ES = 'es',
+}

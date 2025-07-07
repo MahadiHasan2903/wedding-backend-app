@@ -85,7 +85,7 @@ export class UsersService {
     id: string,
     updateUserDto: UpdateUserDto,
     files?: {
-      profilePicture?: Express.Multer.File[];
+      profilePicture?: Express.Multer.File;
       additionalPhotos?: Express.Multer.File[];
     },
   ) {
@@ -98,13 +98,13 @@ export class UsersService {
     }
 
     // === Upload new profile picture ===
-    if (files?.profilePicture?.[0]) {
+    if (files?.profilePicture) {
       if (user.profilePicture) {
         await this.mediaService.deleteMediaById(user.profilePicture);
       }
 
       const media = await this.mediaService.handleUpload(
-        files.profilePicture[0],
+        files.profilePicture,
         `user_profile`,
         `users/${id}/user-profile`,
       );
@@ -192,5 +192,23 @@ export class UsersService {
 
     user.userRole = userRole;
     return this.usersRepository.save(user);
+  }
+
+  /**
+   * Retrieves all users with the specified role and enriches them with related data.
+   *
+   * @param userRole - The role to filter users by (e.g., ADMIN, CUSTOMER, etc.)
+   * @returns A promise that resolves to an array of enriched user entities.
+   */
+  async findUsersByRole(userRole: UserRole) {
+    const users = await this.usersRepository.find({
+      where: { userRole },
+    });
+
+    const enrichedUsers = await Promise.all(
+      users.map((user) => this.usersRepository.enrichUserRelations(user)),
+    );
+
+    return enrichedUsers;
   }
 }
