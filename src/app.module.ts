@@ -9,7 +9,8 @@ import { PaymentModule } from './payment/payment.module';
 import { MsPurchaseModule } from './ms-purchase/ms-purchase.module';
 import { StripeModule } from './payment/stripe/stripe.module';
 import { ConversationModule } from './conversation/conversation.module';
-import { MessageModule } from './conversation/message/message.module';
+import { MessageModule } from './message/message.module';
+import { ReportsModule } from './reports/reports.module';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { MessageModule } from './conversation/message/message.module';
     MsPurchaseModule,
     ConversationModule,
     MessageModule,
+    ReportsModule,
   ],
 })
 export class AppModule {}
