@@ -4,10 +4,16 @@ import { MessageController } from './message.controller';
 import { MessageRepository } from './repositories/message.repository';
 import { GoogleTranslateService } from './translation/google-translate.service';
 import { MediaModule } from 'src/media/media.module';
+import { MessageGateway } from './message.gateway';
 
 @Module({
   imports: [MediaModule],
   controllers: [MessageController],
-  providers: [MessageService, MessageRepository, GoogleTranslateService],
+  providers: [
+    MessageService,
+    MessageRepository,
+    MessageGateway,
+    GoogleTranslateService,
+  ],
 })
 export class MessageModule {}
