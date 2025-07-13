@@ -1,12 +1,11 @@
 import { Module } from '@nestjs/common';
-import { TypeOrmModule, getDataSourceToken } from '@nestjs/typeorm';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { AccountService } from './account.service';
 import { AccountController } from './account.controller';
 import { EmailModule } from 'src/common/email/email.module';
 import { JwtModule } from '@nestjs/jwt';
 import { JwtStrategy } from '../common/guards/jwt/jwt.strategy';
 import { User } from 'src/users/entities/user.entity';
-import { DataSource } from 'typeorm';
 import { AccountRepository } from './repositories/account.repository';
 import { MsPackageModule } from 'src/ms-package/msPackage.module';
 import { MsPurchaseModule } from 'src/ms-purchase/ms-purchase.module';
@@ -22,17 +21,7 @@ import { MsPurchaseModule } from 'src/ms-purchase/ms-purchase.module';
       signOptions: { expiresIn: process.env.JWT_EXPIRES_IN },
     }),
   ],
-  providers: [
-    AccountService,
-    JwtStrategy,
-    {
-      provide: AccountRepository,
-      useFactory: (dataSource: DataSource) => {
-        return new AccountRepository(dataSource);
-      },
-      inject: [getDataSourceToken()],
-    },
-  ],
+  providers: [AccountService, AccountRepository, JwtStrategy],
   controllers: [AccountController],
   exports: [AccountService, AccountRepository],
 })

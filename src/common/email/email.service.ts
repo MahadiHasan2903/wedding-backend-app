@@ -18,11 +18,25 @@ export class EmailService {
     });
   }
 
-  async sendMail(to: string, subject: string, text: string, html?: string) {
+  async sendMail({
+    to,
+    from,
+    subject,
+    text,
+    html,
+  }: {
+    to?: string;
+    from?: string;
+    subject: string;
+    text: string;
+    html?: string;
+  }) {
+    const defaultEmail = this.configService.get<string>('SMTP_USER');
+
     try {
       await this.transporter.sendMail({
-        from: `"France Cuba Wedding App" <${this.configService.get<string>('SMTP_USER')}>`,
-        to,
+        from: from || `"France Cuba Wedding App" <${defaultEmail}>`,
+        to: to || defaultEmail,
         subject,
         text,
         html,

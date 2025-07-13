@@ -11,6 +11,7 @@ import { StripeModule } from './payment/stripe/stripe.module';
 import { ConversationModule } from './conversation/conversation.module';
 import { MessageModule } from './message/message.module';
 import { ReportsModule } from './reports/reports.module';
+import { ContactModule } from './contact/contact.module';
 
 @Module({
   imports: [
@@ -42,6 +43,7 @@ import { ReportsModule } from './reports/reports.module';
     ConversationModule,
     MessageModule,
     ReportsModule,
+    ContactModule,
   ],
 })
 export class AppModule {}

@@ -96,7 +96,12 @@ export class AccountService {
       <p>— France Cuba Wedding App Team</p>
     `;
 
-    await this.emailService.sendMail(to, subject, text, html);
+    await this.emailService.sendMail({
+      to,
+      subject,
+      text,
+      html,
+    });
   }
 
   /**
