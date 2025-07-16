@@ -5,15 +5,17 @@ import {
   HttpException,
   HttpStatus,
 } from '@nestjs/common';
-import { AccountService } from './account.service';
-import { CreateAccountDto } from './dto/create-account.dto';
-import { ConfirmRegistrationDto } from './dto/confirm-registration.dto';
 import { SigninDto } from './dto/signin.dto';
-import { Roles } from 'src/common/decorators/roles.decorator';
-import { UserRole } from 'src/users/enum/users.enum';
-import { Public } from 'src/common/decorators/public.decorator';
 import { sanitizeError } from 'src/utils/helpers';
+import { AccountService } from './account.service';
+import { UserRole } from 'src/users/enum/users.enum';
+import { CreateAccountDto } from './dto/create-account.dto';
+import { Roles } from 'src/common/decorators/roles.decorator';
+import { ChangePasswordDto } from './dto/change-password.dto';
+import { Public } from 'src/common/decorators/public.decorator';
+import { ConfirmRegistrationDto } from './dto/confirm-registration.dto';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
+import { ForgetPasswordConfirmationDto } from './dto/forget-password-confirmation.dto';
 
 @Controller('v1/account')
 export class AccountController {
@@ -155,48 +157,6 @@ export class AccountController {
   }
 
   /**
-   * Changes the authenticated user's password after validating the current password.
-   * @param req - The authenticated request object (contains user ID).
-   * @param body - Object containing current and new passwords.
-   * @returns Success message if password was updated.
-   * @throws HttpException if current password is invalid or update fails.
-   */
-  @Post('change-password')
-  @Roles(UserRole.USER)
-  async changePassword(
-    @CurrentUser() user: { userId: string },
-    @Body() body: { currentPassword: string; newPassword: string },
-  ) {
-    try {
-      const userId = user.userId;
-      const { currentPassword, newPassword } = body;
-
-      await this.accountService.changePassword(
-        userId,
-        currentPassword,
-        newPassword,
-      );
-
-      return {
-        status: HttpStatus.OK,
-        success: true,
-        message: 'Password changed successfully',
-        data: {},
-      };
-    } catch (error: unknown) {
-      throw new HttpException(
-        {
-          status: HttpStatus.BAD_REQUEST,
-          success: false,
-          message: 'Password change failed',
-          error: sanitizeError(error),
-        },
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-  }
-
-  /**
    * Initiates the password reset process by sending an OTP to the user's email.
    * @param body - Object containing the user's email.
    * @returns Success message regardless of whether the email exists (for security).
@@ -225,6 +185,7 @@ export class AccountController {
       );
     }
   }
+
   /**
    * Confirms the OTP sent for password reset.
    * @param body - Object containing email and OTP.
@@ -234,15 +195,17 @@ export class AccountController {
   @Public()
   @Post('forget-password-confirmation')
   async forgetPasswordConfirmation(
-    @Body() body: { email: string; otp: string },
+    @Body() body: ForgetPasswordConfirmationDto,
   ) {
     try {
       await this.accountService.verifyForgetPasswordOtp(body.email, body.otp);
 
+      await this.accountService.resetPassword(body.email, body.newPassword);
+
       return {
         status: HttpStatus.OK,
         success: true,
-        message: 'OTP verified successfully',
+        message: 'Password updated successfully',
         data: {},
       };
     } catch (error: unknown) {
@@ -250,7 +213,7 @@ export class AccountController {
         {
           status: HttpStatus.BAD_REQUEST,
           success: false,
-          message: 'OTP verification failed',
+          message: 'OTP verification or password update failed',
           error: sanitizeError(error),
         },
         HttpStatus.BAD_REQUEST,
@@ -259,21 +222,32 @@ export class AccountController {
   }
 
   /**
-   * Resets the user's password after OTP verification.
-   * @param body - Object containing the email and new password.
-   * @returns Success message if password is reset.
-   * @throws HttpException if OTP was not verified or user does not exist.
+   * Changes the authenticated user's password after validating the current password.
+   * @param req - The authenticated request object (contains user ID).
+   * @param body - Object containing current and new passwords.
+   * @returns Success message if password was updated.
+   * @throws HttpException if current password is invalid or update fails.
    */
-  @Public()
-  @Post('reset-password')
-  async resetPassword(@Body() body: { email: string; newPassword: string }) {
+  @Post('change-password')
+  @Roles(UserRole.USER, UserRole.ADMIN)
+  async changePassword(
+    @CurrentUser() user: { userId: string },
+    @Body() body: ChangePasswordDto,
+  ) {
     try {
-      await this.accountService.resetPassword(body.email, body.newPassword);
+      const userId = user.userId;
+      const { currentPassword, newPassword } = body;
+
+      await this.accountService.changePassword(
+        userId,
+        currentPassword,
+        newPassword,
+      );
 
       return {
         status: HttpStatus.OK,
         success: true,
-        message: 'Password reset successful',
+        message: 'Password changed successfully',
         data: {},
       };
     } catch (error: unknown) {
@@ -281,7 +255,7 @@ export class AccountController {
         {
           status: HttpStatus.BAD_REQUEST,
           success: false,
-          message: 'Password reset failed',
+          message: 'Password change failed',
           error: sanitizeError(error),
         },
         HttpStatus.BAD_REQUEST,

@@ -282,8 +282,12 @@ export class AccountService {
   async verifyForgetPasswordOtp(email: string, otp: string) {
     await Promise.resolve();
     const storedOtp = this.forgetPasswordOtpStore.get(email);
-    if (!storedOtp) throw new Error('No OTP request found for this email');
-    if (storedOtp !== otp) throw new Error('Invalid OTP');
+    if (!storedOtp) {
+      throw new Error('No OTP request found for this email');
+    }
+    if (storedOtp !== otp) {
+      throw new Error('Invalid OTP');
+    }
   }
 
   /**
