@@ -193,10 +193,8 @@ export class AccountController {
    * @throws HttpException if OTP is invalid or missing.
    */
   @Public()
-  @Post('forget-password-confirmation')
-  async forgetPasswordConfirmation(
-    @Body() body: ForgetPasswordConfirmationDto,
-  ) {
+  @Post('reset-password')
+  async resetPassword(@Body() body: ForgetPasswordConfirmationDto) {
     try {
       await this.accountService.verifyForgetPasswordOtp(body.email, body.otp);
 
