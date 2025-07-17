@@ -6,8 +6,11 @@ import {
   DietaryPreference,
   DrinkingHabit,
   Gender,
+  HealthCondition,
+  HighestEducation,
   MaritalStatus,
   PoliticalView,
+  Profession,
   Religion,
   SmokingHabit,
 } from '../enum/users.enum';
@@ -183,6 +186,17 @@ export class UserRepository extends Repository<User> {
     }
 
     if (
+      filters.healthCondition &&
+      Object.values(HealthCondition).includes(
+        filters.healthCondition as HealthCondition,
+      )
+    ) {
+      qb.andWhere('user.healthCondition = :healthCondition', {
+        healthCondition: filters.healthCondition,
+      });
+    }
+
+    if (
       filters.drinkingHabit &&
       Object.values(DrinkingHabit).includes(
         filters.drinkingHabit as DrinkingHabit,
@@ -204,16 +218,23 @@ export class UserRepository extends Repository<User> {
       });
     }
 
-    // PARTIAL MATCH FILTERS (LIKE)
-    if (filters.education) {
-      qb.andWhere('user.highestEducation LIKE :education', {
-        education: `%${filters.education}%`,
+    if (
+      filters.education &&
+      Object.values(HighestEducation).includes(
+        filters.education as HighestEducation,
+      )
+    ) {
+      qb.andWhere('user.highestEducation = :drinkingHabit', {
+        education: filters.education,
       });
     }
 
-    if (filters.profession) {
-      qb.andWhere('user.profession LIKE :profession', {
-        profession: `%${filters.profession}%`,
+    if (
+      filters.profession &&
+      Object.values(Profession).includes(filters.profession as Profession)
+    ) {
+      qb.andWhere('user.profession = :drinkingHabit', {
+        profession: filters.profession,
       });
     }
 

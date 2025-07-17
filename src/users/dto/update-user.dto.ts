@@ -32,6 +32,9 @@ import {
   Currency,
   AccountStatus,
   PrivacySettings,
+  HealthCondition,
+  HighestEducation,
+  Profession,
 } from '../enum/users.enum';
 import { Transform, Type } from 'class-transformer';
 import { isStringArray } from 'src/utils/helpers';
@@ -159,16 +162,16 @@ export class UpdateUserDto {
   timeZone?: string;
 
   @IsOptional()
-  @IsString()
-  highestEducation?: string;
+  @IsEnum(HighestEducation)
+  highestEducation?: HighestEducation;
 
   @IsOptional()
   @IsString()
   institutionName?: string;
 
   @IsOptional()
-  @IsString()
-  profession?: string;
+  @IsEnum(Profession)
+  profession?: Profession;
 
   @IsOptional()
   @IsString()
@@ -277,8 +280,8 @@ export class UpdateUserDto {
   hasPets?: boolean;
 
   @IsOptional()
-  @IsString()
-  healthCondition?: string;
+  @IsEnum(HealthCondition)
+  healthCondition?: HealthCondition;
 
   @IsOptional()
   @IsEnum(DietaryPreference)

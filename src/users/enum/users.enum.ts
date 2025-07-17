@@ -162,3 +162,60 @@ export enum BlockStatus {
   BLOCK = 'block',
   UNBLOCK = 'unblock',
 }
+
+export enum CountryLiving {
+  FRANC = 'france',
+  CUBA = 'cuba',
+  OTHER = 'other',
+}
+
+export enum BooleanStatus {
+  YES = 'true',
+  NO = 'false',
+}
+
+export enum SpokenLanguage {
+  FRENCH = 'french',
+  SPANISH = 'spanish',
+}
+
+export enum HighestEducation {
+  NO_FORMAL_EDUCATION = 'no_formal_education',
+  PRIMARY_EDUCATION = 'primary_education',
+  SECONDARY_EDUCATION = 'secondary_education',
+  HIGH_SCHOOL = 'high_school',
+  DIPLOMA = 'diploma',
+  BACHELORS = 'bachelors',
+  MASTERS = 'masters',
+  DOCTORATE = 'doctorate',
+  OTHER = 'other',
+}
+
+export enum Profession {
+  STUDENT = 'student',
+  ENGINEER = 'engineer',
+  DOCTOR = 'doctor',
+  TEACHER = 'teacher',
+  LAWYER = 'lawyer',
+  BUSINESS = 'business',
+  GOVERNMENT_EMPLOYEE = 'government_employee',
+  PRIVATE_JOB = 'private_job',
+  SELF_EMPLOYED = 'self_employed',
+  FREELANCER = 'freelancer',
+  ARTIST = 'artist',
+  UNEMPLOYED = 'unemployed',
+  RETIRED = 'retired',
+  OTHER = 'other',
+}
+
+export enum HealthCondition {
+  HEALTHY = 'healthy',
+  MINOR_ISSUES = 'minor_issues',
+  CHRONIC_CONDITION = 'chronic_condition',
+  DISABLED = 'disabled',
+  MENTAL_HEALTH_ISSUES = 'mental_health_issues',
+  VISUALLY_IMPAIRED = 'visually_impaired',
+  HEARING_IMPAIRED = 'hearing_impaired',
+  NOT_DISCLOSED = 'not_disclosed',
+  OTHER = 'other',
+}

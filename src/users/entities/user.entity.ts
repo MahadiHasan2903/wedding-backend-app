@@ -25,6 +25,9 @@ import {
   Currency,
   AccountStatus,
   PrivacySettings,
+  HealthCondition,
+  HighestEducation,
+  Profession,
 } from '../enum/users.enum';
 
 @Entity('users')
@@ -98,14 +101,14 @@ export class User {
   @Column({ nullable: true })
   timeZone?: string;
 
-  @Column({ nullable: true })
-  highestEducation?: string;
+  @Column({ type: 'enum', enum: HighestEducation, nullable: true })
+  highestEducation?: HighestEducation;
 
   @Column({ nullable: true })
   institutionName?: string;
 
-  @Column({ nullable: true })
-  profession?: string;
+  @Column({ type: 'enum', enum: Profession, nullable: true })
+  profession?: Profession;
 
   @Column({ nullable: true })
   companyName?: string;
@@ -161,11 +164,11 @@ export class User {
   @Column({ type: 'enum', enum: SmokingHabit, nullable: true })
   smokingHabit?: SmokingHabit;
 
+  @Column({ type: 'enum', enum: HealthCondition, nullable: true })
+  healthCondition?: HealthCondition;
+
   @Column({ type: 'boolean', nullable: true })
   hasPet?: boolean;
-
-  @Column({ nullable: true })
-  healthCondition?: string;
 
   @Column({ type: 'enum', enum: DietaryPreference, nullable: true })
   dietaryPreference?: DietaryPreference;

@@ -13,8 +13,11 @@ import {
   DietaryPreference,
   DrinkingHabit,
   Gender,
+  HealthCondition,
+  HighestEducation,
   MaritalStatus,
   PoliticalView,
+  Profession,
   Religion,
   SmokingHabit,
 } from '../enum/users.enum';
@@ -103,12 +106,12 @@ export class SearchUserDto {
   languageSpoken?: string;
 
   @IsOptional()
-  @IsString()
-  education?: string;
+  @IsEnum(HighestEducation)
+  education?: HighestEducation;
 
   @IsOptional()
-  @IsString()
-  profession?: string;
+  @IsEnum(Profession)
+  profession?: Profession;
 
   @IsOptional()
   @Matches(/^\d+-\d+$/, {
@@ -127,4 +130,8 @@ export class SearchUserDto {
   @IsOptional()
   @IsEnum(SmokingHabit)
   smokingHabit?: SmokingHabit;
+
+  @IsOptional()
+  @IsEnum(HealthCondition)
+  healthCondition?: HealthCondition;
 }
