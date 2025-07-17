@@ -22,13 +22,11 @@ export class EmailService {
     to,
     from,
     subject,
-    text,
     html,
   }: {
     to?: string;
     from?: string;
     subject: string;
-    text: string;
     html?: string;
   }) {
     const defaultEmail = this.configService.get<string>('SMTP_USER');
@@ -38,7 +36,6 @@ export class EmailService {
         from: from || `"France Cuba Wedding App" <${defaultEmail}>`,
         to: to || defaultEmail,
         subject,
-        text,
         html,
       });
     } catch (error: unknown) {

@@ -51,22 +51,9 @@ export class ContactService {
       <p>— France Cuba Wedding App</p>
     `;
 
-    const text = `
-New contact submission received:
-
-Name: ${firstName} ${lastName}
-Email: ${email}
-${phoneNumber ? `Phone: ${phoneNumber}\n` : ''}Subject: ${subject}
-Message:
-${message}
-
-— France Cuba Wedding App
-    `;
-
     await this.emailService.sendMail({
       from: email,
       subject: '📩 New Contact Form Submission',
-      text,
       html,
     });
   }

@@ -84,7 +84,6 @@ export class AccountService {
    */
   private async sendOtpEmail(to: string, otp: string) {
     const subject = 'Your OTP Code';
-    const text = `Your verification code for France & Cuba Wedding App is: ${otp}.`;
 
     const html = `
       <p>Hello,</p>
@@ -99,7 +98,6 @@ export class AccountService {
     await this.emailService.sendMail({
       to,
       subject,
-      text,
       html,
     });
   }
