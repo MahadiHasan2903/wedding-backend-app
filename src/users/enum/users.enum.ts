@@ -163,22 +163,6 @@ export enum BlockStatus {
   UNBLOCK = 'unblock',
 }
 
-export enum CountryLiving {
-  FRANC = 'france',
-  CUBA = 'cuba',
-  OTHER = 'other',
-}
-
-export enum BooleanStatus {
-  YES = 'true',
-  NO = 'false',
-}
-
-export enum SpokenLanguage {
-  FRENCH = 'french',
-  SPANISH = 'spanish',
-}
-
 export enum HighestEducation {
   NO_FORMAL_EDUCATION = 'no_formal_education',
   PRIMARY_EDUCATION = 'primary_education',
