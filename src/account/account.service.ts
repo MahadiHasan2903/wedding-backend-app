@@ -113,8 +113,12 @@ export class AccountService {
    */
   async verifyOtp(email: string, otp: string): Promise<User> {
     const record = this.otpStore.get(email);
-    if (!record) throw new Error('No OTP request found for this email');
-    if (record.otp !== otp) throw new Error('Invalid OTP');
+    if (!record) {
+      throw new Error('No OTP request found for this email');
+    }
+    if (record.otp !== otp) {
+      throw new Error('Invalid OTP');
+    }
 
     const hashedPassword = await bcrypt.hash(record.userData.password, 10);
     const { profilePicture, additionalPhotos, ...rest } = record.userData;

@@ -186,6 +186,31 @@ export class AccountController {
     }
   }
 
+  @Public()
+  @Post('verify-forget-password-otp')
+  async verifyForgetPasswordOtp(@Body() body: { email: string; otp: string }) {
+    try {
+      await this.accountService.verifyForgetPasswordOtp(body.email, body.otp);
+
+      return {
+        status: HttpStatus.OK,
+        success: true,
+        message: 'OTP verified successfully',
+        data: {},
+      };
+    } catch (error: any) {
+      throw new HttpException(
+        {
+          status: HttpStatus.BAD_REQUEST,
+          success: false,
+          message: 'Failed to verify OTP',
+          error: sanitizeError(error),
+        },
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
+
   /**
    * Confirms the OTP sent for password reset.
    * @param body - Object containing email and OTP.
