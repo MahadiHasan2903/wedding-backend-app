@@ -26,7 +26,7 @@ export interface FiltersOptions {
   languageSpoken?: string;
   politicalView?: string;
   maritalStatus?: string;
-  hasChildren?: string;
+  hasChildren?: boolean;
   hasPet?: boolean;
   dietaryPreference?: string;
   smokingHabit?: string;

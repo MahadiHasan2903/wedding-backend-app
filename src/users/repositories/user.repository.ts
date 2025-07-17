@@ -240,8 +240,7 @@ export class UserRepository extends Repository<User> {
 
     // BOOLEAN-LIKE FILTERS
     if (filters.hasChildren !== undefined) {
-      const hasChildren = filters.hasChildren === 'true';
-      if (hasChildren) {
+      if (filters.hasChildren) {
         qb.andWhere('user.children > 0');
       } else {
         qb.andWhere(

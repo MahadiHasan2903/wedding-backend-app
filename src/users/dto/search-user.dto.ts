@@ -89,8 +89,9 @@ export class SearchUserDto {
   maritalStatus?: MaritalStatus;
 
   @IsOptional()
-  @IsBooleanString()
-  hasChildren?: string;
+  @Transform(({ value }) => value === 'true')
+  @IsBoolean()
+  hasChildren?: boolean;
 
   @IsOptional()
   @Transform(({ value }) => value === 'true')
