@@ -9,11 +9,13 @@ import { User } from 'src/users/entities/user.entity';
 import { AccountRepository } from './repositories/account.repository';
 import { MsPackageModule } from 'src/ms-package/msPackage.module';
 import { MsPurchaseModule } from 'src/ms-purchase/ms-purchase.module';
+import { UsersModule } from 'src/users/users.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([User]),
     EmailModule,
+    UsersModule,
     MsPackageModule,
     MsPurchaseModule,
     JwtModule.register({

@@ -9,6 +9,7 @@ import { User } from 'src/users/entities/user.entity';
 import { MsPackageRepository } from 'src/ms-package/repositories/msPackage.repository';
 import { PurchasePackageCategory } from 'src/ms-purchase/enum/ms-purchase.enum';
 import { MsPurchaseService } from 'src/ms-purchase/ms-purchase.service';
+import { UserRepository } from 'src/users/repositories/user.repository';
 
 @Injectable()
 export class AccountService {
@@ -31,6 +32,7 @@ export class AccountService {
     private readonly msPackageRepo: MsPackageRepository,
     private readonly msPurchaseService: MsPurchaseService,
     private readonly accountRepo: AccountRepository,
+    private readonly usersRepository: UserRepository,
     private readonly emailService: EmailService,
     private readonly jwtService: JwtService,
   ) {}
@@ -166,21 +168,7 @@ export class AccountService {
    * @returns JWT access token and selected user details.
    * @throws If credentials are invalid.
    */
-  async signin(
-    email: string,
-    password: string,
-  ): Promise<{
-    accessToken: string;
-    user: {
-      id: string;
-      firstName: string;
-      lastName: string;
-      email: string;
-      phoneNumber: string | null;
-      userRole: string;
-      accountStatus: AccountStatus;
-    };
-  }> {
+  async signin(email: string, password: string) {
     const account = await this.accountRepo.findByEmail(email);
     if (!account) {
       throw new Error('Invalid credentials');
@@ -206,6 +194,9 @@ export class AccountService {
       await this.accountRepo.save(account);
     }
 
+    const enrichedUserDetails =
+      await this.usersRepository.enrichUserRelations(account);
+
     const payload = {
       userId: account.id,
       email: account.email,
@@ -226,6 +217,8 @@ export class AccountService {
         phoneNumber: account.phoneNumber ?? null,
         userRole: account.userRole,
         accountStatus: account.accountStatus,
+        profilePicture: enrichedUserDetails.profilePicture,
+        purchasedMembership: enrichedUserDetails.purchasedMembership,
       },
       accessToken,
     };
