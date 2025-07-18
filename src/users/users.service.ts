@@ -209,64 +209,101 @@ export class UsersService {
   }
 
   /**
-   * Retrieves all users with the specified role and enriches them with related data.
+   * Retrieves a paginated list of users filtered by a specific role.
    *
-   * @param userRole - The role to filter users by (e.g., ADMIN, CUSTOMER, etc.)
-   * @returns A promise that resolves to an array of enriched user entities.
+   * @param role - The user role to filter by (e.g., ADMIN, USER)
+   * @param page - The page number to retrieve (default is 1)
+   * @param pageSize - The number of users to retrieve per page (default is 10)
+   * @returns An object containing paginated users along with pagination metadata
    */
-  async findUsersByRole(userRole: UserRole) {
-    const users = await this.usersRepository.find({
-      where: { userRole },
+  async findUsersByRolePaginated(role: UserRole, page = 1, pageSize = 10) {
+    const [items, totalItems] = await this.usersRepository.findAndCount({
+      where: { userRole: role },
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+      order: { createdAt: 'DESC' },
     });
 
-    const enrichedUsers = await Promise.all(
-      users.map((user) => this.usersRepository.enrichUserRelations(user)),
+    const enrichedItems = await Promise.all(
+      items.map((user) => this.usersRepository.enrichUserRelations(user)),
     );
 
-    return enrichedUsers;
+    const totalPages = Math.ceil(totalItems / pageSize);
+
+    return {
+      items: enrichedItems,
+      totalItems,
+      itemsPerPage: pageSize,
+      currentPage: page,
+      totalPages,
+      hasPrevPage: page > 1,
+      hasNextPage: page < totalPages,
+      prevPage: page > 1 ? page - 1 : null,
+      nextPage: page < totalPages ? page + 1 : null,
+    };
   }
 
   /**
-   * Retrieves the list of users blocked by the specified user.
+   * Retrieves a paginated list of users blocked by a specific user.
    *
-   * @param userId - The ID of the user whose blocked users we want to find.
-   * @returns An array of user objects representing the blocked users, with sensitive data removed and relations enriched.
+   * @param userId - The ID of the user whose blocked users are being fetched
+   * @param page - The page number to retrieve (default is 1)
+   * @param pageSize - The number of users to retrieve per page (default is 10)
+   * @throws NotFoundException if the user with the specified userId does not exist
+   * @returns An object containing paginated blocked users along with pagination metadata
    */
-  async findBlockedUsers(userId: string) {
-    // Fetch the user entity by ID, including the blockedUsers array (list of blocked user IDs)
-    const user = await this.usersRepository.findOne({
-      where: { id: userId },
-    });
+  async findBlockedUsersPaginated(userId: string, page = 1, pageSize = 10) {
+    const user = await this.usersRepository.findOne({ where: { id: userId } });
 
-    // Throw an error if the user with the given ID does not exist
     if (!user) {
       throw new NotFoundException(`User with id ${userId} not found`);
     }
 
-    // If the user has no blocked users, return an empty array early
-    if (!user.blockedUsers || user.blockedUsers.length === 0) {
-      return [];
+    const blockedUserIds = user.blockedUsers ?? [];
+
+    if (blockedUserIds.length === 0) {
+      return {
+        items: [],
+        totalItems: 0,
+        itemsPerPage: pageSize,
+        currentPage: page,
+        totalPages: 0,
+        hasPrevPage: false,
+        hasNextPage: false,
+        prevPage: null,
+        nextPage: null,
+      };
     }
 
-    // Fetch full user entities for each blocked user ID
-    // Note: Excluding password in the next step for security reasons
+    const totalItems = blockedUserIds.length;
+    const start = (page - 1) * pageSize;
+    const end = start + pageSize;
+    const paginatedIds = blockedUserIds.slice(start, end);
+
     const blockedUsers = await this.usersRepository.find({
-      where: {
-        id: In(user.blockedUsers),
-      },
+      where: { id: In(paginatedIds) },
     });
 
-    // Remove sensitive fields such as password from each blocked user object
-    const safeBlockedUsers = blockedUsers.map(({ password, ...rest }) => rest);
+    // Exclude password from user data before enrichment
+    const safeUsers = blockedUsers.map(({ password, ...rest }) => rest);
 
-    const enrichedBlockedUsers = await Promise.all(
-      safeBlockedUsers.map((blockedUser) =>
-        this.usersRepository.enrichUserRelations(blockedUser),
-      ),
+    const enrichedItems = await Promise.all(
+      safeUsers.map((user) => this.usersRepository.enrichUserRelations(user)),
     );
 
-    // Return the fully enriched blocked user objects
-    return enrichedBlockedUsers;
+    const totalPages = Math.ceil(totalItems / pageSize);
+
+    return {
+      items: enrichedItems,
+      totalItems,
+      itemsPerPage: pageSize,
+      currentPage: page,
+      totalPages,
+      hasPrevPage: page > 1,
+      hasNextPage: page < totalPages,
+      prevPage: page > 1 ? page - 1 : null,
+      nextPage: page < totalPages ? page + 1 : null,
+    };
   }
 
   /**

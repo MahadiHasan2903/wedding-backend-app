@@ -28,28 +28,35 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   /**
+   * Retrieves a paginated list of all users with the ADMIN role.
    *
-   * Endpoint to fetch all users with the ADMIN role.
-   * Only accessible to authenticated users with the ADMIN role.
-   * @returns A response object containing the list of admin users.
+   * @route GET /admins
+   * @access Admin only
+   * @param page - The current page number (default: 1)
+   * @param pageSize - The number of users per page (default: 10)
+   * @returns A paginated list of admin users with status and message
    */
   @Get('admins')
   @Roles(UserRole.ADMIN)
-  async getAllAdmins() {
+  async getAllAdmins(
+    @Query('page') page = 1,
+    @Query('pageSize') pageSize = 10,
+  ) {
     try {
-      // Fetch all users with the ADMIN role from the service layer
-      const admins = await this.usersService.findUsersByRole(UserRole.ADMIN);
+      const result = await this.usersService.findUsersByRolePaginated(
+        UserRole.ADMIN,
+        Number(page),
+        Number(pageSize),
+      );
 
       return {
         status: HttpStatus.OK,
         success: true,
         message: 'Admin users fetched successfully',
-        data: admins,
+        data: result,
       };
     } catch (error) {
-      // Sanitize the error before sending it in the response
       const sanitizedError = sanitizeError(error);
-
       throw new HttpException(
         {
           status: HttpStatus.BAD_REQUEST,
@@ -325,23 +332,34 @@ export class UsersController {
   }
 
   /**
-   * Retrieves the list of users blocked by the currently authenticated user.
-   * @param user - The currently authenticated user, injected via @CurrentUser decorator,
-   * @returns An object containing the status, success flag, message, and data payload
+   * Retrieves a paginated list of users blocked by the current user.
    *
-   * @throws HttpException with status 400 if fetching blocked users fails.
+   * @route GET /blocked-users
+   * @access User and Admin
+   * @param user - The currently authenticated user (from @CurrentUser decorator)
+   * @param page - The current page number (default: 1)
+   * @param pageSize - The number of users per page (default: 10)
+   * @returns A paginated list of blocked users with status and message
    */
   @Get('blocked-users')
   @Roles(UserRole.USER, UserRole.ADMIN)
-  async getBlockedUsers(@CurrentUser() user: { userId: string }) {
+  async getBlockedUsers(
+    @CurrentUser() user: { userId: string },
+    @Query('page') page = 1,
+    @Query('pageSize') pageSize = 10,
+  ) {
     try {
-      const blockers = await this.usersService.findBlockedUsers(user.userId);
+      const result = await this.usersService.findBlockedUsersPaginated(
+        user.userId,
+        Number(page),
+        Number(pageSize),
+      );
 
       return {
         status: HttpStatus.OK,
         success: true,
-        message: 'All blocked users retrieved successfully',
-        data: blockers,
+        message: 'Blocked users retrieved successfully',
+        data: result,
       };
     } catch (error) {
       const sanitizedError = sanitizeError(error);
@@ -445,9 +463,7 @@ export class UsersController {
    *
    * @param id - The ID of the user whose account status is to be updated.
    * @param updateAccountStatusDto - DTO containing the new account status.
-   *
    * @returns A response object containing the updated user data (excluding the password).
-   *
    * @throws HttpException with status 400 if the update fails.
    */
   @Patch(':id/account-status')
