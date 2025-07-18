@@ -21,6 +21,7 @@ import { UpdateAccountStatusDto } from './dto/update-account-status.dto';
 import { SearchUserDto } from './dto/search-user.dto';
 import { UpdateUserRoleDto } from './dto/update-user-role.dts';
 import { BlockUnblockDto } from './dto/block-unblock.dto';
+import { Public } from 'src/common/decorators/public.decorator';
 
 @Controller('v1/users')
 export class UsersController {
@@ -70,8 +71,8 @@ export class UsersController {
    * @param {SearchUserDto} query - The query parameters including pagination, sorting, and filters.
    * @returns {Promise<PaginatedUsersResponse>} Paginated list of users with their profile pictures and additional photos populated.
    */
+  @Public()
   @Get()
-  @Roles(UserRole.USER, UserRole.ADMIN)
   async getAllUsers(@Query() query: SearchUserDto) {
     try {
       const {
