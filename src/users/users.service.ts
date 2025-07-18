@@ -48,13 +48,22 @@ export class UsersService {
     sort = 'id,DESC',
     filters: FiltersOptions = {},
   ) {
-    const { items, totalItems, itemsPerPage, currentPage, totalPages } =
-      await this.usersRepository.findAllPaginated(
-        page,
-        pageSize,
-        sort,
-        filters,
-      );
+    const {
+      items,
+      totalItems,
+      itemsPerPage,
+      currentPage,
+      totalPages,
+      hasPrevPage,
+      hasNextPage,
+      prevPage,
+      nextPage,
+    } = await this.usersRepository.findAllPaginated(
+      page,
+      pageSize,
+      sort,
+      filters,
+    );
 
     const enrichedItems = await Promise.all(
       items.map((user) => this.usersRepository.enrichUserRelations(user)),
@@ -66,6 +75,10 @@ export class UsersService {
       itemsPerPage,
       currentPage,
       totalPages,
+      hasPrevPage,
+      hasNextPage,
+      prevPage,
+      nextPage,
     };
   }
 

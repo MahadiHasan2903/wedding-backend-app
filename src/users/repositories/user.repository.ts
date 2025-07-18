@@ -68,13 +68,7 @@ export class UserRepository extends Repository<User> {
     pageSize = 10,
     sort = 'id,DESC',
     filters: FiltersOptions = {},
-  ): Promise<{
-    items: Omit<User, 'password'>[];
-    totalItems: number;
-    itemsPerPage: number;
-    currentPage: number;
-    totalPages: number;
-  }> {
+  ) {
     const [sortField, sortOrder] = sort.split(',');
 
     const qb = this.createQueryBuilder('user');
@@ -277,12 +271,21 @@ export class UserRepository extends Repository<User> {
     const safeItems = items.map(({ password, ...rest }) => rest);
     const totalPages = Math.ceil(totalItems / pageSize);
 
+    const hasPrevPage = page > 1;
+    const hasNextPage = page < totalPages;
+    const prevPage = hasPrevPage ? page - 1 : null;
+    const nextPage = hasNextPage ? page + 1 : null;
+
     return {
       items: safeItems,
       totalItems,
       itemsPerPage: pageSize,
       currentPage: page,
       totalPages,
+      hasPrevPage,
+      hasNextPage,
+      prevPage,
+      nextPage,
     };
   }
 

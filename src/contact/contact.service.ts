@@ -67,18 +67,28 @@ export class ContactService {
    * @returns Paginated response object with items and metadata
    */
   async findAll(page = 1, pageSize = 10, sort = 'id,DESC') {
-    const { items, totalItems } = await this.contactRepository.findAllPaginated(
-      page,
-      pageSize,
-      sort,
-    );
+    const {
+      items,
+      totalItems,
+      itemsPerPage,
+      currentPage,
+      totalPages,
+      hasPrevPage,
+      hasNextPage,
+      prevPage,
+      nextPage,
+    } = await this.contactRepository.findAllPaginated(page, pageSize, sort);
 
     return {
       items,
       totalItems,
-      itemsPerPage: pageSize,
-      currentPage: page,
-      totalPages: Math.ceil(totalItems / pageSize),
+      itemsPerPage,
+      currentPage,
+      totalPages,
+      hasPrevPage,
+      hasNextPage,
+      prevPage,
+      nextPage,
     };
   }
 

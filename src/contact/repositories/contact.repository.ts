@@ -83,16 +83,8 @@ export class ContactRepository extends Repository<Contact> {
    *  - items: Array of Contact entities for the current page
    *  - totalItems: Total count of Contact entities in the database
    */
-  async findAllPaginated(
-    page = 1,
-    pageSize = 10,
-    sort = 'id,DESC',
-  ): Promise<{
-    items: Contact[];
-    totalItems: number;
-  }> {
+  async findAllPaginated(page = 1, pageSize = 10, sort = 'id,DESC') {
     const [sortField, sortOrder] = sort.split(',');
-
     const skip = (page - 1) * pageSize;
 
     const [items, totalItems] = await this.findAndCount({
@@ -103,6 +95,22 @@ export class ContactRepository extends Repository<Contact> {
       take: pageSize,
     });
 
-    return { items, totalItems };
+    const totalPages = Math.ceil(totalItems / pageSize);
+    const hasPrevPage = page > 1;
+    const hasNextPage = page < totalPages;
+    const prevPage = hasPrevPage ? page - 1 : null;
+    const nextPage = hasNextPage ? page + 1 : null;
+
+    return {
+      items,
+      totalItems,
+      itemsPerPage: pageSize,
+      currentPage: page,
+      totalPages,
+      hasPrevPage,
+      hasNextPage,
+      prevPage,
+      nextPage,
+    };
   }
 }

@@ -62,13 +62,24 @@ export class PaymentRepository {
     return this.repo.findAndCount(options);
   }
 
+  /**
+   * Finds payments with optional filters, sorting, and pagination.
+   *
+   * @param {number} page - The current page number (default: 1).
+   * @param {number} pageSize - The number of items per page (default: 10).
+   * @param {string} sort - Sorting format as "field,ORDER" (e.g., "id,DESC").
+   * @param {PaymentFiltersOptions} filters - Optional filters:
+   * @param {string} [userId] - Optional user ID to filter payments by specific user.
+   *
+   * @returns An object containing the paginated payment results and pagination metadata.
+   */
   async findFilteredAndPaginated(
     page = 1,
     pageSize = 10,
     sort = 'id,DESC',
     filters: PaymentFiltersOptions = {},
     userId?: string,
-  ): Promise<[Payment[], number]> {
+  ) {
     const [sortField, sortOrder] = sort.split(',');
 
     const qb = this.repo.createQueryBuilder('payment');
@@ -109,8 +120,27 @@ export class PaymentRepository {
     );
 
     // Pagination
-    qb.skip((page - 1) * pageSize).take(pageSize);
+    const skip = (page - 1) * pageSize;
+    qb.skip(skip).take(pageSize);
 
-    return qb.getManyAndCount();
+    const [items, totalItems] = await qb.getManyAndCount();
+
+    const totalPages = Math.ceil(totalItems / pageSize);
+    const hasPrevPage = page > 1;
+    const hasNextPage = page < totalPages;
+    const prevPage = hasPrevPage ? page - 1 : null;
+    const nextPage = hasNextPage ? page + 1 : null;
+
+    return {
+      items,
+      totalItems,
+      itemsPerPage: pageSize,
+      currentPage: page,
+      totalPages,
+      hasPrevPage,
+      hasNextPage,
+      prevPage,
+      nextPage,
+    };
   }
 }

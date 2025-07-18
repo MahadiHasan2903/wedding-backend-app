@@ -41,12 +41,22 @@ export class MsPurchaseService {
       take: pageSize,
     });
 
+    const totalPages = Math.ceil(totalItems / pageSize);
+    const hasPrevPage = page > 1;
+    const hasNextPage = page < totalPages;
+    const prevPage = hasPrevPage ? page - 1 : null;
+    const nextPage = hasNextPage ? page + 1 : null;
+
     return {
       items,
       totalItems,
       itemsPerPage: pageSize,
       currentPage: page,
-      totalPages: Math.ceil(totalItems / pageSize),
+      totalPages,
+      hasPrevPage,
+      hasNextPage,
+      prevPage,
+      nextPage,
     };
   }
 
@@ -71,12 +81,22 @@ export class MsPurchaseService {
       take: pageSize,
     });
 
+    const totalPages = Math.ceil(totalItems / pageSize);
+    const hasPrevPage = page > 1;
+    const hasNextPage = page < totalPages;
+    const prevPage = hasPrevPage ? page - 1 : null;
+    const nextPage = hasNextPage ? page + 1 : null;
+
     return {
       items,
       totalItems,
       itemsPerPage: pageSize,
       currentPage: page,
-      totalPages: Math.ceil(totalItems / pageSize),
+      totalPages,
+      hasPrevPage,
+      hasNextPage,
+      prevPage,
+      nextPage,
     };
   }
 

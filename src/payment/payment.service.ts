@@ -302,7 +302,17 @@ export class PaymentService {
     sort = 'id,DESC',
     filters: PaymentFiltersOptions = {},
   ) {
-    const [items, totalItems] = await this.paymentRepo.findFilteredAndPaginated(
+    const {
+      items,
+      totalItems,
+      itemsPerPage,
+      currentPage,
+      totalPages,
+      hasPrevPage,
+      hasNextPage,
+      prevPage,
+      nextPage,
+    } = await this.paymentRepo.findFilteredAndPaginated(
       page,
       pageSize,
       sort,
@@ -328,9 +338,13 @@ export class PaymentService {
     return {
       items: itemsWithMembership,
       totalItems,
-      itemsPerPage: pageSize,
-      currentPage: page,
-      totalPages: Math.ceil(totalItems / pageSize),
+      itemsPerPage,
+      currentPage,
+      totalPages,
+      hasPrevPage,
+      hasNextPage,
+      prevPage,
+      nextPage,
     };
   }
 
@@ -348,7 +362,17 @@ export class PaymentService {
     sort = 'id,DESC',
     filters: PaymentFiltersOptions = {},
   ) {
-    const [items, totalItems] = await this.paymentRepo.findFilteredAndPaginated(
+    const {
+      items,
+      totalItems,
+      itemsPerPage,
+      currentPage,
+      totalPages,
+      hasPrevPage,
+      hasNextPage,
+      prevPage,
+      nextPage,
+    } = await this.paymentRepo.findFilteredAndPaginated(
       page,
       pageSize,
       sort,
@@ -375,9 +399,13 @@ export class PaymentService {
     return {
       items: itemsWithMembership,
       totalItems,
-      itemsPerPage: pageSize,
-      currentPage: page,
-      totalPages: Math.ceil(totalItems / pageSize),
+      itemsPerPage,
+      currentPage,
+      totalPages,
+      hasPrevPage,
+      hasNextPage,
+      prevPage,
+      nextPage,
     };
   }
 }
