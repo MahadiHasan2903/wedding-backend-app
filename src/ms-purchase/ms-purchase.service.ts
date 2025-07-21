@@ -7,7 +7,6 @@ import {
   PurchasePackageCategory,
   PurchaseStatus,
 } from './enum/ms-purchase.enum';
-import { PriceOptionType } from 'src/ms-package/enum/msPackage.enum';
 import { PaginationOptions } from 'src/types/common.types';
 
 @Injectable()
@@ -147,18 +146,8 @@ export class MsPurchaseService {
       throw new NotFoundException(`Package with id ${msPackageId} not found`);
     }
 
-    // Find matching price option based on package type category
-    const priceOption = msPackage.priceOptions.find(
-      (option) =>
-        option.category ===
-        (packagePurchasedCategory as unknown as PriceOptionType),
-    );
-    if (!priceOption) {
-      throw new NotFoundException('Price option not found');
-    }
-
-    const amount = priceOption.originalPrice || 0;
-    const discount = amount - priceOption.sellPrice || 0;
+    const amount = msPackage.categoryInfo.originalPrice || 0;
+    const discount = amount - msPackage.categoryInfo.sellPrice || 0;
     const payable = amount - discount;
 
     const purchase = this.msPurchaseRepo.create({
@@ -187,7 +176,7 @@ export class MsPurchaseService {
         id: msPackage.id,
         title: msPackage.title,
         description: msPackage.description,
-        priceOption: priceOption || null,
+        categoryInfo: msPackage.categoryInfo || null,
       },
     };
   }

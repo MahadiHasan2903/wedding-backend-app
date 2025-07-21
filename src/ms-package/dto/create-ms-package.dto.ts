@@ -7,11 +7,11 @@ import {
   IsOptional,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { PackageStatus, PriceOptionType } from '../enum/msPackage.enum';
+import { PackageStatus, CategoryInfoType } from '../enum/msPackage.enum';
 
-class PriceOptionDto {
-  @IsEnum(PriceOptionType)
-  category: PriceOptionType;
+class CategoryInfoDto {
+  @IsEnum(CategoryInfoType)
+  category: CategoryInfoType;
 
   @IsNumber()
   originalPrice: number;
@@ -24,15 +24,15 @@ export class CreateMsPackageDto {
   @IsString()
   title: string;
 
-  @IsString()
-  description: string;
+  @IsArray()
+  @IsString({ each: true })
+  description: string[];
 
   @IsOptional()
   @IsEnum(PackageStatus)
   status?: PackageStatus;
 
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => PriceOptionDto)
-  priceOptions: PriceOptionDto[];
+  @ValidateNested()
+  @Type(() => CategoryInfoDto)
+  categoryInfo: CategoryInfoDto;
 }

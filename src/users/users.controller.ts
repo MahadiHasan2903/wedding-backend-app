@@ -214,12 +214,18 @@ export class UsersController {
     @CurrentUser() user: { userId: string },
     @Body() updateUserDto: UpdateUserDto,
     @UploadedFiles()
-    files: {
-      profilePicture?: Express.Multer.File;
+    rawFiles: {
+      profilePicture?: Express.Multer.File[];
       additionalPhotos?: Express.Multer.File[];
     },
   ) {
     const userId = user.userId;
+
+    //  Normalize file input
+    const files = {
+      profilePicture: rawFiles.profilePicture?.[0],
+      additionalPhotos: rawFiles.additionalPhotos || [],
+    };
 
     try {
       const user = await this.usersService.update(userId, updateUserDto, files);

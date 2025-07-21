@@ -1,4 +1,4 @@
-import { PriceOption } from 'src/ms-package/entities/msPackage.entity';
+import { CategoryInfo } from 'src/ms-package/entities/msPackage.entity';
 
 export interface PurchasedMembershipInfo {
   id: string;
@@ -8,7 +8,7 @@ export interface PurchasedMembershipInfo {
   membershipPackageInfo: {
     id: number;
     title: string;
-    description: string;
-    priceOption: PriceOption | null;
+    description: string[];
+    categoryInfo: CategoryInfo | null;
   };
 }

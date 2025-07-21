@@ -1,12 +1,12 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import {
   S3Client,
   PutObjectCommand,
   DeleteObjectCommand,
 } from '@aws-sdk/client-s3';
 import { randomUUID } from 'crypto';
+import { ConfigService } from '@nestjs/config';
 import { Media } from './entities/media.entity';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { MediaRepository } from './repositories/media.repository';
 
 @Injectable()

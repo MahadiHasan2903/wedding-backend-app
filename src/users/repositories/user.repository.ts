@@ -20,7 +20,6 @@ import { MediaService } from 'src/media/media.service';
 import { MediaRepository } from 'src/media/repositories/media.repository';
 import { MsPackageRepository } from 'src/ms-package/repositories/msPackage.repository';
 import { MsPurchaseRepository } from 'src/ms-purchase/repositories/ms-purchase.repository';
-import { PriceOptionType } from 'src/ms-package/enum/msPackage.enum';
 import { EnrichedUser, FiltersOptions } from '../types/user.types';
 
 @Injectable()
@@ -340,20 +339,13 @@ export class UserRepository extends Repository<User> {
           });
 
           if (msPackage) {
-            const priceOption =
-              msPackage.priceOptions.find(
-                (option) =>
-                  option.category ===
-                  (purchasePackageCategory as unknown as PriceOptionType),
-              ) || null;
-
             purchasedMembershipInfo = {
               ...purchaseWithoutPackage,
               membershipPackageInfo: {
                 id: msPackage.id,
                 title: msPackage.title,
                 description: msPackage.description,
-                priceOption,
+                categoryInfo: msPackage.categoryInfo,
               },
             };
           }
