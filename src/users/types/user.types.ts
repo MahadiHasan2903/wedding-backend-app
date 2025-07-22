@@ -20,6 +20,7 @@ export interface FiltersOptions {
   lookingFor?: string;
   religion?: string;
   country?: string;
+  city?: string;
   education?: string;
   profession?: string;
   familyMember?: string;

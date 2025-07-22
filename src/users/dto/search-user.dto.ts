@@ -104,6 +104,10 @@ export class SearchUserDto {
 
   @IsOptional()
   @IsString()
+  city?: string;
+
+  @IsOptional()
+  @IsString()
   languageSpoken?: string;
 
   @IsOptional()

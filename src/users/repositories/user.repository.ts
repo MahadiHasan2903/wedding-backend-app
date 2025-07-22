@@ -205,6 +205,10 @@ export class UserRepository extends Repository<User> {
       qb.andWhere('user.country = :country', { country: filters.country });
     }
 
+    if (filters.city) {
+      qb.andWhere('user.city = :city', { city: filters.city });
+    }
+
     if (filters.languageSpoken) {
       qb.andWhere('user.motherTongue = :languageSpoken', {
         languageSpoken: filters.languageSpoken,
