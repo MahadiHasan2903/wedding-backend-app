@@ -163,6 +163,11 @@ export enum BlockStatus {
   UNBLOCK = 'unblock',
 }
 
+export enum LikeStatus {
+  LIKE = 'like',
+  DISLIKE = 'dislike',
+}
+
 export enum HighestEducation {
   NO_FORMAL_EDUCATION = 'no_formal_education',
   PRIMARY_EDUCATION = 'primary_education',

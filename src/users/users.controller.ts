@@ -12,7 +12,7 @@ import {
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { BlockStatus, UserRole } from './enum/users.enum';
+import { BlockStatus, LikeStatus, UserRole } from './enum/users.enum';
 import { Roles } from 'src/common/decorators/roles.decorator';
 import { sanitizeError } from 'src/utils/helpers';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
@@ -22,6 +22,7 @@ import { SearchUserDto } from './dto/search-user.dto';
 import { UpdateUserRoleDto } from './dto/update-user-role.dts';
 import { BlockUnblockDto } from './dto/block-unblock.dto';
 import { Public } from 'src/common/decorators/public.decorator';
+import { LikeDislikeDto } from './dto/like-dislike.dto';
 
 @Controller('v1/users')
 export class UsersController {
@@ -332,6 +333,92 @@ export class UsersController {
           status: HttpStatus.BAD_REQUEST,
           success: false,
           message: 'Failed to update user role',
+          error: sanitizedError,
+        },
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
+
+  /**
+   * Retrieves a paginated list of users liked by the current user.
+   *
+   * @route GET /liked-users
+   * @access User and Admin
+   * @param user - The currently authenticated user (from @CurrentUser decorator)
+   * @param page - The current page number (default: 1)
+   * @param pageSize - The number of users per page (default: 10)
+   * @returns A paginated list of liked users with status and message
+   */
+  @Get('liked-users')
+  @Roles(UserRole.USER, UserRole.ADMIN)
+  async getLikedUsers(
+    @CurrentUser() user: { userId: string },
+    @Query('page') page = 1,
+    @Query('pageSize') pageSize = 10,
+  ) {
+    try {
+      const result = await this.usersService.findLikedUsersPaginated(
+        user.userId,
+        Number(page),
+        Number(pageSize),
+      );
+
+      return {
+        status: HttpStatus.OK,
+        success: true,
+        message: 'Liked users retrieved successfully',
+        data: result,
+      };
+    } catch (error) {
+      const sanitizedError = sanitizeError(error);
+      throw new HttpException(
+        {
+          status: HttpStatus.BAD_REQUEST,
+          success: false,
+          message: 'Failed to fetch liked users',
+          error: sanitizedError,
+        },
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
+
+  /**
+   * Handles liking or disliking a user based on the provided DTO.
+   *
+   * @param user - The currently authenticated user performing the action
+   * @param dto - Data transfer object containing the ID of the target user and the like/dislike status
+   * @returns An object containing the updated list of liked users and operation status
+   */
+  @Patch('like')
+  @Roles(UserRole.USER, UserRole.ADMIN)
+  async updateLikedUser(
+    @CurrentUser() user: { userId: string },
+    @Body() dto: LikeDislikeDto,
+  ) {
+    try {
+      const updatedLikedUsers = await this.usersService.updateLikedUser(
+        user.userId,
+        dto,
+      );
+
+      return {
+        status: HttpStatus.OK,
+        success: true,
+        message:
+          dto.status === LikeStatus.LIKE
+            ? 'User liked successfully'
+            : 'User disliked successfully',
+        data: updatedLikedUsers,
+      };
+    } catch (error) {
+      const sanitizedError = sanitizeError(error);
+      throw new HttpException(
+        {
+          status: HttpStatus.BAD_REQUEST,
+          success: false,
+          message: 'Failed to update liked users',
           error: sanitizedError,
         },
         HttpStatus.BAD_REQUEST,

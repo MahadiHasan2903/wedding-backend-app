@@ -83,6 +83,9 @@ export class User {
   @Column({ type: 'uuid', array: true, nullable: true })
   blockedUsers?: string[];
 
+  @Column({ type: 'uuid', array: true, nullable: true })
+  likedUsers?: string[];
+
   @Column('text', { array: true, nullable: true })
   socialMediaLinks: string[];
 

@@ -2,11 +2,17 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { UserRepository } from './repositories/user.repository';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { MediaService } from 'src/media/media.service';
-import { AccountStatus, BlockStatus, UserRole } from './enum/users.enum';
+import {
+  AccountStatus,
+  BlockStatus,
+  LikeStatus,
+  UserRole,
+} from './enum/users.enum';
 import { In } from 'typeorm';
 import { MediaRepository } from 'src/media/repositories/media.repository';
 import { FiltersOptions } from './types/user.types';
 import { BlockUnblockDto } from './dto/block-unblock.dto';
+import { LikeDislikeDto } from './dto/like-dislike.dto';
 
 @Injectable()
 export class UsersService {
@@ -241,6 +247,109 @@ export class UsersService {
       prevPage: page > 1 ? page - 1 : null,
       nextPage: page < totalPages ? page + 1 : null,
     };
+  }
+
+  /**
+   * Retrieves a paginated list of users liked by a specific user.
+   *
+   * @param userId - The ID of the user whose liked users are being fetched
+   * @param page - The page number to retrieve (default is 1)
+   * @param pageSize - The number of users to retrieve per page (default is 10)
+   * @throws NotFoundException if the user with the specified userId does not exist
+   * @returns An object containing paginated liked users along with pagination metadata
+   */
+  async findLikedUsersPaginated(userId: string, page = 1, pageSize = 10) {
+    const user = await this.usersRepository.findOne({ where: { id: userId } });
+
+    if (!user) {
+      throw new NotFoundException(`User with id ${userId} not found`);
+    }
+
+    const likedUserIds = user.likedUsers ?? [];
+
+    if (likedUserIds.length === 0) {
+      return {
+        items: [],
+        totalItems: 0,
+        itemsPerPage: pageSize,
+        currentPage: page,
+        totalPages: 0,
+        hasPrevPage: false,
+        hasNextPage: false,
+        prevPage: null,
+        nextPage: null,
+      };
+    }
+
+    const totalItems = likedUserIds.length;
+    const start = (page - 1) * pageSize;
+    const end = start + pageSize;
+    const paginatedIds = likedUserIds.slice(start, end);
+
+    const likedUsers = await this.usersRepository.find({
+      where: { id: In(paginatedIds) },
+    });
+
+    // Exclude password from user data before enrichment
+    const safeUsers = likedUsers.map(({ password, ...rest }) => rest);
+
+    const enrichedItems = await Promise.all(
+      safeUsers.map((user) => this.usersRepository.enrichUserRelations(user)),
+    );
+
+    const totalPages = Math.ceil(totalItems / pageSize);
+
+    return {
+      items: enrichedItems,
+      totalItems,
+      itemsPerPage: pageSize,
+      currentPage: page,
+      totalPages,
+      hasPrevPage: page > 1,
+      hasNextPage: page < totalPages,
+      prevPage: page > 1 ? page - 1 : null,
+      nextPage: page < totalPages ? page + 1 : null,
+    };
+  }
+
+  /**
+   * Updates the liked users list for a given user based on the provided action.
+   *
+   * @param userId - The ID of the user performing the like/dislike action
+   * @param dto - Data transfer object containing the target user ID and the action status ('like' or 'dislike')
+   * @returns The updated list of liked user IDs
+   */
+  async updateLikedUser(userId: string, dto: LikeDislikeDto) {
+    const { likedUserId, status } = dto;
+
+    // Fetch the user who is performing the like/dislike action
+    const user = await this.usersRepository.findOne({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new NotFoundException(`User with id ${userId} not found`);
+    }
+
+    if (!user.likedUsers) {
+      user.likedUsers = [];
+    }
+
+    if (status === LikeStatus.LIKE) {
+      // If user is already liked, just return the existing list
+      if (!user.likedUsers.includes(likedUserId)) {
+        user.likedUsers.push(likedUserId);
+      }
+    } else if (status === LikeStatus.DISLIKE) {
+      // Remove the likedUserId from the likedUsers array if present
+      user.likedUsers = user.likedUsers.filter((id) => id !== likedUserId);
+    }
+
+    // Save the updated user entity
+    await this.usersRepository.save(user);
+
+    // Return the updated likedUsers list for confirmation
+    return user.likedUsers;
   }
 
   /**
