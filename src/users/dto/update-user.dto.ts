@@ -10,6 +10,8 @@ import {
   Length,
   IsBoolean,
   ValidateNested,
+  IsNotEmpty,
+  IsUrl,
 } from 'class-validator';
 
 import {
@@ -36,9 +38,30 @@ import {
   HighestEducation,
   Profession,
 } from '../enum/users.enum';
-import { Transform, Type } from 'class-transformer';
+import { plainToInstance, Transform, Type } from 'class-transformer';
 import { isStringArray } from 'src/utils/helpers';
 import { MembershipPackageDto } from './membership-package.dto';
+
+class SocialMediaLinkDto {
+  @IsString()
+  @IsNotEmpty()
+  name: string;
+
+  @IsUrl()
+  @IsNotEmpty()
+  link: string;
+}
+
+function isSocialMediaLinkArray(value: unknown): value is SocialMediaLinkDto[] {
+  return (
+    Array.isArray(value) &&
+    value.every((item) => {
+      if (typeof item !== 'object' || item === null) return false;
+      const obj = item as Record<string, unknown>;
+      return typeof obj.name === 'string' && typeof obj.link === 'string';
+    })
+  );
+}
 
 export class UpdateUserDto {
   @IsOptional()
@@ -106,25 +129,27 @@ export class UpdateUserDto {
 
   @IsOptional()
   @IsArray()
-  @IsString({ each: true })
+  @ValidateNested({ each: true })
+  @Type(() => SocialMediaLinkDto)
   @Transform(({ value }) => {
     if (typeof value === 'string') {
       try {
         const parsed: unknown = JSON.parse(value);
-        if (isStringArray(parsed)) {
-          return parsed;
+        if (isSocialMediaLinkArray(parsed)) {
+          // convert to instances
+          return plainToInstance(SocialMediaLinkDto, parsed);
         }
         return [];
       } catch {
         return [];
       }
     }
-    if (isStringArray(value)) {
-      return value;
+    if (isSocialMediaLinkArray(value)) {
+      return plainToInstance(SocialMediaLinkDto, value);
     }
     return [];
   })
-  socialMediaLinks?: string[];
+  socialMediaLinks?: SocialMediaLinkDto[];
 
   @IsOptional()
   @IsArray()

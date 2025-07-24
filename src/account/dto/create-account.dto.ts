@@ -14,6 +14,7 @@ import {
   Max,
   IsBoolean,
   ValidateNested,
+  IsNotEmpty,
 } from 'class-validator';
 
 import {
@@ -41,6 +42,16 @@ import {
 } from '../../users/enum/users.enum';
 import { Transform, Type } from 'class-transformer';
 import { MembershipPackageDto } from 'src/users/dto/membership-package.dto';
+
+export class SocialMediaLinkDto {
+  @IsString()
+  @IsNotEmpty()
+  name: string;
+
+  @IsUrl()
+  @IsNotEmpty()
+  link: string;
+}
 
 export class CreateAccountDto {
   @IsString()
@@ -100,8 +111,9 @@ export class CreateAccountDto {
 
   @IsOptional()
   @IsArray()
-  @IsUrl({}, { each: true })
-  socialMediaLinks?: string[];
+  @ValidateNested({ each: true })
+  @Type(() => SocialMediaLinkDto)
+  socialMediaLinks?: SocialMediaLinkDto[];
 
   @IsOptional()
   @IsArray()

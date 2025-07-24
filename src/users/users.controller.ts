@@ -222,8 +222,6 @@ export class UsersController {
       additionalPhotos?: Express.Multer.File[];
     },
   ) {
-    const userId = user.userId;
-
     //  Normalize file input
     const files = {
       profilePicture: rawFiles.profilePicture?.[0],
@@ -231,13 +229,17 @@ export class UsersController {
     };
 
     try {
-      const user = await this.usersService.update(userId, updateUserDto, files);
+      const updatedUser = await this.usersService.update(
+        user.userId,
+        updateUserDto,
+        files,
+      );
 
       return {
         status: HttpStatus.OK,
         success: true,
         message: 'User updated successfully',
-        data: user,
+        data: updatedUser,
       };
     } catch (error: unknown) {
       const sanitizedError = sanitizeError(error);

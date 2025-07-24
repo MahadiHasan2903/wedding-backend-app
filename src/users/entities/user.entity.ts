@@ -86,8 +86,8 @@ export class User {
   @Column({ type: 'uuid', array: true, nullable: true })
   likedUsers?: string[];
 
-  @Column('text', { array: true, nullable: true })
-  socialMediaLinks: string[];
+  @Column('jsonb', { nullable: true })
+  socialMediaLinks: { name: string; link: string }[];
 
   @Column('text', { array: true, nullable: true })
   preferredLanguages?: string[];
