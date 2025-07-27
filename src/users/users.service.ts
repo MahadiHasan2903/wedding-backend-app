@@ -459,4 +459,27 @@ export class UsersService {
     // Return the updated blockedUsers list for confirmation
     return user.blockedUsers;
   }
+
+  async removeAdditionalPhoto(userId: string, mediaId: string): Promise<void> {
+    // Step 1: Find user
+    const user = await this.usersRepository.findOne({ where: { id: userId } });
+    if (!user) {
+      throw new NotFoundException(`User with id ${userId} not found`);
+    }
+
+    // Step 2: Validate that the media exists in user's additionalPhotos
+    const currentPhotos = user.additionalPhotos || [];
+    if (!currentPhotos.includes(mediaId)) {
+      throw new NotFoundException(
+        `Media ID ${mediaId} is not in user's additional photos`,
+      );
+    }
+
+    // Step 3: Remove mediaId from user's additionalPhotos
+    user.additionalPhotos = currentPhotos.filter((id) => id !== mediaId);
+    await this.usersRepository.save(user);
+
+    // Step 4: Delete the media from S3 and media table
+    await this.mediaService.deleteMediaById(mediaId);
+  }
 }

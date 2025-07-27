@@ -9,6 +9,7 @@ import {
   UploadedFiles,
   Get,
   Query,
+  Delete,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -591,6 +592,49 @@ export class UsersController {
           status: HttpStatus.BAD_REQUEST,
           success: false,
           message: 'Failed to update user account status',
+          error: sanitizedError,
+        },
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
+
+  /**
+   * Deletes an additional photo from the user's profile.
+   *
+   * @param user - The current authenticated user (injected via custom decorator)
+   * @param photoId - The ID of the photo to be deleted
+   * @returns Success message with status
+   */
+  @Delete('photo/:photoId')
+  @Roles(UserRole.USER, UserRole.ADMIN)
+  async deleteAdditionalPhoto(
+    @CurrentUser() user: { userId: string },
+    @Param('photoId') photoId: string,
+  ) {
+    try {
+      await this.usersService.removeAdditionalPhoto(user.userId, photoId);
+
+      return {
+        status: HttpStatus.OK,
+        success: true,
+        message: 'Photo deleted successfully',
+        data: {},
+      };
+    } catch (error) {
+      // Let known HTTP exceptions bubble up directly
+      if (error instanceof HttpException) {
+        throw error;
+      }
+
+      // Log or sanitize the unknown error if needed
+      const sanitizedError = sanitizeError(error);
+
+      throw new HttpException(
+        {
+          status: HttpStatus.BAD_REQUEST,
+          success: false,
+          message: 'Failed to delete photo',
           error: sanitizedError,
         },
         HttpStatus.BAD_REQUEST,
