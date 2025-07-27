@@ -26,8 +26,6 @@ import {
   AccountStatus,
   PrivacySettings,
   HealthCondition,
-  HighestEducation,
-  Profession,
 } from '../enum/users.enum';
 
 @Entity('users')
@@ -104,14 +102,14 @@ export class User {
   @Column({ nullable: true })
   timeZone?: string;
 
-  @Column({ type: 'enum', enum: HighestEducation, nullable: true })
-  highestEducation?: HighestEducation;
+  @Column({ nullable: true })
+  highestEducation?: string;
 
   @Column({ nullable: true })
   institutionName?: string;
 
-  @Column({ type: 'enum', enum: Profession, nullable: true })
-  profession?: Profession;
+  @Column({ nullable: true })
+  profession?: string;
 
   @Column({ nullable: true })
   companyName?: string;
@@ -148,6 +146,9 @@ export class User {
 
   @Column({ type: 'enum', enum: ReligionPreference, nullable: true })
   religionPreference?: ReligionPreference;
+
+  @Column({ type: 'text', nullable: true })
+  politicalPreference?: string;
 
   @Column({ type: 'text', nullable: true })
   partnerExpectations?: string;

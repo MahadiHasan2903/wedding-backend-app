@@ -7,10 +7,8 @@ import {
   DrinkingHabit,
   Gender,
   HealthCondition,
-  HighestEducation,
   MaritalStatus,
   PoliticalView,
-  Profession,
   Religion,
   SmokingHabit,
 } from '../enum/users.enum';
@@ -215,23 +213,15 @@ export class UserRepository extends Repository<User> {
       });
     }
 
-    if (
-      filters.education &&
-      Object.values(HighestEducation).includes(
-        filters.education as HighestEducation,
-      )
-    ) {
-      qb.andWhere('user.highestEducation = :drinkingHabit', {
-        education: filters.education,
+    if (filters.education) {
+      qb.andWhere('user.highestEducation ILIKE :education', {
+        education: `%${filters.education}%`,
       });
     }
 
-    if (
-      filters.profession &&
-      Object.values(Profession).includes(filters.profession as Profession)
-    ) {
-      qb.andWhere('user.profession = :drinkingHabit', {
-        profession: filters.profession,
+    if (filters.profession) {
+      qb.andWhere('user.profession ILIKE :profession', {
+        profession: `%${filters.profession}%`,
       });
     }
 

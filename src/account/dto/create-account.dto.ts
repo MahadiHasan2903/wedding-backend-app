@@ -37,8 +37,6 @@ import {
   Currency,
   AccountStatus,
   HealthCondition,
-  HighestEducation,
-  Profession,
 } from '../../users/enum/users.enum';
 import { Transform, Type } from 'class-transformer';
 import { MembershipPackageDto } from 'src/users/dto/membership-package.dto';
@@ -138,16 +136,16 @@ export class CreateAccountDto {
   timeZone?: string;
 
   @IsOptional()
-  @IsEnum(HighestEducation)
-  highestEducation?: HighestEducation;
+  @IsString()
+  highestEducation?: string;
 
   @IsOptional()
   @IsString()
   institutionName?: string;
 
   @IsOptional()
-  @IsEnum(Profession)
-  profession?: Profession;
+  @IsString()
+  profession?: string;
 
   @IsOptional()
   @IsString()
@@ -200,6 +198,10 @@ export class CreateAccountDto {
 
   @IsOptional()
   @IsString()
+  politicalPreference?: string;
+
+  @IsOptional()
+  @IsString()
   partnerExpectations?: string;
 
   @IsOptional()
@@ -229,7 +231,7 @@ export class CreateAccountDto {
   @IsOptional()
   @Transform(({ value }) => value === 'true')
   @IsBoolean()
-  hasPets?: boolean;
+  hasPet?: boolean;
 
   @IsOptional()
   @IsEnum(HealthCondition)

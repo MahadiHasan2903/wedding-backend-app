@@ -75,7 +75,7 @@ export enum ReligionPreference {
   CHRISTIANITY = 'christianity',
   BUDDHISM = 'buddhism',
   JUDAISM = 'judaism',
-  ANY = 'any',
+  Other = 'other',
 }
 
 export enum BodyType {

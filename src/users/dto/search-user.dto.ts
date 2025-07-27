@@ -5,7 +5,6 @@ import {
   IsString,
   Matches,
   IsEnum,
-  IsBooleanString,
   IsBoolean,
 } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
@@ -14,10 +13,8 @@ import {
   DrinkingHabit,
   Gender,
   HealthCondition,
-  HighestEducation,
   MaritalStatus,
   PoliticalView,
-  Profession,
   Religion,
   SmokingHabit,
 } from '../enum/users.enum';
@@ -111,12 +108,12 @@ export class SearchUserDto {
   languageSpoken?: string;
 
   @IsOptional()
-  @IsEnum(HighestEducation)
-  education?: HighestEducation;
+  @IsString()
+  education?: string;
 
   @IsOptional()
-  @IsEnum(Profession)
-  profession?: Profession;
+  @IsString()
+  profession?: string;
 
   @IsOptional()
   @Matches(/^\d+-\d+$/, {
