@@ -10,6 +10,7 @@ import {
   Get,
   Query,
   Delete,
+  BadRequestException,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -394,7 +395,7 @@ export class UsersController {
    * @param dto - Data transfer object containing the ID of the target user and the like/dislike status
    * @returns An object containing the updated list of liked users and operation status
    */
-  @Patch('like')
+  @Patch('liked-users/update-status')
   @Roles(UserRole.USER, UserRole.ADMIN)
   async updateLikedUser(
     @CurrentUser() user: { userId: string },
@@ -422,6 +423,51 @@ export class UsersController {
           status: HttpStatus.BAD_REQUEST,
           success: false,
           message: 'Failed to update liked users',
+          error: sanitizedError,
+        },
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
+
+  /**
+   * Endpoint to check if the currently authenticated user has liked a specific target user.
+   *
+   * @param user - The currently authenticated user, injected via `@CurrentUser` decorator.
+   * @param targetUserId - The ID of the target user to check against, provided as a URL parameter.
+   * @returns An object containing the liked status (`isLiked`) of the target user for the current user.
+   * @throws BadRequestException if the `targetUserId` parameter is missing.
+   * @throws HttpException with status 400 if there is an error during the check.
+   */
+  @Get('liked-users/check/:targetUserId')
+  @Roles(UserRole.USER, UserRole.ADMIN)
+  async checkIfUserLiked(
+    @CurrentUser() user: { userId: string },
+    @Param('targetUserId') targetUserId: string,
+  ) {
+    if (!targetUserId) {
+      throw new BadRequestException('Target user ID is required');
+    }
+
+    try {
+      const isLiked = await this.usersService.hasUserLikedTarget(
+        user.userId,
+        targetUserId,
+      );
+
+      return {
+        status: HttpStatus.OK,
+        success: true,
+        message: `Liked status checked for user ${targetUserId}`,
+        data: { isLiked },
+      };
+    } catch (error) {
+      const sanitizedError = sanitizeError(error);
+      throw new HttpException(
+        {
+          status: HttpStatus.BAD_REQUEST,
+          success: false,
+          message: 'Failed to check liked status',
           error: sanitizedError,
         },
         HttpStatus.BAD_REQUEST,
@@ -480,7 +526,7 @@ export class UsersController {
    * @param dto - Data transfer object containing the ID of the user to block/unblock and the action status.
    * @returns An object containing the updated list of blocked users and operation status.
    */
-  @Patch('block')
+  @Patch('blocked-users/update-status')
   @Roles(UserRole.USER, UserRole.ADMIN)
   async updateBlockedUser(
     @CurrentUser() user: { userId: string },
@@ -512,6 +558,51 @@ export class UsersController {
           status: HttpStatus.BAD_REQUEST,
           success: false,
           message: 'Failed to update blocked users',
+          error: sanitizedError,
+        },
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
+
+  /**
+   * Endpoint to check if the currently authenticated user has blocked a specific target user.
+   *
+   * @param user - The currently authenticated user, injected via `@CurrentUser` decorator.
+   * @param targetUserId - The ID of the target user to check against, provided as a URL parameter.
+   * @returns An object containing the blocked status (`isBlocked`) of the target user for the current user.
+   * @throws BadRequestException if the `targetUserId` parameter is missing.
+   * @throws HttpException with status 400 if there is an error during the check.
+   */
+  @Get('blocked-users/check/:targetUserId')
+  @Roles(UserRole.USER, UserRole.ADMIN)
+  async checkIfUserBlocked(
+    @CurrentUser() user: { userId: string },
+    @Param('targetUserId') targetUserId: string,
+  ) {
+    if (!targetUserId) {
+      throw new BadRequestException('Target user ID is required');
+    }
+
+    try {
+      const isBlocked = await this.usersService.hasUserBlockedTarget(
+        user.userId,
+        targetUserId,
+      );
+
+      return {
+        status: HttpStatus.OK,
+        success: true,
+        message: `Blocked status checked for user ${targetUserId}`,
+        data: { isBlocked },
+      };
+    } catch (error) {
+      const sanitizedError = sanitizeError(error);
+      throw new HttpException(
+        {
+          status: HttpStatus.BAD_REQUEST,
+          success: false,
+          message: 'Failed to check blocked status',
           error: sanitizedError,
         },
         HttpStatus.BAD_REQUEST,

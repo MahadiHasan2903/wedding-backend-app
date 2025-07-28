@@ -353,6 +353,30 @@ export class UsersService {
   }
 
   /**
+   * Checks whether a given user has liked a specific target user.
+   *
+   * @param userId - The ID of the user performing the like action.
+   * @param targetUserId - The ID of the target user to check if liked.
+   * @returns A boolean indicating whether the target user is in the user's liked users list.
+   * @throws NotFoundException if the user with the specified `userId` does not exist.
+   */
+  async hasUserLikedTarget(
+    userId: string,
+    targetUserId: string,
+  ): Promise<boolean> {
+    const user = await this.usersRepository.findOne({
+      where: { id: userId },
+      select: ['likedUsers'],
+    });
+
+    if (!user) {
+      throw new NotFoundException(`User with id ${userId} not found`);
+    }
+
+    return user.likedUsers?.includes(targetUserId) ?? false;
+  }
+
+  /**
    * Retrieves a paginated list of users blocked by a specific user.
    *
    * @param userId - The ID of the user whose blocked users are being fetched
@@ -460,6 +484,37 @@ export class UsersService {
     return user.blockedUsers;
   }
 
+  /**
+   * Checks whether a given user has blocked a specific target user.
+   *
+   * @param userId - The ID of the user performing the blocked action.
+   * @param targetUserId - The ID of the target user to check if blocked.
+   * @returns A boolean indicating whether the target user is in the user's blocked users list.
+   * @throws NotFoundException if the user with the specified `userId` does not exist.
+   */
+  async hasUserBlockedTarget(
+    userId: string,
+    targetUserId: string,
+  ): Promise<boolean> {
+    const user = await this.usersRepository.findOne({
+      where: { id: userId },
+      select: ['blockedUsers'],
+    });
+
+    if (!user) {
+      throw new NotFoundException(`User with id ${userId} not found`);
+    }
+    return user.blockedUsers?.includes(targetUserId) ?? false;
+  }
+
+  /**
+   * Removes an additional photo from a user's profile.
+   *
+   * @param userId - The ID of the user whose photo will be removed.
+   * @param mediaId - The ID of the media/photo to remove.
+   * @throws NotFoundException if the user or media ID is not found in user's photos.
+   * @returns void
+   */
   async removeAdditionalPhoto(userId: string, mediaId: string): Promise<void> {
     // Step 1: Find user
     const user = await this.usersRepository.findOne({ where: { id: userId } });
