@@ -101,6 +101,10 @@ export class SearchUserDto {
 
   @IsOptional()
   @IsString()
+  accountType?: string;
+
+  @IsOptional()
+  @IsString()
   city?: string;
 
   @IsOptional()

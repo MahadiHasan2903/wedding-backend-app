@@ -70,6 +70,16 @@ export class UserRepository extends Repository<User> {
 
     const qb = this.createQueryBuilder('user');
 
+    // Manual join for VIP filtering
+    if (filters.accountType === 'vip') {
+      qb.leftJoin(
+        'membership_purchases',
+        'mp',
+        'mp.id = CAST(user.purchasedMembership AS uuid)',
+      );
+      qb.andWhere('mp.packageId IN (:...vipIds)', { vipIds: [2, 3] });
+    }
+
     // RANGE FILTERS
     if (filters.age?.includes('-')) {
       const [minAge, maxAge] = filters.age.split('-').map(Number);

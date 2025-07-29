@@ -109,6 +109,7 @@ export class UsersController {
         dietaryPreference,
         smokingHabit,
         drinkingHabit,
+        accountType,
       } = query;
 
       const data = await this.usersService.findUsersWithRelatedMediaPaginated(
@@ -136,6 +137,7 @@ export class UsersController {
           dietaryPreference,
           smokingHabit,
           drinkingHabit,
+          accountType,
         },
       );
 

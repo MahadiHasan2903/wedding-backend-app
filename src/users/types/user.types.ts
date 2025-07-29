@@ -33,4 +33,5 @@ export interface FiltersOptions {
   smokingHabit?: string;
   drinkingHabit?: string;
   healthCondition?: string;
+  accountType?: string;
 }
