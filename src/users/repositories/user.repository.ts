@@ -71,7 +71,7 @@ export class UserRepository extends Repository<User> {
     const qb = this.createQueryBuilder('user');
 
     // Manual join for VIP filtering
-    if (filters.accountType === 'vip') {
+    if (filters.accountType === 'premium') {
       qb.leftJoin(
         'membership_purchases',
         'mp',
