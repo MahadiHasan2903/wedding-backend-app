@@ -86,6 +86,7 @@ export class UsersController {
   async getAllUsers(@Query() query: SearchUserDto) {
     try {
       const {
+        name,
         page,
         pageSize,
         sort,
@@ -117,6 +118,7 @@ export class UsersController {
         pageSize,
         sort,
         {
+          name,
           age,
           height,
           weight,

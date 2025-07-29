@@ -12,6 +12,7 @@ export type EnrichedUser = Omit<
 };
 
 export interface FiltersOptions {
+  name?: string;
   age?: string;
   height?: string;
   weight?: string;

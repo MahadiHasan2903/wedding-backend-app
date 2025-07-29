@@ -40,6 +40,10 @@ export class SearchUserDto {
   sort?: string = 'id,DESC';
 
   @IsOptional()
+  @IsString()
+  name?: string;
+
+  @IsOptional()
   @Matches(/^\d{1,3}-\d{1,3}$/, {
     message: 'age must be in format "min-max"',
   })

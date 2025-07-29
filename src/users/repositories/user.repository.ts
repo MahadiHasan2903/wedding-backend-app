@@ -209,6 +209,18 @@ export class UserRepository extends Repository<User> {
     }
 
     // SIMPLE STRING FILTERS
+
+    if (filters.name) {
+      qb.andWhere(
+        new Brackets((qb) => {
+          qb.where('user.firstName ILIKE :name').orWhere(
+            'user.lastName ILIKE :name',
+          );
+        }),
+        { name: `%${filters.name}%` },
+      );
+    }
+
     if (filters.country) {
       qb.andWhere('user.country = :country', { country: filters.country });
     }
