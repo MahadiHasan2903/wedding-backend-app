@@ -382,10 +382,16 @@ export class UsersService {
    * @param userId - The ID of the user whose blocked users are being fetched
    * @param page - The page number to retrieve (default is 1)
    * @param pageSize - The number of users to retrieve per page (default is 10)
+   * @param name - The name of the user
    * @throws NotFoundException if the user with the specified userId does not exist
    * @returns An object containing paginated blocked users along with pagination metadata
    */
-  async findBlockedUsersPaginated(userId: string, page = 1, pageSize = 10) {
+  async findBlockedUsersPaginated(
+    userId: string,
+    page = 1,
+    pageSize = 10,
+    name?: string,
+  ) {
     const user = await this.usersRepository.findOne({ where: { id: userId } });
 
     if (!user) {
@@ -408,17 +414,25 @@ export class UsersService {
       };
     }
 
-    const totalItems = blockedUserIds.length;
-    const start = (page - 1) * pageSize;
-    const end = start + pageSize;
-    const paginatedIds = blockedUserIds.slice(start, end);
+    const queryBuilder = this.usersRepository
+      .createQueryBuilder('user')
+      .where('user.id IN (:...blockedUserIds)', { blockedUserIds });
 
-    const blockedUsers = await this.usersRepository.find({
-      where: { id: In(paginatedIds) },
-    });
+    if (name) {
+      queryBuilder.andWhere(
+        `(LOWER(user.firstName) LIKE :name OR LOWER(user.lastName) LIKE :name)`,
+        { name: `%${name.toLowerCase()}%` },
+      );
+    }
 
-    // Exclude password from user data before enrichment
-    const safeUsers = blockedUsers.map(({ password, ...rest }) => rest);
+    const totalItems = await queryBuilder.getCount();
+
+    const users = await queryBuilder
+      .skip((page - 1) * pageSize)
+      .take(pageSize)
+      .getMany();
+
+    const safeUsers = users.map(({ password, ...rest }) => rest);
 
     const enrichedItems = await Promise.all(
       safeUsers.map((user) => this.usersRepository.enrichUserRelations(user)),

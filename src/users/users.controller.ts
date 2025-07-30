@@ -487,6 +487,7 @@ export class UsersController {
    * @param user - The currently authenticated user (from @CurrentUser decorator)
    * @param page - The current page number (default: 1)
    * @param pageSize - The number of users per page (default: 10)
+   * @param name - The name of the user
    * @returns A paginated list of blocked users with status and message
    */
   @Get('blocked-users')
@@ -495,12 +496,14 @@ export class UsersController {
     @CurrentUser() user: { userId: string },
     @Query('page') page = 1,
     @Query('pageSize') pageSize = 10,
+    @Query('name') name?: string,
   ) {
     try {
       const result = await this.usersService.findBlockedUsersPaginated(
         user.userId,
         Number(page),
         Number(pageSize),
+        name,
       );
 
       return {
