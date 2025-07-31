@@ -193,7 +193,7 @@ export class PaymentService {
     return {
       url:
         this.configService.get<string>('CLIENT_BASE_URL') +
-        `/payment?transactionId=${sessionId}&status=${paymentIntent.status}`,
+        `/pricing/payment-success?transactionId=${sessionId}&status=${paymentIntent.status}`,
     };
   }
 
@@ -252,7 +252,7 @@ export class PaymentService {
     return {
       url:
         this.configService.get<string>('CLIENT_BASE_URL') +
-        `/payment?transactionId=${orderId}&status=${status.toLowerCase()}`,
+        `/pricing/payment-success?transactionId=${orderId}&status=${status.toLowerCase()}`,
     };
   }
 

@@ -158,9 +158,8 @@ export class PaymentController {
    * @param {CreateMembershipPaymentDto} dto - Data required to create membership payment
    * @returns {object} clientSecret, transactionId, paymentStatus
    */
-  @Public()
   @Post('initiate-payment')
-  // @Roles(UserRole.USER, UserRole.ADMIN)
+  @Roles(UserRole.USER, UserRole.ADMIN)
   async purchaseMembership(@Body() dto: CreateMembershipPaymentDto) {
     try {
       const result = await this.paymentService.createMembershipPayment(dto);
