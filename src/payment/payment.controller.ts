@@ -9,15 +9,15 @@ import {
   Query,
   Res,
 } from '@nestjs/common';
-import { PaymentService } from './payment.service';
-import { CreateMembershipPaymentDto } from './dto/create-membership-payment.dto';
-import { Roles } from 'src/common/decorators/roles.decorator';
-import { UserRole } from 'src/users/enum/users.enum';
-import { sanitizeError } from 'src/utils/helpers';
-import { CurrentUser } from 'src/common/decorators/current-user.decorator';
-import { Public } from 'src/common/decorators/public.decorator';
 import { Response } from 'express';
+import { sanitizeError } from 'src/utils/helpers';
+import { PaymentService } from './payment.service';
+import { UserRole } from 'src/users/enum/users.enum';
 import { SearchPaymentDto } from './dto/search-payment.dto';
+import { Roles } from 'src/common/decorators/roles.decorator';
+import { Public } from 'src/common/decorators/public.decorator';
+import { CurrentUser } from 'src/common/decorators/current-user.decorator';
+import { CreateMembershipPaymentDto } from './dto/create-membership-payment.dto';
 
 @Controller('v1/payment')
 export class PaymentController {
@@ -158,8 +158,8 @@ export class PaymentController {
    * @param {CreateMembershipPaymentDto} dto - Data required to create membership payment
    * @returns {object} clientSecret, transactionId, paymentStatus
    */
+  @Public()
   @Post('initiate-payment')
-  @Roles(UserRole.USER, UserRole.ADMIN)
   async purchaseMembership(@Body() dto: CreateMembershipPaymentDto) {
     try {
       const result = await this.paymentService.createMembershipPayment(dto);
