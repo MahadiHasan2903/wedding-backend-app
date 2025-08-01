@@ -1,12 +1,13 @@
 import { Injectable } from '@nestjs/common';
-import { MessageRepository } from './repositories/message.repository';
-import { CreateMessageDto } from './dto/create-message.dto';
-import { UpdateMessageStatusDto } from './dto/update-message-status.dto';
-import { Message } from './entities/message.entity';
-import { GoogleTranslateService } from './translation/google-translate.service';
-import { MediaRepository } from 'src/media/repositories/media.repository';
+import { Language } from './enum/message.enum';
 import { MediaService } from 'src/media/media.service';
 import { Media } from 'src/media/entities/media.entity';
+import { CreateMessageDto } from './dto/create-message.dto';
+import { Message, MessageContent } from './entities/message.entity';
+import { MessageRepository } from './repositories/message.repository';
+import { UpdateMessageStatusDto } from './dto/update-message-status.dto';
+import { MediaRepository } from 'src/media/repositories/media.repository';
+import { GoogleTranslateService } from './translation/google-translate.service';
 
 @Injectable()
 export class MessageService {
@@ -18,37 +19,66 @@ export class MessageService {
   ) {}
 
   /**
+   * Prepares the message content with optional translations.
+   * @param message - The original message text to process.
+   * @param needsTranslation - Whether the message should be translated into multiple languages.
+   * @returns A Promise resolving to a structured `MessageContent` object.
+   * @throws If no message is provided.
+   */
+  private async prepareMessageContent(
+    message: string,
+    needsTranslation: boolean,
+  ): Promise<MessageContent> {
+    if (!message) {
+      throw new Error('Message is required');
+    }
+
+    console.log(message);
+
+    if (needsTranslation) {
+      const translations =
+        await this.googleTranslateService.translateMessage(message);
+
+      return {
+        originalText: message,
+        sourceLanguage: translations.originalLanguage,
+        translationEn: translations.translationEn,
+        translationFr: translations.translationFr,
+        translationEs: translations.translationEs,
+      };
+    }
+
+    return {
+      originalText: message,
+      sourceLanguage: Language.EN,
+      translationEn: message,
+      translationFr: '',
+      translationEs: '',
+    };
+  }
+
+  /**
    * Creates a new message record in the database.
    * @param dto - Data transfer object containing new message details.
    * @returns The saved Message entity.
    */
-  async create(
+  async createMessage(
     dto: CreateMessageDto,
     files?: {
       attachments?: Express.Multer.File[];
     },
   ) {
-    // Assign messageContent directly or undefined if dto.message is missing
-    const messageContent = dto.message
-      ? await (async () => {
-          const translations =
-            await this.googleTranslateService.translateMessage(
-              dto.message as string,
-            );
+    let messageContent: MessageContent | undefined;
 
-          return {
-            originalText: dto.message,
-            sourceLanguage: translations.originalLanguage,
-            translationEn: translations.translationEn,
-            translationFr: translations.translationFr,
-            translationEs: translations.translationEs,
-          };
-        })()
-      : undefined;
+    if (dto.message) {
+      messageContent = await this.prepareMessageContent(
+        dto.message,
+        dto.needsTranslation || false,
+      );
+    }
 
-    // Upload attachments and collect their media IDs
     let attachmentIds: string[] = [];
-    if (files?.attachments && files.attachments.length > 0) {
+    if (files?.attachments?.length) {
       const mediaList = await Promise.all(
         files.attachments.map((file) =>
           this.mediaService.handleUpload(
@@ -58,12 +88,9 @@ export class MessageService {
           ),
         ),
       );
-
-      // store media IDs in attachments
       attachmentIds = mediaList.map((media) => media.id);
     }
 
-    // Create and save the message entity
     const message = this.messageRepository.create({
       ...dto,
       message: messageContent,
@@ -151,21 +178,17 @@ export class MessageService {
    * @param message -the new message content
    * @returns The updated Message entity.
    */
-  async updateMessageContent(id: string, message: string): Promise<Message> {
-    // Translate the new message content
-    const translations =
-      await this.googleTranslateService.translateMessage(message);
+  async updateMessageContent(
+    id: string,
+    message: string,
+    needsTranslation = false,
+  ): Promise<Message> {
+    const translatedContent = await this.prepareMessageContent(
+      message,
+      needsTranslation,
+    );
 
-    // Prepare translated content in MessageContent structure
-    const translatedContent = {
-      originalText: message,
-      sourceLanguage: translations.originalLanguage,
-      translationEn: translations.translationEn,
-      translationFr: translations.translationFr,
-      translationEs: translations.translationEs,
-    };
-
-    // Pass structured content to repository
+    console.log(translatedContent);
     return this.messageRepository.updateMessageContent(id, translatedContent);
   }
 
