@@ -81,7 +81,7 @@ export class MessageGateway
       message: string;
     },
   ) {
-    const createdMessage = await this.messageService.create({
+    const createdMessage = await this.messageService.createMessage({
       senderId: data.senderId,
       receiverId: data.receiverId,
       conversationId: data.conversationId,

@@ -1,15 +1,15 @@
 import {
-  Controller,
-  Post,
   Get,
-  Patch,
+  Post,
   Body,
+  Patch,
   Param,
+  Controller,
+  HttpStatus,
   ParseUUIDPipe,
   HttpException,
-  HttpStatus,
-  UseInterceptors,
   UploadedFiles,
+  UseInterceptors,
 } from '@nestjs/common';
 import { MessageService } from './message.service';
 import { CreateMessageDto } from './dto/create-message.dto';
@@ -18,6 +18,7 @@ import { sanitizeError } from 'src/utils/helpers';
 import { Roles } from 'src/common/decorators/roles.decorator';
 import { UserRole } from 'src/users/enum/users.enum';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
+import { UpdateMessageContentDto } from './dto/update-message.dto';
 
 @Controller('v1/message')
 export class MessageController {
@@ -39,7 +40,7 @@ export class MessageController {
     },
   ) {
     try {
-      const message = await this.messageService.create(dto, files);
+      const message = await this.messageService.createMessage(dto, files);
       return {
         success: true,
         message: 'Message created successfully',
@@ -150,13 +151,16 @@ export class MessageController {
   @Patch(':id')
   @Roles(UserRole.USER, UserRole.ADMIN)
   async updateMessageContent(
-    @Param('id', ParseUUIDPipe) id: string,
-    @Body() message: string,
+    @Param('id') id: string,
+    @Body() body: UpdateMessageContentDto,
   ) {
+    const { message, needsTranslation } = body;
+
     try {
       const updatedMessage = await this.messageService.updateMessageContent(
         id,
         message,
+        needsTranslation,
       );
 
       return {

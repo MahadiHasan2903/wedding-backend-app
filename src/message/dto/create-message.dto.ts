@@ -1,5 +1,6 @@
-import { IsEnum, IsOptional, IsString } from 'class-validator';
+import { Transform } from 'class-transformer';
 import { MessageStatus, MessageType } from '../enum/message.enum';
+import { IsBoolean, IsEnum, IsOptional, IsString } from 'class-validator';
 
 export class CreateMessageDto {
   @IsString()
@@ -28,4 +29,9 @@ export class CreateMessageDto {
 
   @IsOptional()
   attachments?: string[];
+
+  @IsOptional()
+  @Transform(({ value }) => value === 'true')
+  @IsBoolean()
+  needsTranslation?: boolean = false;
 }
