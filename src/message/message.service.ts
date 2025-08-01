@@ -33,8 +33,6 @@ export class MessageService {
       throw new Error('Message is required');
     }
 
-    console.log(message);
-
     if (needsTranslation) {
       const translations =
         await this.googleTranslateService.translateMessage(message);
@@ -188,7 +186,6 @@ export class MessageService {
       needsTranslation,
     );
 
-    console.log(translatedContent);
     return this.messageRepository.updateMessageContent(id, translatedContent);
   }
 
