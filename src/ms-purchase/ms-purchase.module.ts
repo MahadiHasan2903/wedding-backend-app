@@ -1,11 +1,12 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { MsPurchaseService } from './ms-purchase.service';
+import { AccountModule } from 'src/account/account.module';
 import { MsPurchaseController } from './ms-purchase.controller';
-import { MsPurchaseRepository } from './repositories/ms-purchase.repository';
 import { MsPackageModule } from 'src/ms-package/msPackage.module';
+import { MsPurchaseRepository } from './repositories/ms-purchase.repository';
 
 @Module({
-  imports: [MsPackageModule],
+  imports: [MsPackageModule, forwardRef(() => AccountModule)],
   exports: [MsPurchaseService, MsPurchaseRepository],
   controllers: [MsPurchaseController],
   providers: [MsPurchaseService, MsPurchaseRepository],

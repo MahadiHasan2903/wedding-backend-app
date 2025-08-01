@@ -8,11 +8,13 @@ import {
   PurchaseStatus,
 } from './enum/ms-purchase.enum';
 import { PaginationOptions } from 'src/types/common.types';
+import { AccountRepository } from 'src/account/repositories/account.repository';
 
 @Injectable()
 export class MsPurchaseService {
   constructor(
     private readonly msPurchaseRepo: MsPurchaseRepository,
+    private readonly accountRepo: AccountRepository,
     private readonly msPackageService: MsPackageService,
   ) {}
 
@@ -166,6 +168,13 @@ export class MsPurchaseService {
     });
 
     const savedPurchase = await this.msPurchaseRepo.save(purchase);
+
+    // Automatically update user's purchasedMembership for free default package
+    if (msPackageId === 1) {
+      await this.accountRepo.update(userId, {
+        purchasedMembership: savedPurchase.id,
+      });
+    }
 
     const { packageId, purchasePackageCategory, ...purchaseWithoutPackage } =
       savedPurchase;

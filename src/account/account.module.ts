@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AccountService } from './account.service';
 import { AccountController } from './account.controller';
@@ -17,7 +17,7 @@ import { UsersModule } from 'src/users/users.module';
     EmailModule,
     UsersModule,
     MsPackageModule,
-    MsPurchaseModule,
+    forwardRef(() => MsPurchaseModule),
     JwtModule.register({
       secret: process.env.JWT_SECRET,
       signOptions: { expiresIn: process.env.JWT_EXPIRES_IN },
