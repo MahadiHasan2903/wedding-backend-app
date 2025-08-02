@@ -70,9 +70,8 @@ export class ConversationController {
   @Roles(UserRole.USER, UserRole.ADMIN)
   async getConversationsBySenderId(@CurrentUser() user: { userId: string }) {
     try {
-      const conversations = await this.conversationService.findBySenderId(
-        user.userId,
-      );
+      const conversations =
+        await this.conversationService.findMyConversationByUserId(user.userId);
 
       return {
         success: true,
@@ -106,15 +105,10 @@ export class ConversationController {
    */
   @Get(':id')
   @Roles(UserRole.USER, UserRole.ADMIN)
-  async getConversationByIdAndSender(
-    @Param('id') id: string,
-    @Query('senderId') senderId: string,
-  ) {
+  async getConversationByIdAndSender(@Param('id') id: string) {
     try {
-      const conversation = await this.conversationService.findByIdAndSender(
-        id,
-        senderId,
-      );
+      const conversation =
+        await this.conversationService.findByConversationId(id);
 
       return {
         success: true,
@@ -130,7 +124,7 @@ export class ConversationController {
         {
           status: HttpStatus.INTERNAL_SERVER_ERROR,
           success: false,
-          message: `Failed to fetch conversation with ID ${id} and senderId ${senderId}`,
+          message: `Failed to fetch conversation with ID ${id}`,
           error: sanitizedError,
         },
         HttpStatus.INTERNAL_SERVER_ERROR,
