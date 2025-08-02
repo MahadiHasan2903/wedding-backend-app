@@ -8,11 +8,13 @@ import { MessageRepository } from './repositories/message.repository';
 import { UpdateMessageStatusDto } from './dto/update-message-status.dto';
 import { MediaRepository } from 'src/media/repositories/media.repository';
 import { GoogleTranslateService } from './translation/google-translate.service';
+import { ConversationRepository } from 'src/conversation/repositories/conversation.repository';
 
 @Injectable()
 export class MessageService {
   constructor(
     private readonly messageRepository: MessageRepository,
+    private readonly conversationRepository: ConversationRepository,
     private readonly googleTranslateService: GoogleTranslateService,
     private readonly mediaRepository: MediaRepository,
     private readonly mediaService: MediaService,
@@ -89,13 +91,25 @@ export class MessageService {
       attachmentIds = mediaList.map((media) => media.id);
     }
 
-    const message = this.messageRepository.create({
+    // 1. Save the new message
+    const newMessage = this.messageRepository.create({
       ...dto,
       message: messageContent,
       attachments: attachmentIds.length > 0 ? attachmentIds : undefined,
     });
 
-    return this.messageRepository.save(message);
+    const savedMessage = await this.messageRepository.save(newMessage);
+
+    // 2. Update the conversation with last message info
+    await this.conversationRepository.update(dto.conversationId, {
+      lastMessageId: savedMessage.id,
+      lastMessage: dto.message ?? '[attachment]',
+      senderId: dto.senderId,
+      receiverId: dto.receiverId,
+      updatedAt: new Date(),
+    });
+
+    return savedMessage;
   }
 
   /**
