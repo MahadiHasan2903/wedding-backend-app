@@ -7,8 +7,9 @@ import {
   Get,
   Param,
   Query,
-  Res,
+  Redirect,
 } from '@nestjs/common';
+
 import { Response } from 'express';
 import { sanitizeError } from 'src/utils/helpers';
 import { PaymentService } from './payment.service';
@@ -22,6 +23,93 @@ import { CreateMembershipPaymentDto } from './dto/create-membership-payment.dto'
 @Controller('v1/payment')
 export class PaymentController {
   constructor(private readonly paymentService: PaymentService) {}
+
+  /**
+   * @route POST /v1/payment/membership-purchase
+   * @desc Create a payment intent for a membership purchase
+   * @access User, Admin
+   * @param {CreateMembershipPaymentDto} dto - Data required to create membership payment
+   * @returns {object} clientSecret, transactionId, paymentStatus
+   */
+  @Public()
+  @Post('initiate-payment')
+  async purchaseMembership(@Body() dto: CreateMembershipPaymentDto) {
+    try {
+      const result = await this.paymentService.createMembershipPayment(dto);
+
+      return {
+        status: HttpStatus.CREATED,
+        success: true,
+        message: 'Membership payment intent created successfully',
+        data: result,
+      };
+    } catch (error) {
+      throw new HttpException(
+        {
+          status: HttpStatus.BAD_REQUEST,
+          success: false,
+          message: 'Failed to create membership payment',
+          error: sanitizeError(error),
+        },
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
+
+  /**
+   * Stripe payment callback endpoint.
+   *
+   * This endpoint is triggered when Stripe redirects the user after completing a payment.
+   * @param sessionId - The Stripe Checkout Session ID passed by Stripe as a query param
+   * @returns Redirect URL to the client with transaction ID and status
+   */
+  @Public()
+  @Get('stripe-payment-callback')
+  @Redirect()
+  async stripeCallback(@Query('session_id') sessionId: string) {
+    const result = await this.paymentService.stripePaymentCallback(sessionId);
+    return {
+      statusCode: HttpStatus.PERMANENT_REDIRECT,
+      url: result.url,
+    };
+  }
+
+  /**
+   * PayPal payment approval callback endpoint.
+   *
+   * This route is hit by PayPal after the user approves the payment and is redirected
+   * back to the system with a `orderId` (PayPal order ID). This method finalizes the
+   * transaction by calling the appropriate service method to capture the payment.
+   *
+   * @route POST /v1/payment/paypal-payment-callback?orderId={paypal_order_id}
+   * @access Public
+   * @param orderId PayPal order ID passed as a query parameter
+   * @returns Success or failure response with relevant data or error
+   */
+  @Public()
+  @Post('paypal-payment-callback')
+  async membershipPaypalPaymentCallback(@Query('orderId') orderId: string) {
+    try {
+      const response = await this.paymentService.paypalPaymentCallback(orderId);
+
+      return {
+        status: HttpStatus.CREATED,
+        success: true,
+        message: 'PayPal membership payment completed successfully',
+        data: response,
+      };
+    } catch (error) {
+      throw new HttpException(
+        {
+          status: HttpStatus.BAD_REQUEST,
+          success: false,
+          message: 'PayPal membership payment failed',
+          error: sanitizeError(error),
+        },
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
 
   /**
    * Controller endpoint to retrieve all payments in the system.
@@ -144,92 +232,6 @@ export class PaymentController {
           status: HttpStatus.BAD_REQUEST,
           success: false,
           message: 'Failed to retrieve payment details',
-          error: sanitizeError(error),
-        },
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-  }
-
-  /**
-   * @route POST /v1/payment/membership-purchase
-   * @desc Create a payment intent for a membership purchase
-   * @access User, Admin
-   * @param {CreateMembershipPaymentDto} dto - Data required to create membership payment
-   * @returns {object} clientSecret, transactionId, paymentStatus
-   */
-  @Public()
-  @Post('initiate-payment')
-  async purchaseMembership(@Body() dto: CreateMembershipPaymentDto) {
-    try {
-      const result = await this.paymentService.createMembershipPayment(dto);
-
-      return {
-        status: HttpStatus.CREATED,
-        success: true,
-        message: 'Membership payment intent created successfully',
-        data: result,
-      };
-    } catch (error) {
-      throw new HttpException(
-        {
-          status: HttpStatus.BAD_REQUEST,
-          success: false,
-          message: 'Failed to create membership payment',
-          error: sanitizeError(error),
-        },
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-  }
-
-  /**
-   * Stripe payment callback endpoint.
-   *
-   * This endpoint is triggered when Stripe redirects the user after completing a payment.
-   * @param sessionId - The Stripe Checkout Session ID passed by Stripe as a query param
-   * @returns Redirect URL to the client with transaction ID and status
-   */
-  @Public()
-  @Get('stripe-payment-callback')
-  async membershipStripePaymentCallback(
-    @Query('session_id') sessionId: string,
-    @Res() res: Response,
-  ) {
-    const response = await this.paymentService.stripePaymentCallback(sessionId);
-    return res.redirect(response.url);
-  }
-
-  /**
-   * PayPal payment approval callback endpoint.
-   *
-   * This route is hit by PayPal after the user approves the payment and is redirected
-   * back to the system with a `orderId` (PayPal order ID). This method finalizes the
-   * transaction by calling the appropriate service method to capture the payment.
-   *
-   * @route POST /v1/payment/paypal-payment-callback?orderId={paypal_order_id}
-   * @access Public
-   * @param orderId PayPal order ID passed as a query parameter
-   * @returns Success or failure response with relevant data or error
-   */
-  @Public()
-  @Post('paypal-payment-callback')
-  async membershipPaypalPaymentCallback(@Query('orderId') orderId: string) {
-    try {
-      const response = await this.paymentService.paypalPaymentCallback(orderId);
-
-      return {
-        status: HttpStatus.CREATED,
-        success: true,
-        message: 'PayPal membership payment completed successfully',
-        data: response,
-      };
-    } catch (error) {
-      throw new HttpException(
-        {
-          status: HttpStatus.BAD_REQUEST,
-          success: false,
-          message: 'PayPal membership payment failed',
           error: sanitizeError(error),
         },
         HttpStatus.BAD_REQUEST,
