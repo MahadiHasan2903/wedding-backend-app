@@ -68,10 +68,19 @@ export class ConversationController {
    */
   @Get('my-conversations')
   @Roles(UserRole.USER, UserRole.ADMIN)
-  async getConversationsBySenderId(@CurrentUser() user: { userId: string }) {
+  async getConversationsBySenderId(
+    @Query('page') page = 1,
+    @Query('pageSize') pageSize = 10,
+    @Query('sort') sort = 'updatedAt,DESC',
+    @CurrentUser() user: { userId: string },
+  ) {
     try {
       const conversations =
-        await this.conversationService.findMyConversationByUserId(user.userId);
+        await this.conversationService.findMyConversationByUserId(user.userId, {
+          page: Number(page),
+          pageSize: Number(pageSize),
+          sort,
+        });
 
       return {
         success: true,
@@ -181,17 +190,26 @@ export class ConversationController {
    */
   @Get('sender/:senderId')
   async getConversationsBySender(
-    @Param('senderId', ParseUUIDPipe) senderId: string,
+    @Param('senderId') senderId: string,
+    @Query('page') page = 1,
+    @Query('pageSize') pageSize = 10,
+    @Query('sort') sort = 'updatedAt,DESC',
   ) {
     try {
-      const conversations =
-        await this.conversationService.findBySenderId(senderId);
+      const paginatedResult = await this.conversationService.findBySenderId(
+        senderId,
+        {
+          page: Number(page),
+          pageSize: Number(pageSize),
+          sort,
+        },
+      );
 
       return {
         success: true,
         message: `Conversations fetched for senderId: ${senderId}`,
         status: HttpStatus.OK,
-        data: conversations,
+        data: paginatedResult,
       };
     } catch (error: unknown) {
       const sanitizedError = sanitizeError(error);

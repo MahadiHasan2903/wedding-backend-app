@@ -4,6 +4,7 @@ import { ConversationRepository } from './repositories/conversation.repository';
 import { CreateConversationDto } from './dto/create-conversation.dto';
 import { UpdateLastMessageDto } from './dto/update-last-message.dto';
 import { UsersService } from 'src/users/users.service';
+import { PaginationOptions } from 'src/types/common.types';
 
 @Injectable()
 export class ConversationService {
@@ -23,32 +24,79 @@ export class ConversationService {
   }
 
   /**
-   * Retrieves all conversations where the specified user is the sender.
-   * @param senderId - UUID of the sender.
-   * @returns An array of Conversation entities ordered by recent activity.
+   * Retrieves a paginated list of conversations by sender ID.
+   *
+   * @param senderId - The ID of the sender whose conversations are to be retrieved.
+   * @param param - Pagination and sorting options.
+   * @param param.page - The current page number.
+   * @param param.pageSize - The number of items per page.
+   * @param param.sort - A string in the format "field,order" (e.g., "createdAt,DESC") specifying the sort field and direction.
+   * @returns An object containing the paginated list of conversations and metadata.
    */
-  async findBySenderId(senderId: string): Promise<Conversation[]> {
-    return await this.conversationRepository.findBySenderId(senderId);
+  async findBySenderId(
+    senderId: string,
+    { page, pageSize, sort }: PaginationOptions,
+  ) {
+    const [sortField, sortOrder] = sort.split(',');
+
+    const [items, totalItems] = await this.conversationRepository.findAndCount({
+      where: { senderId },
+      order: {
+        [sortField]: sortOrder.toUpperCase() === 'DESC' ? 'DESC' : 'ASC',
+      },
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+    });
+
+    const totalPages = Math.ceil(totalItems / pageSize);
+    const hasPrevPage = page > 1;
+    const hasNextPage = page < totalPages;
+    const prevPage = hasPrevPage ? page - 1 : null;
+    const nextPage = hasNextPage ? page + 1 : null;
+
+    return {
+      items,
+      totalItems,
+      itemsPerPage: pageSize,
+      currentPage: page,
+      totalPages,
+      hasPrevPage,
+      hasNextPage,
+      prevPage,
+      nextPage,
+    };
   }
 
   /**
-   * Retrieves all conversations where the specified user is either the sender or the receiver,
-   * and enriches each conversation with full sender and receiver user information.
-   *
-   * @param userId - The UUID of the user whose conversations are to be fetched.
-   * @returns A Promise that resolves to an array of conversations. Each conversation includes
-   *          the original conversation data along with the populated `sender` and `receiver` user objects.
+   * Retrieves a paginated list of conversations for a user (as sender or receiver),
+s   *
+   * @param userId - The ID of the user whose conversations are to be fetched.
+   * @param param - Pagination and sorting options.
+   * @param param.page - The current page number.
+   * @param param.pageSize - The number of items per page.
+   * @param param.sort - A string in the format "field,order", but only `updatedAt` is supported here.
+   * @returns A paginated list of enriched conversations and pagination metadata.
    */
-  async findMyConversationByUserId(userId: string) {
-    // fetch conversations
-    const conversations = await this.conversationRepository.find({
+  async findMyConversationByUserId(
+    userId: string,
+    { page, pageSize, sort }: PaginationOptions,
+  ) {
+    const [sortField, sortOrder] = sort.split(',');
+    const isDesc = sortOrder.toUpperCase() === 'DESC';
+
+    // fetch paginated conversations
+    const [items, totalItems] = await this.conversationRepository.findAndCount({
       where: [{ senderId: userId }, { receiverId: userId }],
-      order: { updatedAt: 'DESC' },
+      order: {
+        [sortField]: isDesc ? 'DESC' : 'ASC',
+      },
+      skip: (page - 1) * pageSize,
+      take: pageSize,
     });
 
-    // enrich each conversation with full sender and receiver info
+    // enrich with sender and receiver details
     const enrichedConversations = await Promise.all(
-      conversations.map(async (conversation) => {
+      items.map(async (conversation) => {
         const sender = await this.userService.findUserById(
           conversation.senderId,
         );
@@ -63,7 +111,23 @@ export class ConversationService {
       }),
     );
 
-    return enrichedConversations;
+    const totalPages = Math.ceil(totalItems / pageSize);
+    const hasPrevPage = page > 1;
+    const hasNextPage = page < totalPages;
+    const prevPage = hasPrevPage ? page - 1 : null;
+    const nextPage = hasNextPage ? page + 1 : null;
+
+    return {
+      items: enrichedConversations,
+      totalItems,
+      itemsPerPage: pageSize,
+      currentPage: page,
+      totalPages,
+      hasPrevPage,
+      hasNextPage,
+      prevPage,
+      nextPage,
+    };
   }
 
   /**
