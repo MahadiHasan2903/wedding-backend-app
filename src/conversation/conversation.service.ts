@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { Conversation } from './entities/conversation.entity';
 import { ConversationRepository } from './repositories/conversation.repository';
 import { CreateConversationDto } from './dto/create-conversation.dto';
@@ -19,6 +23,27 @@ export class ConversationService {
    * @returns The newly created Conversation entity.
    */
   async createConversation(dto: CreateConversationDto): Promise<Conversation> {
+    const { senderId, receiverId } = dto;
+
+    if (!receiverId) {
+      throw new BadRequestException(
+        'receiverId is required to create a conversation.',
+      );
+    }
+
+    // Check for existing conversation regardless of sender/receiver direction
+    const existingConversation = await this.conversationRepository.findOne({
+      where: [
+        { senderId, receiverId },
+        { senderId: receiverId, receiverId: senderId },
+      ],
+    });
+
+    if (existingConversation) {
+      return existingConversation;
+    }
+
+    // No existing conversation found, create a new one
     const conversation = this.conversationRepository.create(dto);
     return await this.conversationRepository.save(conversation);
   }
