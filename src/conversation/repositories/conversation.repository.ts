@@ -37,12 +37,9 @@ export class ConversationRepository extends Repository<Conversation> {
    * @param senderId - UUID of the sender to validate ownership.
    * @returns Promise resolving to the Conversation entity or null.
    */
-  async findByIdAndSender(
-    id: string,
-    senderId: string,
-  ): Promise<Conversation | null> {
+  async findByConversationId(id: string): Promise<Conversation | null> {
     return this.findOne({
-      where: { id, senderId },
+      where: { id },
     });
   }
 
