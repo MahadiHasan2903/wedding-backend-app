@@ -10,6 +10,7 @@ import {
   HttpException,
   UploadedFiles,
   UseInterceptors,
+  Query,
 } from '@nestjs/common';
 import { MessageService } from './message.service';
 import { CreateMessageDto } from './dto/create-message.dto';
@@ -72,10 +73,20 @@ export class MessageController {
   @Roles(UserRole.USER, UserRole.ADMIN)
   async getByConversationId(
     @Param('conversationId', ParseUUIDPipe) conversationId: string,
+    @Query('page') page = 1,
+    @Query('pageSize') pageSize = 10,
+    @Query('sort') sort = 'updatedAt,DESC',
   ) {
     try {
-      const messages =
-        await this.messageService.findByConversationId(conversationId);
+      const messages = await this.messageService.findByConversationId(
+        conversationId,
+        {
+          page: Number(page),
+          pageSize: Number(pageSize),
+          sort,
+        },
+      );
+
       return {
         success: true,
         message: 'Messages fetched successfully for conversation',

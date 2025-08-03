@@ -9,6 +9,7 @@ import { UpdateMessageStatusDto } from './dto/update-message-status.dto';
 import { MediaRepository } from 'src/media/repositories/media.repository';
 import { GoogleTranslateService } from './translation/google-translate.service';
 import { ConversationRepository } from 'src/conversation/repositories/conversation.repository';
+import { PaginationOptions } from 'src/types/common.types';
 
 @Injectable()
 export class MessageService {
@@ -154,34 +155,63 @@ export class MessageService {
    * Retrieves all messages associated with a specific conversation.
    * Only non-deleted messages are returned.
    * @param conversationId - The UUID of the conversation.
-   * @returns An array of Message entities sorted by creation date ascending.
+   * @param param - Pagination and sorting options.
+   * @param param.page - The current page number.
+   * @param param.pageSize - The number of items per page.
+   * @param param.sort - A string in the format "field,order", but only `updatedAt` is supported here.
+   * @returns A paginated list of messages and pagination metadata.
    */
-  async findByConversationId(conversationId: string) {
-    // Fetch messages normally
-    const messages =
-      await this.messageRepository.findByConversationId(conversationId);
+  async findByConversationId(
+    conversationId: string,
+    { page, pageSize, sort }: PaginationOptions,
+  ) {
+    const [sortField, sortOrder] = sort.split(',');
+    const isDesc = sortOrder.toUpperCase() === 'DESC';
 
-    // Replace attachments for each message with full media objects
-    const messagesWithFullAttachments = await Promise.all(
-      messages.map(async (message) => {
+    // Fetch paginated messages
+    const [items, totalItems] = await this.messageRepository.findAndCount({
+      where: { conversationId },
+      order: {
+        [sortField]: isDesc ? 'DESC' : 'ASC',
+      },
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+    });
+
+    // Enrich messages with full media details for attachments
+    const enrichedMessages = await Promise.all(
+      items.map(async (message) => {
         if (message.attachments && message.attachments.length > 0) {
           const fullAttachments = await Promise.all(
             message.attachments.map((id) => this.mediaRepository.findById(id)),
           );
-
-          // Return new message object with attachments replaced
           return {
             ...message,
             attachments: fullAttachments,
           };
         }
-
-        // If no attachments, return message as is
         return message;
       }),
     );
 
-    return messagesWithFullAttachments;
+    // Pagination metadata
+    const totalPages = Math.ceil(totalItems / pageSize);
+    const hasPrevPage = page > 1;
+    const hasNextPage = page < totalPages;
+    const prevPage = hasPrevPage ? page - 1 : null;
+    const nextPage = hasNextPage ? page + 1 : null;
+
+    return {
+      items: enrichedMessages,
+      totalItems,
+      itemsPerPage: pageSize,
+      currentPage: page,
+      totalPages,
+      hasPrevPage,
+      hasNextPage,
+      prevPage,
+      nextPage,
+    };
   }
 
   /**
