@@ -22,7 +22,7 @@ export class MessageGateway
   /**
    * Maps userId to their connected socket ID.
    */
-  private activeUsers = new Map<string, string>();
+  private activeUsers = new Map<string, Set<string>>();
 
   constructor(private readonly messageService: MessageService) {}
 
@@ -42,8 +42,16 @@ export class MessageGateway
   handleConnection(client: Socket) {
     const userId = client.handshake.query.userId as string;
     if (userId) {
-      this.activeUsers.set(userId, client.id);
+      if (!this.activeUsers.has(userId)) {
+        this.activeUsers.set(userId, new Set());
+      }
+      this.activeUsers.get(userId)!.add(client.id);
       console.log(`✅ User connected: ${userId} with socket ID: ${client.id}`);
+
+      // Emit only if this is the first connection for this user
+      if (this.activeUsers.get(userId)!.size === 1) {
+        this.server.emit('userStatusChanged', { userId, isOnline: true });
+      }
     } else {
       console.log(`⚠️ Client connected without a userId: ${client.id}`);
     }
@@ -55,10 +63,20 @@ export class MessageGateway
    * @param client - The disconnected socket client.
    */
   handleDisconnect(client: Socket) {
-    for (const [userId, socketId] of this.activeUsers.entries()) {
-      if (socketId === client.id) {
-        this.activeUsers.delete(userId);
-        console.log(`❌ User disconnected: ${userId}`);
+    for (const [userId, socketIds] of this.activeUsers.entries()) {
+      if (socketIds.has(client.id)) {
+        socketIds.delete(client.id);
+        console.log(
+          `❌ Socket disconnected for user: ${userId}, socket ID: ${client.id}`,
+        );
+
+        if (socketIds.size === 0) {
+          this.activeUsers.delete(userId);
+          console.log(`❌ User disconnected: ${userId}`);
+
+          // Notify all clients only if no active connections remain for this user
+          this.server.emit('userStatusChanged', { userId, isOnline: false });
+        }
         break;
       }
     }
@@ -89,14 +107,20 @@ export class MessageGateway
       replyToMessageId: data.replyToMessageId,
     });
 
-    const senderSocketId = this.activeUsers.get(data.senderId);
-    if (senderSocketId) {
-      this.server.to(senderSocketId).emit('newMessage', createdMessage);
+    // Emit to all sender sockets
+    const senderSocketIds = this.activeUsers.get(data.senderId);
+    if (senderSocketIds) {
+      senderSocketIds.forEach((socketId) => {
+        this.server.to(socketId).emit('newMessage', createdMessage);
+      });
     }
 
-    const receiverSocketId = this.activeUsers.get(data.receiverId);
-    if (receiverSocketId) {
-      this.server.to(receiverSocketId).emit('newMessage', createdMessage);
+    // Emit to all receiver sockets
+    const receiverSocketIds = this.activeUsers.get(data.receiverId);
+    if (receiverSocketIds) {
+      receiverSocketIds.forEach((socketId) => {
+        this.server.to(socketId).emit('newMessage', createdMessage);
+      });
     }
 
     return { success: true, message: '📨 Message successfully sent.' };
@@ -123,14 +147,20 @@ export class MessageGateway
       data.updatedMessage,
     );
 
-    const senderSocketId = this.activeUsers.get(data.senderId);
-    if (senderSocketId) {
-      this.server.to(senderSocketId).emit('messageEdited', updatedMessage);
+    // Emit to all sender sockets
+    const senderSocketIds = this.activeUsers.get(data.senderId);
+    if (senderSocketIds) {
+      senderSocketIds.forEach((socketId) => {
+        this.server.to(socketId).emit('messageEdited', updatedMessage);
+      });
     }
 
-    const receiverSocketId = this.activeUsers.get(data.receiverId);
-    if (receiverSocketId) {
-      this.server.to(receiverSocketId).emit('messageEdited', updatedMessage);
+    // Emit to all receiver sockets
+    const receiverSocketIds = this.activeUsers.get(data.receiverId);
+    if (receiverSocketIds) {
+      receiverSocketIds.forEach((socketId) => {
+        this.server.to(socketId).emit('messageEdited', updatedMessage);
+      });
     }
 
     return { success: true, message: '✏️ Message successfully edited.' };
