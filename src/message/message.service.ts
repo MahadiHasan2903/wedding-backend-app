@@ -90,7 +90,7 @@ export class MessageService {
       attachmentIds = mediaList.map((media) => media.id);
     }
 
-    // 1. Save the new message
+    // Save the new message
     const newMessage = this.messageRepository.create({
       ...dto,
       message: messageContent,
@@ -99,7 +99,7 @@ export class MessageService {
 
     const savedMessage = await this.messageRepository.save(newMessage);
 
-    // 2. Update conversation last message info
+    // Update conversation last message info
     await this.conversationRepository.update(dto.conversationId, {
       lastMessageId: savedMessage.id,
       lastMessage: dto.message ?? '[attachment]',
@@ -108,7 +108,7 @@ export class MessageService {
       createdAt: new Date(),
     });
 
-    // 3. Fetch and attach full replied message if repliedToMessage exists
+    // Fetch and attach full replied message if repliedToMessage exists
     if (dto.repliedToMessage) {
       const repliedMessage = await this.messageRepository.findOne({
         where: { id: dto.repliedToMessage },
