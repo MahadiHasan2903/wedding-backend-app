@@ -25,7 +25,7 @@ export class CreateMessageDto {
   status?: MessageStatus;
 
   @IsOptional()
-  replyToMessageId?: string;
+  repliedToMessage?: string;
 
   @IsOptional()
   attachments?: string[];

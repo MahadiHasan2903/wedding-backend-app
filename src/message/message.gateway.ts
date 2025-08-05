@@ -95,7 +95,7 @@ export class MessageGateway
       senderId: string;
       receiverId: string;
       conversationId: string;
-      replyToMessageId?: string;
+      repliedToMessage?: string;
       message: string;
     },
   ) {
@@ -104,7 +104,7 @@ export class MessageGateway
       receiverId: data.receiverId,
       conversationId: data.conversationId,
       message: data.message,
-      replyToMessageId: data.replyToMessageId,
+      repliedToMessage: data.repliedToMessage,
     });
 
     // Emit to all sender sockets
@@ -164,5 +164,46 @@ export class MessageGateway
     }
 
     return { success: true, message: '✏️ Message successfully edited.' };
+  }
+
+  @SubscribeMessage('toggleMessageDeletion')
+  async handleToggleMessageDeletion(
+    @MessageBody()
+    data: {
+      messageId: string;
+      isDeleted: boolean;
+    },
+  ) {
+    // Step 1: Fetch message to get senderId and receiverId
+    const message = await this.messageService.findById(data.messageId);
+
+    if (!message) {
+      return {
+        success: false,
+        message: `Message with ID ${data.messageId} not found.`,
+      };
+    }
+
+    // Step 2: Update isDeleted status
+    const updatedMessage = await this.messageService.updateIsDeleted(
+      data.messageId,
+      { isDeleted: data.isDeleted },
+    );
+
+    // Step 3: Emit update to sender and receiver sockets
+    const userIdsToNotify = [message.senderId, message.receiverId];
+
+    userIdsToNotify.forEach((userId) => {
+      const socketIds = this.activeUsers.get(userId);
+      if (socketIds) {
+        socketIds.forEach((socketId) => {
+          this.server
+            .to(socketId)
+            .emit('messageDeletionToggled', updatedMessage);
+        });
+      }
+    });
+
+    return { success: true, message: '🗑️ Message deletion status updated.' };
   }
 }

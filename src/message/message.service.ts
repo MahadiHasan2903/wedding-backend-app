@@ -181,16 +181,25 @@ export class MessageService {
     // Enrich messages with full media details for attachments
     const enrichedMessages = await Promise.all(
       items.map(async (message) => {
-        if (message.attachments && message.attachments.length > 0) {
-          const fullAttachments = await Promise.all(
+        let fullAttachments: (Media | null)[] = [];
+        if (message.attachments?.length) {
+          fullAttachments = await Promise.all(
             message.attachments.map((id) => this.mediaRepository.findById(id)),
           );
-          return {
-            ...message,
-            attachments: fullAttachments,
-          };
         }
-        return message;
+
+        let repliedToMessage: Message | null = null;
+        if (message.repliedToMessage) {
+          repliedToMessage = await this.messageRepository.findOne({
+            where: { id: message.repliedToMessage },
+          });
+        }
+
+        return {
+          ...message,
+          attachments: fullAttachments,
+          repliedToMessage,
+        };
       }),
     );
 

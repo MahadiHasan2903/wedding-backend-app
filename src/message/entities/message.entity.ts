@@ -50,7 +50,7 @@ export class Message {
   readAt: Date;
 
   @Column({ nullable: true })
-  replyToMessageId: string;
+  repliedToMessage: string;
 
   @Column({ type: 'uuid', array: true, nullable: true })
   attachments?: string[];
