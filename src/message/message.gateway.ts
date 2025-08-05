@@ -191,6 +191,12 @@ export class MessageGateway
     return { success: true, message: '✏️ Message successfully edited.' };
   }
 
+  /**
+   * Handles toggling the deletion status of a message (soft delete).
+   *
+   * @param data - Contains the ID of the message to update and the desired deletion status.
+   * @returns A success/failure response indicating whether the update was processed.
+   */
   @SubscribeMessage('toggleMessageDeletion')
   async handleToggleMessageDeletion(
     @MessageBody()
