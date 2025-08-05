@@ -1,11 +1,12 @@
 import {
-  WebSocketGateway,
-  WebSocketServer,
-  SubscribeMessage,
+  MessageBody,
   OnGatewayInit,
+  ConnectedSocket,
+  WebSocketServer,
+  WebSocketGateway,
+  SubscribeMessage,
   OnGatewayConnection,
   OnGatewayDisconnect,
-  MessageBody,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { MessageService } from './message.service';
@@ -80,6 +81,30 @@ export class MessageGateway
         break;
       }
     }
+  }
+
+  /**
+   * Handles the "checkUserOnlineStatus" WebSocket event.
+   * When a client emits this event with a user ID, this method checks
+   * if that user is currently online (i.e., exists in the activeUsers map),
+   * and responds to the requesting client with the user's online status.
+   *
+   * @param data - An object containing the userId to check.
+   * @param client - The WebSocket client that made the request.
+   */
+  @SubscribeMessage('checkUserOnlineStatus')
+  handleCheckUserOnlineStatus(
+    @MessageBody() data: { userIdToCheck: string },
+    @ConnectedSocket() client: Socket,
+  ) {
+    const { userIdToCheck } = data;
+    const isOnline = this.activeUsers.has(userIdToCheck);
+
+    console.log(
+      `🧠 [checkUserOnlineStatus] ${userIdToCheck} isOnline: ${isOnline}`,
+    );
+
+    client.emit('userStatusChanged', { userId: userIdToCheck, isOnline });
   }
 
   /**

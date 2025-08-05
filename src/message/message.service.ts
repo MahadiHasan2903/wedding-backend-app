@@ -65,9 +65,7 @@ export class MessageService {
    */
   async createMessage(
     dto: CreateMessageDto,
-    files?: {
-      attachments?: Express.Multer.File[];
-    },
+    files?: { attachments?: Express.Multer.File[] },
   ) {
     let messageContent: MessageContent | undefined;
 
@@ -101,7 +99,7 @@ export class MessageService {
 
     const savedMessage = await this.messageRepository.save(newMessage);
 
-    // 2. Update the conversation with last message info
+    // 2. Update conversation last message info
     await this.conversationRepository.update(dto.conversationId, {
       lastMessageId: savedMessage.id,
       lastMessage: dto.message ?? '[attachment]',
@@ -109,6 +107,18 @@ export class MessageService {
       receiverId: dto.receiverId,
       updatedAt: new Date(),
     });
+
+    // 3. Fetch and attach full replied message if repliedToMessage exists
+    if (dto.repliedToMessage) {
+      const repliedMessage = await this.messageRepository.findOne({
+        where: { id: dto.repliedToMessage },
+      });
+
+      return {
+        ...savedMessage,
+        repliedToMessage: repliedMessage,
+      };
+    }
 
     return savedMessage;
   }
