@@ -105,7 +105,7 @@ export class MessageService {
       lastMessage: dto.message ?? '[attachment]',
       senderId: dto.senderId,
       receiverId: dto.receiverId,
-      updatedAt: new Date(),
+      createdAt: new Date(),
     });
 
     // 3. Fetch and attach full replied message if repliedToMessage exists
@@ -168,7 +168,7 @@ export class MessageService {
    * @param param - Pagination and sorting options.
    * @param param.page - The current page number.
    * @param param.pageSize - The number of items per page.
-   * @param param.sort - A string in the format "field,order", but only `updatedAt` is supported here.
+   * @param param.sort - A string in the format "field,order", but only `createdAt` is supported here.
    * @returns A paginated list of messages and pagination metadata.
    */
   async findByConversationId(
@@ -243,13 +243,32 @@ export class MessageService {
     id: string,
     message: string,
     needsTranslation = false,
-  ): Promise<Message> {
+  ) {
+    // Prepare the content (translated or not)
     const translatedContent = await this.prepareMessageContent(
       message,
       needsTranslation,
     );
 
-    return this.messageRepository.updateMessageContent(id, translatedContent);
+    // Await updatedMessage correctly
+    const updatedMessage = await this.messageRepository.updateMessageContent(
+      id,
+      translatedContent,
+    );
+
+    // Check if repliedToMessage exists before querying
+    let repliedMessage: Message | null = null;
+    if (updatedMessage.repliedToMessage) {
+      repliedMessage = await this.messageRepository.findOne({
+        where: { id: updatedMessage.repliedToMessage },
+      });
+    }
+
+    // Return the updated message with the nested replied message object
+    return {
+      ...updatedMessage,
+      repliedToMessage: repliedMessage,
+    };
   }
 
   /**

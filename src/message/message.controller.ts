@@ -75,7 +75,7 @@ export class MessageController {
     @Param('conversationId', ParseUUIDPipe) conversationId: string,
     @Query('page') page = 1,
     @Query('pageSize') pageSize = 10,
-    @Query('sort') sort = 'updatedAt,DESC',
+    @Query('sort') sort = 'createdAt,DESC',
   ) {
     try {
       const messages = await this.messageService.findByConversationId(
