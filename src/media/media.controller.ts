@@ -8,8 +8,13 @@ import {
   UseInterceptors,
   HttpException,
   HttpStatus,
+  UploadedFiles,
+  Body,
 } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
+import {
+  FileFieldsInterceptor,
+  FileInterceptor,
+} from '@nestjs/platform-express';
 import { MediaService } from './media.service';
 import { sanitizeError } from 'src/utils/helpers';
 import { Public } from 'src/common/decorators/public.decorator';
@@ -172,6 +177,56 @@ export class MediaController {
         },
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
+    }
+  }
+
+  /**
+   * Upload multiple image/video files in a single request.
+   * Accepts up to 10 files under the field name "files".
+   */
+  @Post('upload-multiple')
+  @UseInterceptors(FileFieldsInterceptor([{ name: 'files', maxCount: 10 }]))
+  async uploadMultipleFiles(
+    @UploadedFiles() files: { files?: Express.Multer.File[] },
+    @Body() body: { conversationId: string },
+  ) {
+    // Validate that at least one file was provided
+    if (!files.files || files.files.length === 0) {
+      return {
+        status: HttpStatus.BAD_REQUEST,
+        success: false,
+        data: [],
+        message:
+          'No files were uploaded. Please select at least one image or video file.',
+      };
+    }
+
+    try {
+      // Upload each file using media service
+      const uploadedMedia = await Promise.all(
+        files.files.map((file) =>
+          this.mediaService.handleUpload(
+            file,
+            'conversation_attachments',
+            `conversation/${body.conversationId}/conversation-attachments`,
+          ),
+        ),
+      );
+
+      return {
+        status: HttpStatus.CREATED,
+        success: true,
+        data: uploadedMedia,
+        message: 'Files uploaded successfully.',
+      };
+    } catch (error) {
+      console.error('Error uploading files:', error);
+      return {
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+        success: false,
+        data: [],
+        message: 'Upload failed. Please try again later.',
+      };
     }
   }
 }
