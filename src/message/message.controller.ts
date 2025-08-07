@@ -11,6 +11,7 @@ import {
   UploadedFiles,
   UseInterceptors,
   Query,
+  Delete,
 } from '@nestjs/common';
 import { MessageService } from './message.service';
 import { CreateMessageDto } from './dto/create-message.dto';
@@ -228,6 +229,44 @@ export class MessageController {
           error: sanitizedError,
         },
         HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  /**
+   *
+   * @param attachmentId - The ID of the attachment to delete.
+   * @returns Success message if deletion is successful.
+   */
+  @Delete('attachment/:attachmentId')
+  @Roles(UserRole.USER, UserRole.ADMIN)
+  async deleteMessageAttachment(@Param('attachmentId') attachmentId: string) {
+    try {
+      await this.messageService.removeAttachment(attachmentId);
+
+      return {
+        status: HttpStatus.OK,
+        success: true,
+        message: 'Attachment deleted successfully',
+        data: {},
+      };
+    } catch (error) {
+      // Let known HTTP exceptions bubble up directly
+      if (error instanceof HttpException) {
+        throw error;
+      }
+
+      // Log or sanitize the unknown error if needed
+      const sanitizedError = sanitizeError(error);
+
+      throw new HttpException(
+        {
+          status: HttpStatus.BAD_REQUEST,
+          success: false,
+          message: 'Failed to delete attachment',
+          error: sanitizedError,
+        },
+        HttpStatus.BAD_REQUEST,
       );
     }
   }
