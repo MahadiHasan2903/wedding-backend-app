@@ -237,4 +237,57 @@ export class MessageGateway
 
     return { success: true, message: '🗑️ Message deletion status updated.' };
   }
+
+  /**
+   *
+   * @param data - Contains the attachmentId, senderId, and receiverId.
+   * @returns  A success/failure response indicating whether the attachment was deleted.
+   */
+  @SubscribeMessage('deleteAttachment')
+  async handleDeleteAttachment(
+    @MessageBody() data: { messageId: string; attachmentId: string },
+  ) {
+    const { messageId, attachmentId } = data;
+
+    if (!messageId || !attachmentId) {
+      return {
+        success: false,
+        message: '❌ Missing required fields: messageId or attachmentId.',
+      };
+    }
+
+    // Find the message by messageId
+    const message = await this.messageService.findById(messageId);
+    if (!message) {
+      return {
+        success: false,
+        message: `❌ Message with ID ${messageId} not found.`,
+      };
+    }
+
+    // Remove the attachment
+    await this.messageService.removeAttachment(attachmentId);
+
+    // Get sender and receiver IDs from the message
+    const { senderId, receiverId } = message;
+
+    // Emit to sender and receiver
+    const userIdsToNotify = [senderId, receiverId];
+    userIdsToNotify.forEach((userId) => {
+      const socketIds = this.activeUsers.get(userId);
+      if (socketIds) {
+        socketIds.forEach((socketId) => {
+          this.server.to(socketId).emit('attachmentDeleted', {
+            messageId,
+            attachmentId,
+          });
+        });
+      }
+    });
+
+    return {
+      success: true,
+      message: '🗑️ Attachment deleted successfully.',
+    };
+  }
 }
