@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { Language } from './enum/message.enum';
 import { MediaService } from 'src/media/media.service';
 import { Media } from 'src/media/entities/media.entity';
@@ -285,5 +285,36 @@ export class MessageService {
       id,
       dto.isDeleted,
     );
+  }
+
+  /**
+   *
+   * @param mediaId - The ID of the media attachment to remove.
+   */
+  async removeAttachment(mediaId: string): Promise<void> {
+    // Find the media record
+    const media = await this.mediaRepository.findOne({
+      where: { id: mediaId },
+    });
+    if (!media) {
+      throw new NotFoundException(`Attachment with id ${mediaId} not found`);
+    }
+
+    // Find messages containing this attachment ID
+    const messagesWithAttachment = await this.messageRepository
+      .createQueryBuilder('message')
+      .where(':mediaId = ANY(message.attachments)', { mediaId })
+      .getMany();
+
+    // Remove attachment ID from messages
+    for (const message of messagesWithAttachment) {
+      if (!message.attachments) continue;
+
+      message.attachments = message.attachments.filter((id) => id !== mediaId);
+      await this.messageRepository.save(message);
+    }
+
+    // Delete the media from S3 and database
+    await this.mediaService.deleteMediaById(mediaId);
   }
 }
