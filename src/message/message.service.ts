@@ -10,6 +10,7 @@ import { MediaRepository } from 'src/media/repositories/media.repository';
 import { GoogleTranslateService } from './translation/google-translate.service';
 import { ConversationRepository } from 'src/conversation/repositories/conversation.repository';
 import { PaginationOptions } from 'src/types/common.types';
+import { In } from 'typeorm';
 
 @Injectable()
 export class MessageService {
@@ -77,6 +78,7 @@ export class MessageService {
     }
 
     let attachmentIds: string[] = [];
+
     if (files?.attachments?.length) {
       const mediaList = await Promise.all(
         files.attachments.map((file) =>
@@ -88,9 +90,10 @@ export class MessageService {
         ),
       );
       attachmentIds = mediaList.map((media) => media.id);
+    } else if (dto.attachments?.length) {
+      attachmentIds = dto.attachments;
     }
 
-    // Save the new message
     const newMessage = this.messageRepository.create({
       ...dto,
       message: messageContent,
@@ -99,7 +102,6 @@ export class MessageService {
 
     const savedMessage = await this.messageRepository.save(newMessage);
 
-    // Update conversation last message info
     await this.conversationRepository.update(dto.conversationId, {
       lastMessageId: savedMessage.id,
       lastMessage: dto.message ?? '[attachment]',
@@ -108,19 +110,26 @@ export class MessageService {
       createdAt: new Date(),
     });
 
-    // Fetch and attach full replied message if repliedToMessage exists
+    // Replace deprecated findByIds
+    const mediaItems = attachmentIds.length
+      ? await this.mediaRepository.find({
+          where: { id: In(attachmentIds) },
+        })
+      : [];
+
+    // Declare repliedMessage before use
+    let repliedMessage: Message | null = null;
     if (dto.repliedToMessage) {
-      const repliedMessage = await this.messageRepository.findOne({
+      repliedMessage = await this.messageRepository.findOne({
         where: { id: dto.repliedToMessage },
       });
-
-      return {
-        ...savedMessage,
-        repliedToMessage: repliedMessage,
-      };
     }
 
-    return savedMessage;
+    return {
+      ...savedMessage,
+      attachments: mediaItems,
+      ...(repliedMessage ? { repliedToMessage: repliedMessage } : {}),
+    };
   }
 
   /**

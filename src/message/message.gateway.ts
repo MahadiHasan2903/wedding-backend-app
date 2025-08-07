@@ -122,6 +122,7 @@ export class MessageGateway
       conversationId: string;
       repliedToMessage?: string;
       message: string;
+      attachmentIds?: string[];
     },
   ) {
     const createdMessage = await this.messageService.createMessage({
@@ -130,23 +131,20 @@ export class MessageGateway
       conversationId: data.conversationId,
       message: data.message,
       repliedToMessage: data.repliedToMessage,
+      attachments: data.attachmentIds,
     });
 
     // Emit to all sender sockets
     const senderSocketIds = this.activeUsers.get(data.senderId);
-    if (senderSocketIds) {
-      senderSocketIds.forEach((socketId) => {
-        this.server.to(socketId).emit('newMessage', createdMessage);
-      });
-    }
+    senderSocketIds?.forEach((socketId) =>
+      this.server.to(socketId).emit('newMessage', createdMessage),
+    );
 
     // Emit to all receiver sockets
     const receiverSocketIds = this.activeUsers.get(data.receiverId);
-    if (receiverSocketIds) {
-      receiverSocketIds.forEach((socketId) => {
-        this.server.to(socketId).emit('newMessage', createdMessage);
-      });
-    }
+    receiverSocketIds?.forEach((socketId) =>
+      this.server.to(socketId).emit('newMessage', createdMessage),
+    );
 
     return { success: true, message: '📨 Message successfully sent.' };
   }
