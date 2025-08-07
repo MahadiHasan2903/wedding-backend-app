@@ -1,19 +1,22 @@
 import {
-  BadRequestException,
   Injectable,
   NotFoundException,
+  BadRequestException,
 } from '@nestjs/common';
-import { Conversation } from './entities/conversation.entity';
-import { ConversationRepository } from './repositories/conversation.repository';
-import { CreateConversationDto } from './dto/create-conversation.dto';
-import { UpdateLastMessageDto } from './dto/update-last-message.dto';
 import { UsersService } from 'src/users/users.service';
 import { PaginationOptions } from 'src/types/common.types';
+import { Conversation } from './entities/conversation.entity';
+import { UpdateLastMessageDto } from './dto/update-last-message.dto';
+import { CreateConversationDto } from './dto/create-conversation.dto';
+import { ConversationRepository } from './repositories/conversation.repository';
+import { MessageRepository } from 'src/message/repositories/message.repository';
+import { Message } from 'src/message/entities/message.entity';
 
 @Injectable()
 export class ConversationService {
   constructor(
     private readonly conversationRepository: ConversationRepository,
+    private readonly messageRepository: MessageRepository,
     private readonly userService: UsersService,
   ) {}
 
@@ -102,7 +105,7 @@ s   *
    * @param param.sort - A string in the format "field,order", but only `updatedAt` is supported here.
    * @returns A paginated list of enriched conversations and pagination metadata.
    */
-  async findMyConversationByUserId(
+  async findMyConversation(
     userId: string,
     { page, pageSize, sort }: PaginationOptions,
   ) {
@@ -128,10 +131,19 @@ s   *
         const receiver = await this.userService.findUserById(
           conversation.receiverId,
         );
+
+        let fullLastMessage: Message | null = null;
+        if (conversation.lastMessageId) {
+          fullLastMessage = await this.messageRepository.findById(
+            conversation.lastMessageId,
+          );
+        }
+
         return {
           ...conversation,
           sender,
           receiver,
+          lastMessage: fullLastMessage,
         };
       }),
     );

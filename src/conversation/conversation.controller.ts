@@ -75,12 +75,14 @@ export class ConversationController {
     @CurrentUser() user: { userId: string },
   ) {
     try {
-      const conversations =
-        await this.conversationService.findMyConversationByUserId(user.userId, {
+      const conversations = await this.conversationService.findMyConversation(
+        user.userId,
+        {
           page: Number(page),
           pageSize: Number(pageSize),
           sort,
-        });
+        },
+      );
 
       return {
         success: true,

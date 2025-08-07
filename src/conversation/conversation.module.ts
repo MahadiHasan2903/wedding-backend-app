@@ -1,11 +1,12 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
+import { UsersModule } from 'src/users/users.module';
+import { MessageModule } from 'src/message/message.module';
 import { ConversationService } from './conversation.service';
 import { ConversationController } from './conversation.controller';
 import { ConversationRepository } from './repositories/conversation.repository';
-import { UsersModule } from 'src/users/users.module';
 
 @Module({
-  imports: [UsersModule],
+  imports: [UsersModule, forwardRef(() => MessageModule)],
   controllers: [ConversationController],
   providers: [ConversationService, ConversationRepository],
   exports: [ConversationService, ConversationRepository],

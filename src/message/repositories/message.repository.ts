@@ -25,6 +25,15 @@ export class MessageRepository extends Repository<Message> {
   }
 
   /**
+   *
+   * @param id - UUID of the message to find.
+   * @returns Promise resolving to a Message entity or null if not found.
+   */
+  async findById(id: string): Promise<Message | null> {
+    return this.findOne({ where: { id } });
+  }
+
+  /**
    * Finds all non-deleted messages belonging to a specific conversation.
    * Results are ordered by creation time in ascending order (oldest first).
    *
