@@ -6,18 +6,20 @@ import {
 import { UsersService } from 'src/users/users.service';
 import { PaginationOptions } from 'src/types/common.types';
 import { Conversation } from './entities/conversation.entity';
+import { Message } from 'src/message/entities/message.entity';
 import { UpdateLastMessageDto } from './dto/update-last-message.dto';
 import { CreateConversationDto } from './dto/create-conversation.dto';
+import { UserRepository } from 'src/users/repositories/user.repository';
 import { ConversationRepository } from './repositories/conversation.repository';
 import { MessageRepository } from 'src/message/repositories/message.repository';
-import { Message } from 'src/message/entities/message.entity';
 
 @Injectable()
 export class ConversationService {
   constructor(
-    private readonly conversationRepository: ConversationRepository,
-    private readonly messageRepository: MessageRepository,
     private readonly userService: UsersService,
+    private readonly userRepository: UserRepository,
+    private readonly messageRepository: MessageRepository,
+    private readonly conversationRepository: ConversationRepository,
   ) {}
 
   /**
@@ -112,7 +114,14 @@ s   *
     const [sortField, sortOrder] = sort.split(',');
     const isDesc = sortOrder.toUpperCase() === 'DESC';
 
-    // fetch paginated conversations
+    // Fetch blockedUsers for current user
+    const currentUser = await this.userRepository.findOne({
+      where: { id: userId },
+      select: ['blockedUsers'],
+    });
+    const blockedUsers = currentUser?.blockedUsers ?? [];
+
+    // Fetch conversations where user is sender or receiver
     const [items, totalItems] = await this.conversationRepository.findAndCount({
       where: [{ senderId: userId }, { receiverId: userId }],
       order: {
@@ -122,9 +131,16 @@ s   *
       take: pageSize,
     });
 
-    // enrich with sender and receiver details
+    // Filter out conversations involving blocked users
+    const filteredConversations = items.filter(
+      (conversation) =>
+        !blockedUsers.includes(conversation.senderId) &&
+        !blockedUsers.includes(conversation.receiverId),
+    );
+
+    // Enrich remaining conversations with sender, receiver, and last message
     const enrichedConversations = await Promise.all(
-      items.map(async (conversation) => {
+      filteredConversations.map(async (conversation) => {
         const sender = await this.userService.findUserById(
           conversation.senderId,
         );
@@ -148,7 +164,10 @@ s   *
       }),
     );
 
-    const totalPages = Math.ceil(totalItems / pageSize);
+    // Note: totalItems here is for unfiltered total. If you want filtered total:
+    const filteredTotalItems =
+      totalItems - (items.length - filteredConversations.length);
+    const totalPages = Math.ceil(filteredTotalItems / pageSize);
     const hasPrevPage = page > 1;
     const hasNextPage = page < totalPages;
     const prevPage = hasPrevPage ? page - 1 : null;
@@ -156,7 +175,7 @@ s   *
 
     return {
       items: enrichedConversations,
-      totalItems,
+      totalItems: filteredTotalItems,
       itemsPerPage: pageSize,
       currentPage: page,
       totalPages,
