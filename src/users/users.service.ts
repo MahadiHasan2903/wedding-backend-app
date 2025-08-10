@@ -370,7 +370,7 @@ export class UsersService {
     });
 
     if (!user) {
-      throw new NotFoundException(`User with id ${userId} not found`);
+      return false;
     }
 
     return user.likedUsers?.includes(targetUserId) ?? false;
@@ -516,8 +516,9 @@ export class UsersService {
     });
 
     if (!user) {
-      throw new NotFoundException(`User with id ${userId} not found`);
+      return false;
     }
+
     return user.blockedUsers?.includes(targetUserId) ?? false;
   }
 

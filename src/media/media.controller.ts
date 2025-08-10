@@ -207,8 +207,8 @@ export class MediaController {
         files.files.map((file) =>
           this.mediaService.handleUpload(
             file,
-            'conversation_attachments',
-            `conversation/${body.conversationId}/conversation-attachments`,
+            'general-collections',
+            'general-folder',
           ),
         ),
       );
