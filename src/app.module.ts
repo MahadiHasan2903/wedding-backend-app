@@ -29,8 +29,10 @@ import { ContactModule } from './contact/contact.module';
         password: configService.get<string>('DB_PASSWORD'),
         database: configService.get<string>('DB_NAME'),
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
-        synchronize: configService.get<string>('NODE_ENV') !== 'production',
-        // ⚠️ Disable in production
+        synchronize: configService.get<string>('NODE_ENV') !== 'production', // ⚠️ Disable in production
+        ssl: {
+          rejectUnauthorized: false,
+        },
       }),
     }),
     StripeModule,
