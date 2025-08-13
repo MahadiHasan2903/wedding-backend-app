@@ -148,6 +148,35 @@ export class UsersController {
   }
 
   /**
+   * @route GET /v1/users/gender-distribution
+   * @desc Get total gender percentages and breakdown by active/inactive users
+   * @access Admin
+   */
+  @Get('gender-distribution')
+  @Roles(UserRole.ADMIN)
+  async getGenderDistribution() {
+    try {
+      const data = await this.usersService.getGenderDistribution();
+      return {
+        status: HttpStatus.OK,
+        success: true,
+        message: 'Gender distribution breakdown retrieved successfully',
+        data,
+      };
+    } catch (error) {
+      throw new HttpException(
+        {
+          status: HttpStatus.BAD_REQUEST,
+          success: false,
+          message: 'Failed to fetch gender distribution',
+          error: sanitizeError(error),
+        },
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
+
+  /**
    * Retrieves a paginated list of users, optionally filtered and sorted based on query parameters.
    *
    * Supports filtering by various user attributes, sorting, and pagination.

@@ -207,6 +207,43 @@ export class PaymentController {
   }
 
   /**
+   * Retrieves a summarized view of subscription revenue.
+   *
+   * This endpoint aggregates subscription payments for different time frames
+   * (weekly, monthly, quarterly, total) and provides per-month totals for the current year.
+   *
+   * @access ADMIN only
+   * @returns {Object} A standardized response object
+   * @throws {HttpException} Throws a BAD_REQUEST error if retrieval fails, with a sanitized error message.
+   */
+  @Get('subscription-revenue')
+  @Roles(UserRole.ADMIN)
+  async getSubscriptionRevenueSummary() {
+    try {
+      const revenueSummary = await this.paymentService.getRevenueSummary();
+
+      // Return the revenue data in a standardized response format
+      return {
+        status: HttpStatus.OK,
+        success: true,
+        message: 'Subscription revenue summary retrieved successfully',
+        data: revenueSummary,
+      };
+    } catch (error) {
+      // Log and return a sanitized error response
+      throw new HttpException(
+        {
+          status: HttpStatus.BAD_REQUEST,
+          success: false,
+          message: 'Unable to retrieve subscription revenue summary',
+          error: sanitizeError(error),
+        },
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
+
+  /**
    * @route GET /v1/payment/:transactionId
    * @desc Retrieve payment details by transaction ID
    * @access User, Admin
