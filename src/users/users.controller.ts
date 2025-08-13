@@ -73,6 +73,81 @@ export class UsersController {
   }
 
   /**
+   * Endpoint to fetch user statistics.
+   *
+   * @returns A response object containing counts of active, inactive, and VIP users.
+   * @access Admin only
+   */
+  @Get('users-stats')
+  @Roles(UserRole.ADMIN)
+  async getUserStats() {
+    try {
+      // Call service method to get user stats
+      const result = await this.usersService.getUserStats();
+
+      // Return success response with stats data
+      return {
+        status: HttpStatus.OK,
+        success: true,
+        message: 'User stats fetched successfully',
+        data: result,
+      };
+    } catch (error) {
+      // Sanitize error for security before responding
+      const sanitizedError = sanitizeError(error);
+
+      // Throw an HTTP 400 Bad Request with error details
+      throw new HttpException(
+        {
+          status: HttpStatus.BAD_REQUEST,
+          success: false,
+          message: 'Failed to fetch user stats',
+          error: sanitizedError,
+        },
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
+
+  /**
+   * Endpoint to fetch new user registration statistics.
+   * This route is restricted to users with ADMIN role.
+   * @returns A response object containing new registration stats including:
+   *  - registrations within the last 24 hours, 7 days, 30 days, and 90 days
+   *  - monthly grouped new registration counts
+   */
+  @Get('new-registrations-stats')
+  @Roles(UserRole.ADMIN)
+  async getNewRegistrationsStats() {
+    try {
+      // Call the service method to fetch new registration statistics
+      const data = await this.usersService.getNewRegistrationStats();
+
+      // Return success response with the fetched data
+      return {
+        status: HttpStatus.OK,
+        success: true,
+        message: 'New registrations stats fetched successfully',
+        data,
+      };
+    } catch (error) {
+      // Sanitize the error to avoid leaking sensitive info
+      const sanitizedError = sanitizeError(error);
+
+      // Throw a standardized HTTP 400 Bad Request with error details
+      throw new HttpException(
+        {
+          status: HttpStatus.BAD_REQUEST,
+          success: false,
+          message: 'Failed to fetch new registrations stats',
+          error: sanitizedError,
+        },
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
+
+  /**
    * Retrieves a paginated list of users, optionally filtered and sorted based on query parameters.
    *
    * Supports filtering by various user attributes, sorting, and pagination.
