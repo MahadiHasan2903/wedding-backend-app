@@ -36,3 +36,8 @@ export interface FiltersOptions {
   healthCondition?: string;
   accountType?: string;
 }
+
+export interface MonthlyRegistrationRaw {
+  yearMonth: string;
+  count: string;
+}

@@ -1,25 +1,28 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { UserRepository } from './repositories/user.repository';
+import {
+  UserRole,
+  LikeStatus,
+  BlockStatus,
+  AccountStatus,
+} from './enum/users.enum';
+import { In, MoreThanOrEqual } from 'typeorm';
+import { startOfDay, subDays, format } from 'date-fns';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { MediaService } from 'src/media/media.service';
-import {
-  AccountStatus,
-  BlockStatus,
-  LikeStatus,
-  UserRole,
-} from './enum/users.enum';
-import { In } from 'typeorm';
-import { MediaRepository } from 'src/media/repositories/media.repository';
-import { FiltersOptions } from './types/user.types';
-import { BlockUnblockDto } from './dto/block-unblock.dto';
 import { LikeDislikeDto } from './dto/like-dislike.dto';
+import { BlockUnblockDto } from './dto/block-unblock.dto';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { UserRepository } from './repositories/user.repository';
+import { MediaRepository } from 'src/media/repositories/media.repository';
+import { FiltersOptions, MonthlyRegistrationRaw } from './types/user.types';
+import { MsPurchaseRepository } from 'src/ms-purchase/repositories/ms-purchase.repository';
 
 @Injectable()
 export class UsersService {
   constructor(
+    private readonly mediaService: MediaService,
     private readonly usersRepository: UserRepository,
     private readonly mediaRepository: MediaRepository,
-    private readonly mediaService: MediaService,
+    private readonly msPurchaseRepository: MsPurchaseRepository,
   ) {}
 
   /**
@@ -551,5 +554,117 @@ export class UsersService {
 
     // Step 4: Delete the media from S3 and media table
     await this.mediaService.deleteMediaById(mediaId);
+  }
+
+  /**
+   * Retrieves statistics about users, including counts of active, inactive, and VIP users.
+   *
+   * @returns An object containing:
+   *   - activeCount: number of users with active accounts.
+   *   - inactiveCount: number of users with inactive accounts.
+   *   - vipCount: number of distinct users who purchased VIP packages (packageId 2 or 3).
+   */
+  async getUserStats() {
+    // Run all counts in parallel for better performance
+    const [activeCount, inactiveCount, vipCountResult] = await Promise.all([
+      this.usersRepository.count({
+        where: { accountStatus: AccountStatus.ACTIVE },
+      }),
+      this.usersRepository.count({
+        where: { accountStatus: AccountStatus.INACTIVE },
+      }),
+      this.msPurchaseRepository
+        .createQueryBuilder('purchase')
+        .select('COUNT(DISTINCT purchase.user)', 'count')
+        .where('purchase.packageId IN (:...packages)', { packages: [2, 3] })
+        .getRawOne<{ count: string }>(),
+    ]);
+
+    const vipCount = parseInt(vipCountResult?.count ?? '0', 10);
+
+    return {
+      activeCount,
+      inactiveCount,
+      vipCount,
+    };
+  }
+
+  /**
+   * Retrieves new user registration statistics over multiple time ranges
+   * and monthly grouped registration counts.
+   *
+   * @returns An object containing:
+   *  - last24HoursCount: total registrations in the last 24 hours.
+   *  - last7DaysCount: total registrations in the last 7 days.
+   *  - last30DaysCount: total registrations in the last 30 days.
+   *  - last90DaysCount: total registrations in the last 90 days.
+   *  - monthlyRegistrations: array of objects with month name and new registration count for that month.
+   */
+  async getNewRegistrationStats() {
+    const now = new Date();
+
+    const last24Hours = startOfDay(subDays(now, 1));
+    const last7Days = startOfDay(subDays(now, 7));
+    const last30Days = startOfDay(subDays(now, 30));
+    const last90Days = startOfDay(subDays(now, 90));
+
+    // Run all counts and query in parallel for performance
+    const [
+      last24HoursCount,
+      last7DaysCount,
+      last30DaysCount,
+      last90DaysCount,
+      monthlyRegistrationsRaw,
+    ] = await Promise.all([
+      this.usersRepository.count({
+        where: {
+          createdAt: MoreThanOrEqual(last24Hours),
+        },
+      }),
+      this.usersRepository.count({
+        where: {
+          createdAt: MoreThanOrEqual(last7Days),
+        },
+      }),
+      this.usersRepository.count({
+        where: {
+          createdAt: MoreThanOrEqual(last30Days),
+        },
+      }),
+      this.usersRepository.count({
+        where: {
+          createdAt: MoreThanOrEqual(last90Days),
+        },
+      }),
+      this.usersRepository
+        .createQueryBuilder('user')
+        .select([
+          `TO_CHAR(user.createdAt, 'YYYY-MM') as "yearMonth"`,
+          'COUNT(*) as count',
+        ])
+        .groupBy(`"yearMonth"`)
+        .orderBy(`"yearMonth"`, 'ASC')
+        .getRawMany<MonthlyRegistrationRaw>(),
+    ]);
+
+    // Map raw monthly registration data into desired format
+    const monthlyRegistrations = monthlyRegistrationsRaw.map(
+      ({ yearMonth, count }) => {
+        const [year, month] = yearMonth.split('-').map(Number);
+        const formattedMonth = format(new Date(year, month - 1), 'MMMM yyyy');
+        return {
+          month: formattedMonth,
+          newRegistration: parseInt(count, 10),
+        };
+      },
+    );
+
+    return {
+      last24HoursCount,
+      last7DaysCount,
+      last30DaysCount,
+      last90DaysCount,
+      monthlyRegistrations,
+    };
   }
 }
