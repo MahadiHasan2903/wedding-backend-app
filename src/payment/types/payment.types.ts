@@ -5,3 +5,13 @@ export interface PaymentFiltersOptions {
   paymentStatus?: PaymentStatus;
   dateRange?: string;
 }
+
+export interface SumResult {
+  sum: string | null;
+}
+
+export interface PerMonthRaw {
+  month: string;
+  year: string;
+  totalAmount: string;
+}

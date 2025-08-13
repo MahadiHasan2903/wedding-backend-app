@@ -12,6 +12,15 @@ export class PaymentRepository {
   }
 
   /**
+   * Creates and returns a TypeORM QueryBuilder instance for the Payment entity.
+   * @param {string} [alias='payment'] - The table alias to use in the query builder.
+   * @returns {SelectQueryBuilder<Payment>} A query builder instance for building custom queries.
+   */
+  createQueryBuilder(alias = 'payment') {
+    return this.repo.createQueryBuilder(alias);
+  }
+
+  /**
    * Create a new Payment entity instance (not saved to DB yet)
    * @param data Partial Payment data
    */
@@ -36,9 +45,9 @@ export class PaymentRepository {
   }
 
   /**
-   *
-   * @param user
-   * @returns
+   * Retrieves all payment records associated with the given user ID.
+   * @param {string} user - The ID of the user whose payments should be retrieved.
+   * @returns {Promise<Payment[]>} A promise that resolves to an array of payment entities.
    */
   findByUserId(user: string): Promise<Payment[]> {
     return this.repo.find({ where: { user } });

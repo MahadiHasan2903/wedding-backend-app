@@ -3,11 +3,12 @@ import {
   LikeStatus,
   BlockStatus,
   AccountStatus,
+  Gender,
 } from './enum/users.enum';
 import { In, MoreThanOrEqual } from 'typeorm';
-import { startOfDay, subDays, format } from 'date-fns';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { MediaService } from 'src/media/media.service';
+import { startOfDay, subDays, format } from 'date-fns';
 import { LikeDislikeDto } from './dto/like-dislike.dto';
 import { BlockUnblockDto } from './dto/block-unblock.dto';
 import { Injectable, NotFoundException } from '@nestjs/common';
@@ -590,15 +591,14 @@ export class UsersService {
   }
 
   /**
-   * Retrieves new user registration statistics over multiple time ranges
-   * and monthly grouped registration counts.
+   * Retrieves new user registration statistics for different time frames.
    *
-   * @returns An object containing:
-   *  - last24HoursCount: total registrations in the last 24 hours.
-   *  - last7DaysCount: total registrations in the last 7 days.
-   *  - last30DaysCount: total registrations in the last 30 days.
-   *  - last90DaysCount: total registrations in the last 90 days.
-   *  - monthlyRegistrations: array of objects with month name and new registration count for that month.
+   * @returns {Object} Registration statistics including:
+   *  - last24HoursCount: number of users registered in the last 24 hours
+   *  - last7DaysCount: number of users registered in the last 7 days
+   *  - last30DaysCount: number of users registered in the last 30 days
+   *  - last90DaysCount: number of users registered in the last 90 days
+   *  - monthlyRegistrations: array of objects containing month, year, and newRegistration count
    */
   async getNewRegistrationStats() {
     const now = new Date();
@@ -617,24 +617,16 @@ export class UsersService {
       monthlyRegistrationsRaw,
     ] = await Promise.all([
       this.usersRepository.count({
-        where: {
-          createdAt: MoreThanOrEqual(last24Hours),
-        },
+        where: { createdAt: MoreThanOrEqual(last24Hours) },
       }),
       this.usersRepository.count({
-        where: {
-          createdAt: MoreThanOrEqual(last7Days),
-        },
+        where: { createdAt: MoreThanOrEqual(last7Days) },
       }),
       this.usersRepository.count({
-        where: {
-          createdAt: MoreThanOrEqual(last30Days),
-        },
+        where: { createdAt: MoreThanOrEqual(last30Days) },
       }),
       this.usersRepository.count({
-        where: {
-          createdAt: MoreThanOrEqual(last90Days),
-        },
+        where: { createdAt: MoreThanOrEqual(last90Days) },
       }),
       this.usersRepository
         .createQueryBuilder('user')
@@ -647,13 +639,14 @@ export class UsersService {
         .getRawMany<MonthlyRegistrationRaw>(),
     ]);
 
-    // Map raw monthly registration data into desired format
+    // Map raw monthly registration data into desired format with separate month and year
     const monthlyRegistrations = monthlyRegistrationsRaw.map(
       ({ yearMonth, count }) => {
         const [year, month] = yearMonth.split('-').map(Number);
-        const formattedMonth = format(new Date(year, month - 1), 'MMMM yyyy');
+        const formattedMonth = format(new Date(year, month - 1), 'MMMM');
         return {
           month: formattedMonth,
+          year,
           newRegistration: parseInt(count, 10),
         };
       },
@@ -665,6 +658,65 @@ export class UsersService {
       last30DaysCount,
       last90DaysCount,
       monthlyRegistrations,
+    };
+  }
+
+  /**
+   * Calculate gender percentages overall and split by account status
+   *
+   * @returns {Promise<object>} Object containing overall gender percentages
+   * and active/inactive breakdown
+   */
+  async getGenderDistribution() {
+    // Fetch total counts grouped by gender
+    const totalRaw = await this.usersRepository
+      .createQueryBuilder('user')
+      .select('user.gender', 'gender')
+      .addSelect('COUNT(*)', 'count')
+      .groupBy('user.gender')
+      .getRawMany<{ gender: Gender; count: string }>();
+
+    const totalUsers = totalRaw.reduce(
+      (sum, item) => sum + Number(item.count),
+      0,
+    );
+
+    // Fetch active users grouped by gender
+    const activeRaw = await this.usersRepository
+      .createQueryBuilder('user')
+      .select('user.gender', 'gender')
+      .addSelect('COUNT(*)', 'count')
+      .where('user.accountStatus = :status', { status: AccountStatus.ACTIVE })
+      .groupBy('user.gender')
+      .getRawMany<{ gender: Gender; count: string }>();
+
+    const inactiveRaw = await this.usersRepository
+      .createQueryBuilder('user')
+      .select('user.gender', 'gender')
+      .addSelect('COUNT(*)', 'count')
+      .where('user.accountStatus = :status', { status: AccountStatus.INACTIVE })
+      .groupBy('user.gender')
+      .getRawMany<{ gender: Gender; count: string }>();
+
+    const mapPercentage = (raw: typeof totalRaw, total: number) => {
+      const result: Record<string, number> = { male: 0, female: 0, other: 0 };
+      raw.forEach((item) => {
+        const key = item.gender?.toLowerCase() || 'other';
+        result[key] = Math.round((Number(item.count) / total) * 100);
+      });
+      return result;
+    };
+
+    return {
+      ...mapPercentage(totalRaw, totalUsers),
+      active: mapPercentage(
+        activeRaw,
+        activeRaw.reduce((sum, i) => sum + Number(i.count), 0) || 1,
+      ),
+      inactive: mapPercentage(
+        inactiveRaw,
+        inactiveRaw.reduce((sum, i) => sum + Number(i.count), 0) || 1,
+      ),
     };
   }
 }
