@@ -9,6 +9,7 @@ import {
 } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
 import {
+  AccountStatus,
   DietaryPreference,
   DrinkingHabit,
   Gender,
@@ -76,6 +77,10 @@ export class SearchUserDto {
   @IsOptional()
   @IsEnum(Gender)
   lookingFor?: Gender;
+
+  @IsOptional()
+  @IsEnum(AccountStatus)
+  accountStatus?: AccountStatus;
 
   @IsOptional()
   @IsEnum(Religion)

@@ -18,6 +18,7 @@ export interface FiltersOptions {
   weight?: string;
   joined?: string;
   monthlyIncome?: string;
+  accountStatus?: string;
   lookingFor?: string;
   religion?: string;
   country?: string;

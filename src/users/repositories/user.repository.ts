@@ -3,6 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { User } from '../entities/user.entity';
 import { subYears } from 'date-fns';
 import {
+  AccountStatus,
   DietaryPreference,
   DrinkingHabit,
   Gender,
@@ -70,6 +71,8 @@ export class UserRepository extends Repository<User> {
 
     const qb = this.createQueryBuilder('user');
 
+    qb.andWhere('user.userRole != :adminRole', { adminRole: 'admin' });
+
     // Manual join for VIP filtering
     if (filters.accountType === 'premium') {
       qb.leftJoin(
@@ -135,6 +138,17 @@ export class UserRepository extends Repository<User> {
       Object.values(Gender).includes(filters.lookingFor as Gender)
     ) {
       qb.andWhere('user.gender = :gender', { gender: filters.lookingFor });
+    }
+
+    if (
+      filters.accountStatus &&
+      Object.values(AccountStatus).includes(
+        filters.accountStatus as AccountStatus,
+      )
+    ) {
+      qb.andWhere('user.accountStatus = :accountStatus', {
+        accountStatus: filters.accountStatus,
+      });
     }
 
     if (
@@ -209,7 +223,6 @@ export class UserRepository extends Repository<User> {
     }
 
     // SIMPLE STRING FILTERS
-
     if (filters.name) {
       qb.andWhere(
         new Brackets((qb) => {
