@@ -563,29 +563,35 @@ export class UsersService {
    * @returns An object containing:
    *   - activeCount: number of users with active accounts.
    *   - inactiveCount: number of users with inactive accounts.
+   *   - bannedCount: number of users with banned accounts.
    *   - vipCount: number of distinct users who purchased VIP packages (packageId 2 or 3).
    */
   async getUserStats() {
     // Run all counts in parallel for better performance
-    const [activeCount, inactiveCount, vipCountResult] = await Promise.all([
-      this.usersRepository.count({
-        where: { accountStatus: AccountStatus.ACTIVE },
-      }),
-      this.usersRepository.count({
-        where: { accountStatus: AccountStatus.INACTIVE },
-      }),
-      this.msPurchaseRepository
-        .createQueryBuilder('purchase')
-        .select('COUNT(DISTINCT purchase.user)', 'count')
-        .where('purchase.packageId IN (:...packages)', { packages: [2, 3] })
-        .getRawOne<{ count: string }>(),
-    ]);
+    const [activeCount, inactiveCount, bannedCount, vipCountResult] =
+      await Promise.all([
+        this.usersRepository.count({
+          where: { accountStatus: AccountStatus.ACTIVE },
+        }),
+        this.usersRepository.count({
+          where: { accountStatus: AccountStatus.INACTIVE },
+        }),
+        this.usersRepository.count({
+          where: { accountStatus: AccountStatus.BANNED },
+        }),
+        this.msPurchaseRepository
+          .createQueryBuilder('purchase')
+          .select('COUNT(DISTINCT purchase.user)', 'count')
+          .where('purchase.packageId IN (:...packages)', { packages: [2, 3] })
+          .getRawOne<{ count: string }>(),
+      ]);
 
     const vipCount = parseInt(vipCountResult?.count ?? '0', 10);
 
     return {
       activeCount,
       inactiveCount,
+      bannedCount,
       vipCount,
     };
   }
