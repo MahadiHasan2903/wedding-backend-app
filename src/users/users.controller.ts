@@ -1,30 +1,32 @@
 import {
-  Controller,
-  Patch,
-  Param,
+  Get,
   Body,
-  UseInterceptors,
+  Post,
+  Patch,
+  Query,
+  Param,
+  Delete,
   HttpStatus,
+  Controller,
   HttpException,
   UploadedFiles,
-  Get,
-  Query,
-  Delete,
+  UseInterceptors,
   BadRequestException,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
-import { UpdateUserDto } from './dto/update-user.dto';
-import { BlockStatus, LikeStatus, UserRole } from './enum/users.enum';
-import { Roles } from 'src/common/decorators/roles.decorator';
 import { sanitizeError } from 'src/utils/helpers';
+import { UpdateUserDto } from './dto/update-user.dto';
+import { SearchUserDto } from './dto/search-user.dto';
+import { LikeDislikeDto } from './dto/like-dislike.dto';
+import { CreateAdminDto } from './dto/create-admin.dto';
+import { BlockUnblockDto } from './dto/block-unblock.dto';
+import { Roles } from 'src/common/decorators/roles.decorator';
+import { UpdateUserRoleDto } from './dto/update-user-role.dts';
+import { Public } from 'src/common/decorators/public.decorator';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
+import { BlockStatus, LikeStatus, UserRole } from './enum/users.enum';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { UpdateAccountStatusDto } from './dto/update-account-status.dto';
-import { SearchUserDto } from './dto/search-user.dto';
-import { UpdateUserRoleDto } from './dto/update-user-role.dts';
-import { BlockUnblockDto } from './dto/block-unblock.dto';
-import { Public } from 'src/common/decorators/public.decorator';
-import { LikeDislikeDto } from './dto/like-dislike.dto';
 
 @Controller('v1/users')
 export class UsersController {
@@ -66,6 +68,39 @@ export class UsersController {
           success: false,
           message: 'Failed to fetch admin users',
           error: sanitizedError,
+        },
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
+
+  /**
+   * Creates a new admin user directly (no OTP required).
+   *
+   * @param createAdminDto - DTO containing new admin details.
+   * @returns Response object with created admin (excluding password).
+   * @throws HttpException - If creation fails (e.g., duplicate email, DB error).
+   */
+  @Roles(UserRole.ADMIN)
+  @Post('add-admin')
+  async addAdmin(@Body() createAdminDto: CreateAdminDto) {
+    try {
+      const admin = await this.usersService.createAdmin(createAdminDto);
+      const { password, ...adminWithoutPassword } = admin;
+
+      return {
+        status: HttpStatus.CREATED,
+        success: true,
+        message: 'Admin account successfully created',
+        data: adminWithoutPassword,
+      };
+    } catch (error: unknown) {
+      throw new HttpException(
+        {
+          status: HttpStatus.BAD_REQUEST,
+          success: false,
+          message: 'Failed to create admin account',
+          error: sanitizeError(error),
         },
         HttpStatus.BAD_REQUEST,
       );

@@ -51,7 +51,7 @@ export class AccountController {
         };
       }
 
-      const result = await this.accountService.create(createAccountDto);
+      const result = await this.accountService.createAccount(createAccountDto);
 
       return {
         status: HttpStatus.OK,

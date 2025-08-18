@@ -56,7 +56,7 @@ export class AccountService {
    * @param createAccountDto - Account registration details.
    * @returns A message confirming OTP sent, and the OTP itself in development mode.
    */
-  async create(
+  async createAccount(
     createAccountDto: CreateAccountDto,
   ): Promise<{ message: string; otp?: string }> {
     const otp = Math.floor(100000 + Math.random() * 900000).toString();

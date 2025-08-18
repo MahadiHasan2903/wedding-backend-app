@@ -5,6 +5,7 @@ import {
   AccountStatus,
   Gender,
 } from './enum/users.enum';
+import * as bcrypt from 'bcrypt';
 import { In, MoreThanOrEqual } from 'typeorm';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { MediaService } from 'src/media/media.service';
@@ -16,6 +17,10 @@ import { UserRepository } from './repositories/user.repository';
 import { MediaRepository } from 'src/media/repositories/media.repository';
 import { FiltersOptions, MonthlyRegistrationRaw } from './types/user.types';
 import { MsPurchaseRepository } from 'src/ms-purchase/repositories/ms-purchase.repository';
+import { CreateAdminDto } from './dto/create-admin.dto';
+import { MsPackageRepository } from 'src/ms-package/repositories/msPackage.repository';
+import { MsPurchaseService } from 'src/ms-purchase/ms-purchase.service';
+import { PurchasePackageCategory } from 'src/ms-purchase/enum/ms-purchase.enum';
 
 @Injectable()
 export class UsersService {
@@ -23,6 +28,8 @@ export class UsersService {
     private readonly mediaService: MediaService,
     private readonly usersRepository: UserRepository,
     private readonly mediaRepository: MediaRepository,
+    private readonly msPackageRepo: MsPackageRepository,
+    private readonly msPurchaseService: MsPurchaseService,
     private readonly msPurchaseRepository: MsPurchaseRepository,
   ) {}
 
@@ -40,6 +47,55 @@ export class UsersService {
     }
 
     return this.usersRepository.enrichUserRelations(user);
+  }
+
+  /**
+   * Creates a new admin user directly (skips OTP flow).
+   *
+   * @param createAdminDto - DTO containing firstName, lastName, email, password.
+   * @returns The created admin user entity (with membership linked).
+   * @throws Error if email already exists or default membership is not found.
+   */
+  async createAdmin(createAdminDto: CreateAdminDto) {
+    const existing = await this.usersRepository.findOne({
+      where: { email: createAdminDto.email },
+    });
+
+    if (existing) {
+      throw new Error('An account with this email already exists.');
+    }
+
+    const hashedPassword = await bcrypt.hash(createAdminDto.password, 10);
+
+    // Create admin user
+    const admin = this.usersRepository.create({
+      ...createAdminDto,
+      password: hashedPassword,
+      userRole: UserRole.ADMIN,
+    });
+    const savedAdmin = await this.usersRepository.save(admin);
+
+    // Fetch default membership (id = 1)
+    const defaultPackage = await this.msPackageRepo.findOne({
+      where: { id: 1 },
+    });
+
+    if (!defaultPackage) {
+      throw new Error('Default membership package not found');
+    }
+
+    // Create membership purchase
+    const purchaseInfo = await this.msPurchaseService.createPurchase(
+      savedAdmin.id,
+      defaultPackage.id,
+      PurchasePackageCategory.LIFETIME,
+    );
+
+    // Link membership
+    savedAdmin.purchasedMembership = purchaseInfo.id;
+    await this.usersRepository.save(savedAdmin);
+
+    return savedAdmin;
   }
 
   /**
