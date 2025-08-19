@@ -18,6 +18,7 @@ export interface FiltersOptions {
   weight?: string;
   joined?: string;
   monthlyIncome?: string;
+  accountStatus?: string;
   lookingFor?: string;
   religion?: string;
   country?: string;
@@ -35,4 +36,9 @@ export interface FiltersOptions {
   drinkingHabit?: string;
   healthCondition?: string;
   accountType?: string;
+}
+
+export interface MonthlyRegistrationRaw {
+  yearMonth: string;
+  count: string;
 }

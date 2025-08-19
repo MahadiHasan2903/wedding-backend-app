@@ -9,6 +9,7 @@ import {
 } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
 import {
+  AccountStatus,
   DietaryPreference,
   DrinkingHabit,
   Gender,
@@ -37,7 +38,7 @@ export class SearchUserDto {
   @Matches(/^[a-zA-Z0-9_]+,(ASC|DESC)$/i, {
     message: 'sort must be in the format "field,ASC" or "field,DESC"',
   })
-  sort?: string = 'id,DESC';
+  sort?: string = 'createdAt,DESC';
 
   @IsOptional()
   @IsString()
@@ -76,6 +77,10 @@ export class SearchUserDto {
   @IsOptional()
   @IsEnum(Gender)
   lookingFor?: Gender;
+
+  @IsOptional()
+  @IsEnum(AccountStatus)
+  accountStatus?: AccountStatus;
 
   @IsOptional()
   @IsEnum(Religion)

@@ -56,7 +56,7 @@ export class AccountService {
    * @param createAccountDto - Account registration details.
    * @returns A message confirming OTP sent, and the OTP itself in development mode.
    */
-  async create(
+  async createAccount(
     createAccountDto: CreateAccountDto,
   ): Promise<{ message: string; otp?: string }> {
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
@@ -175,9 +175,9 @@ export class AccountService {
     }
 
     // Check if account status is blocked or deleted
-    if (account.accountStatus === AccountStatus.BLOCK) {
+    if (account.accountStatus === AccountStatus.BANNED) {
       throw new Error(
-        'Your account has been blocked. Please contact support for assistance.',
+        'Your account has been banned. Please contact support for assistance.',
       );
     } else if (account.accountStatus === AccountStatus.DELETE) {
       throw new Error('Your account has been deleted and cannot be accessed.');

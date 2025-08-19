@@ -1,25 +1,36 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { UserRepository } from './repositories/user.repository';
+import {
+  UserRole,
+  LikeStatus,
+  BlockStatus,
+  AccountStatus,
+  Gender,
+} from './enum/users.enum';
+import * as bcrypt from 'bcrypt';
+import { In, MoreThanOrEqual } from 'typeorm';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { MediaService } from 'src/media/media.service';
-import {
-  AccountStatus,
-  BlockStatus,
-  LikeStatus,
-  UserRole,
-} from './enum/users.enum';
-import { In } from 'typeorm';
-import { MediaRepository } from 'src/media/repositories/media.repository';
-import { FiltersOptions } from './types/user.types';
-import { BlockUnblockDto } from './dto/block-unblock.dto';
+import { startOfDay, subDays, format } from 'date-fns';
 import { LikeDislikeDto } from './dto/like-dislike.dto';
+import { BlockUnblockDto } from './dto/block-unblock.dto';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { UserRepository } from './repositories/user.repository';
+import { MediaRepository } from 'src/media/repositories/media.repository';
+import { FiltersOptions, MonthlyRegistrationRaw } from './types/user.types';
+import { MsPurchaseRepository } from 'src/ms-purchase/repositories/ms-purchase.repository';
+import { CreateAdminDto } from './dto/create-admin.dto';
+import { MsPackageRepository } from 'src/ms-package/repositories/msPackage.repository';
+import { MsPurchaseService } from 'src/ms-purchase/ms-purchase.service';
+import { PurchasePackageCategory } from 'src/ms-purchase/enum/ms-purchase.enum';
 
 @Injectable()
 export class UsersService {
   constructor(
+    private readonly mediaService: MediaService,
     private readonly usersRepository: UserRepository,
     private readonly mediaRepository: MediaRepository,
-    private readonly mediaService: MediaService,
+    private readonly msPackageRepo: MsPackageRepository,
+    private readonly msPurchaseService: MsPurchaseService,
+    private readonly msPurchaseRepository: MsPurchaseRepository,
   ) {}
 
   /**
@@ -39,11 +50,60 @@ export class UsersService {
   }
 
   /**
+   * Creates a new admin user directly (skips OTP flow).
+   *
+   * @param createAdminDto - DTO containing firstName, lastName, email, password.
+   * @returns The created admin user entity (with membership linked).
+   * @throws Error if email already exists or default membership is not found.
+   */
+  async createAdmin(createAdminDto: CreateAdminDto) {
+    const existing = await this.usersRepository.findOne({
+      where: { email: createAdminDto.email },
+    });
+
+    if (existing) {
+      throw new Error('An account with this email already exists.');
+    }
+
+    const hashedPassword = await bcrypt.hash(createAdminDto.password, 10);
+
+    // Create admin user
+    const admin = this.usersRepository.create({
+      ...createAdminDto,
+      password: hashedPassword,
+      userRole: UserRole.ADMIN,
+    });
+    const savedAdmin = await this.usersRepository.save(admin);
+
+    // Fetch default membership (id = 1)
+    const defaultPackage = await this.msPackageRepo.findOne({
+      where: { id: 1 },
+    });
+
+    if (!defaultPackage) {
+      throw new Error('Default membership package not found');
+    }
+
+    // Create membership purchase
+    const purchaseInfo = await this.msPurchaseService.createPurchase(
+      savedAdmin.id,
+      defaultPackage.id,
+      PurchasePackageCategory.LIFETIME,
+    );
+
+    // Link membership
+    savedAdmin.purchasedMembership = purchaseInfo.id;
+    await this.usersRepository.save(savedAdmin);
+
+    return savedAdmin;
+  }
+
+  /**
    * Fetches a paginated list of users with optional sorting and advanced filtering.
    *
    * @param page - The current page number (default is 1).
    * @param pageSize - The number of users to return per page (default is 10).
-   * @param sort - A string in the format 'field,ASC|DESC' used to sort results (default is 'id,DESC').
+   * @param sort - A string in the format 'field,ASC|DESC' used to sort results (default is 'createdAt,DESC').
    * @param filters - An object containing various filters such as age range, gender, religion, etc.
    * @returns A Promise resolving to an object containing:
    *
@@ -51,7 +111,7 @@ export class UsersService {
   async findUsersWithRelatedMediaPaginated(
     page = 1,
     pageSize = 10,
-    sort = 'id,DESC',
+    sort = 'createdAt,DESC',
     filters: FiltersOptions = {},
   ) {
     const {
@@ -551,5 +611,174 @@ export class UsersService {
 
     // Step 4: Delete the media from S3 and media table
     await this.mediaService.deleteMediaById(mediaId);
+  }
+
+  /**
+   * Retrieves statistics about users, including counts of active, inactive, and VIP users.
+   *
+   * @returns An object containing:
+   *   - activeCount: number of users with active accounts.
+   *   - inactiveCount: number of users with inactive accounts.
+   *   - bannedCount: number of users with banned accounts.
+   *   - vipCount: number of distinct users who purchased VIP packages (packageId 2 or 3).
+   */
+  async getUserStats() {
+    // Run all counts in parallel for better performance
+    const [activeCount, inactiveCount, bannedCount, vipCountResult] =
+      await Promise.all([
+        this.usersRepository.count({
+          where: { accountStatus: AccountStatus.ACTIVE },
+        }),
+        this.usersRepository.count({
+          where: { accountStatus: AccountStatus.INACTIVE },
+        }),
+        this.usersRepository.count({
+          where: { accountStatus: AccountStatus.BANNED },
+        }),
+        this.msPurchaseRepository
+          .createQueryBuilder('purchase')
+          .select('COUNT(DISTINCT purchase.user)', 'count')
+          .where('purchase.packageId IN (:...packages)', { packages: [2, 3] })
+          .getRawOne<{ count: string }>(),
+      ]);
+
+    const vipCount = parseInt(vipCountResult?.count ?? '0', 10);
+
+    return {
+      activeCount,
+      inactiveCount,
+      bannedCount,
+      vipCount,
+    };
+  }
+
+  /**
+   * Retrieves new user registration statistics for different time frames.
+   *
+   * @returns {Object} Registration statistics including:
+   *  - last24HoursCount: number of users registered in the last 24 hours
+   *  - last7DaysCount: number of users registered in the last 7 days
+   *  - last30DaysCount: number of users registered in the last 30 days
+   *  - last90DaysCount: number of users registered in the last 90 days
+   *  - monthlyRegistrations: array of objects containing month, year, and newRegistration count
+   */
+  async getNewRegistrationStats() {
+    const now = new Date();
+
+    const last24Hours = startOfDay(subDays(now, 1));
+    const last7Days = startOfDay(subDays(now, 7));
+    const last30Days = startOfDay(subDays(now, 30));
+    const last90Days = startOfDay(subDays(now, 90));
+
+    // Run all counts and query in parallel for performance
+    const [
+      last24HoursCount,
+      last7DaysCount,
+      last30DaysCount,
+      last90DaysCount,
+      monthlyRegistrationsRaw,
+    ] = await Promise.all([
+      this.usersRepository.count({
+        where: { createdAt: MoreThanOrEqual(last24Hours) },
+      }),
+      this.usersRepository.count({
+        where: { createdAt: MoreThanOrEqual(last7Days) },
+      }),
+      this.usersRepository.count({
+        where: { createdAt: MoreThanOrEqual(last30Days) },
+      }),
+      this.usersRepository.count({
+        where: { createdAt: MoreThanOrEqual(last90Days) },
+      }),
+      this.usersRepository
+        .createQueryBuilder('user')
+        .select([
+          `TO_CHAR(user.createdAt, 'YYYY-MM') as "yearMonth"`,
+          'COUNT(*) as count',
+        ])
+        .groupBy(`"yearMonth"`)
+        .orderBy(`"yearMonth"`, 'ASC')
+        .getRawMany<MonthlyRegistrationRaw>(),
+    ]);
+
+    // Map raw monthly registration data into desired format with separate month and year
+    const monthlyRegistrations = monthlyRegistrationsRaw.map(
+      ({ yearMonth, count }) => {
+        const [year, month] = yearMonth.split('-').map(Number);
+        const formattedMonth = format(new Date(year, month - 1), 'MMMM');
+        return {
+          month: formattedMonth,
+          year,
+          newRegistration: parseInt(count, 10),
+        };
+      },
+    );
+
+    return {
+      last24HoursCount,
+      last7DaysCount,
+      last30DaysCount,
+      last90DaysCount,
+      monthlyRegistrations,
+    };
+  }
+
+  /**
+   * Calculate gender percentages overall and split by account status
+   *
+   * @returns {Promise<object>} Object containing overall gender percentages
+   * and active/inactive breakdown
+   */
+  async getGenderDistribution() {
+    // Fetch total counts grouped by gender
+    const totalRaw = await this.usersRepository
+      .createQueryBuilder('user')
+      .select('user.gender', 'gender')
+      .addSelect('COUNT(*)', 'count')
+      .groupBy('user.gender')
+      .getRawMany<{ gender: Gender; count: string }>();
+
+    const totalUsers = totalRaw.reduce(
+      (sum, item) => sum + Number(item.count),
+      0,
+    );
+
+    // Fetch active users grouped by gender
+    const activeRaw = await this.usersRepository
+      .createQueryBuilder('user')
+      .select('user.gender', 'gender')
+      .addSelect('COUNT(*)', 'count')
+      .where('user.accountStatus = :status', { status: AccountStatus.ACTIVE })
+      .groupBy('user.gender')
+      .getRawMany<{ gender: Gender; count: string }>();
+
+    const inactiveRaw = await this.usersRepository
+      .createQueryBuilder('user')
+      .select('user.gender', 'gender')
+      .addSelect('COUNT(*)', 'count')
+      .where('user.accountStatus = :status', { status: AccountStatus.INACTIVE })
+      .groupBy('user.gender')
+      .getRawMany<{ gender: Gender; count: string }>();
+
+    const mapPercentage = (raw: typeof totalRaw, total: number) => {
+      const result: Record<string, number> = { male: 0, female: 0, other: 0 };
+      raw.forEach((item) => {
+        const key = item.gender?.toLowerCase() || 'other';
+        result[key] = Math.round((Number(item.count) / total) * 100);
+      });
+      return result;
+    };
+
+    return {
+      ...mapPercentage(totalRaw, totalUsers),
+      active: mapPercentage(
+        activeRaw,
+        activeRaw.reduce((sum, i) => sum + Number(i.count), 0) || 1,
+      ),
+      inactive: mapPercentage(
+        inactiveRaw,
+        inactiveRaw.reduce((sum, i) => sum + Number(i.count), 0) || 1,
+      ),
+    };
   }
 }

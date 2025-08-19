@@ -1,19 +1,32 @@
-import { ConfigService } from '@nestjs/config';
-import { PaymentGateway, PaymentStatus } from './enum/payment.enum';
-import { PaymentRepository } from './repositories/payment.repository';
+import {
+  endOfWeek,
+  endOfMonth,
+  startOfWeek,
+  endOfQuarter,
+  startOfMonth,
+  startOfQuarter,
+} from 'date-fns';
 import {
   Injectable,
-  BadRequestException,
   NotFoundException,
+  BadRequestException,
 } from '@nestjs/common';
-import { CreateMembershipPaymentDto } from './dto/create-membership-payment.dto';
-import { MsPurchaseRepository } from 'src/ms-purchase/repositories/ms-purchase.repository';
+import {
+  SumResult,
+  PerMonthRaw,
+  PaymentFiltersOptions,
+} from './types/payment.types';
+import { ConfigService } from '@nestjs/config';
+import { formatAmount } from 'src/utils/helpers';
+import { StripeService } from './stripe/stripe.service';
+import { PayPalService } from './paypal/paypal.service';
+import { PaymentGateway, PaymentStatus } from './enum/payment.enum';
+import { PaymentRepository } from './repositories/payment.repository';
 import { PurchaseStatus } from 'src/ms-purchase/enum/ms-purchase.enum';
 import { UserRepository } from 'src/users/repositories/user.repository';
 import { AccountRepository } from 'src/account/repositories/account.repository';
-import { StripeService } from './stripe/stripe.service';
-import { PayPalService } from './paypal/paypal.service';
-import { PaymentFiltersOptions } from './types/payment.types';
+import { CreateMembershipPaymentDto } from './dto/create-membership-payment.dto';
+import { MsPurchaseRepository } from 'src/ms-purchase/repositories/ms-purchase.repository';
 
 @Injectable()
 export class PaymentService {
@@ -299,7 +312,7 @@ export class PaymentService {
   async getAllPayments(
     page = 1,
     pageSize = 10,
-    sort = 'id,DESC',
+    sort = 'createdAt,DESC',
     filters: PaymentFiltersOptions = {},
   ) {
     const {
@@ -359,7 +372,7 @@ export class PaymentService {
     user: string,
     page = 1,
     pageSize = 10,
-    sort = 'id,DESC',
+    sort = 'createdAt,DESC',
     filters: PaymentFiltersOptions = {},
   ) {
     const {
@@ -406,6 +419,84 @@ export class PaymentService {
       hasNextPage,
       prevPage,
       nextPage,
+    };
+  }
+
+  /**
+   * Generates a revenue summary for the current week, month, quarter, year, and per-month breakdown.
+   * @returns An object containing weekly, monthly, quarterly, total revenue,  and a per-month breakdown for the current year.
+   *
+   */
+  async getRevenueSummary() {
+    const now = new Date();
+
+    const startWeek = startOfWeek(now, { weekStartsOn: 1 });
+    const endWeek = endOfWeek(now, { weekStartsOn: 1 });
+
+    const startMonth = startOfMonth(now);
+    const endMonth = endOfMonth(now);
+
+    const startQuarter = startOfQuarter(now);
+    const endQuarter = endOfQuarter(now);
+
+    const querySum = (start?: Date, end?: Date) => {
+      let qb = this.paymentRepo
+        .createQueryBuilder('payment')
+        .select('SUM(payment.payable)', 'sum')
+        .where('payment.paymentStatus = :status', {
+          status: PaymentStatus.PAID,
+        });
+
+      if (start && end) {
+        qb = qb.andWhere('payment.createdAt BETWEEN :start AND :end', {
+          start,
+          end,
+        });
+      }
+
+      return qb.getRawOne<SumResult>();
+    };
+
+    const [weekTotal, monthTotal, quarterTotal, totalRevenue] = (
+      await Promise.all([
+        querySum(startWeek, endWeek),
+        querySum(startMonth, endMonth),
+        querySum(startQuarter, endQuarter),
+        querySum(),
+      ])
+    ).map((res) => res ?? { sum: null });
+
+    // Per-month aggregation for the current year
+    const startYear = new Date(now.getFullYear(), 0, 1);
+    const endYear = new Date(now.getFullYear(), 11, 31);
+
+    const perMonthRaw = await this.paymentRepo
+      .createQueryBuilder('payment')
+      .select("TO_CHAR(payment.createdAt, 'Month')", 'month')
+      .addSelect('EXTRACT(YEAR FROM payment.createdAt)', 'year')
+      .addSelect('SUM(payment.payable)', 'totalAmount')
+      .where('payment.paymentStatus = :status', { status: PaymentStatus.PAID })
+      .andWhere('payment.createdAt BETWEEN :start AND :end', {
+        start: startYear,
+        end: endYear,
+      })
+      .groupBy('month, year')
+      .orderBy('year', 'ASC')
+      .addOrderBy('MIN(EXTRACT(MONTH FROM payment.createdAt))', 'ASC')
+      .getRawMany<PerMonthRaw>();
+
+    const monthlyRevenue = perMonthRaw.map((item) => ({
+      month: item.month.trim(),
+      year: Number(item.year),
+      totalAmount: formatAmount(Number(item.totalAmount)),
+    }));
+
+    return {
+      thisWeek: Number(weekTotal.sum ?? 0),
+      thisMonth: Number(monthTotal.sum ?? 0),
+      thisQuarter: Number(quarterTotal.sum ?? 0),
+      total: Number(totalRevenue.sum ?? 0),
+      monthlyRevenue,
     };
   }
 }

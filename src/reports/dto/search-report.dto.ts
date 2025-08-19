@@ -1,7 +1,7 @@
 import { IsOptional, IsInt, Min, IsString, Matches } from 'class-validator';
 import { Type } from 'class-transformer';
 
-export class SearchContactSubmissionDto {
+export class SearchReportDto {
   @IsOptional()
   @Type(() => Number)
   @IsInt()
@@ -20,4 +20,10 @@ export class SearchContactSubmissionDto {
     message: 'sort must be in the format "field,ASC" or "field,DESC"',
   })
   sort?: string = 'createdAt,DESC';
+
+  @IsOptional()
+  @Matches(/^\d{4}-\d{2}-\d{2} - \d{4}-\d{2}-\d{2}$/, {
+    message: 'joined must be in format "YYYY-MM-DD - YYYY-MM-DD"',
+  })
+  dateRange?: string;
 }
