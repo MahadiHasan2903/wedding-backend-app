@@ -78,12 +78,12 @@ export class ContactRepository extends Repository<Contact> {
    *
    * @param page Current page number (1-based)
    * @param pageSize Number of items per page
-   * @param sort Sorting criteria string, format: 'field,ASC|DESC' (e.g. 'id,DESC')
+   * @param sort Sorting criteria string, format: 'field,ASC|DESC' (e.g. 'createdAt,DESC')
    * @returns An object containing:
    *  - items: Array of Contact entities for the current page
    *  - totalItems: Total count of Contact entities in the database
    */
-  async findAllPaginated(page = 1, pageSize = 10, sort = 'id,DESC') {
+  async findAllPaginated(page = 1, pageSize = 10, sort = 'createdAt,DESC') {
     const [sortField, sortOrder] = sort.split(',');
     const skip = (page - 1) * pageSize;
 

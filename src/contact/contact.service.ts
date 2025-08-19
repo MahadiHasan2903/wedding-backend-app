@@ -63,10 +63,10 @@ export class ContactService {
    *
    * @param page - Current page number (default 1)
    * @param pageSize - Number of items per page (default 10)
-   * @param sort - Sorting criteria string in the format 'field,ASC|DESC' (default 'id,DESC')
+   * @param sort - Sorting criteria string in the format 'field,ASC|DESC' (default 'createdAt,DESC')
    * @returns Paginated response object with items and metadata
    */
-  async findAll(page = 1, pageSize = 10, sort = 'id,DESC') {
+  async findAll(page = 1, pageSize = 10, sort = 'createdAt,DESC') {
     const {
       items,
       totalItems,

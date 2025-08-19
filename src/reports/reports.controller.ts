@@ -18,6 +18,7 @@ import { Roles } from 'src/common/decorators/roles.decorator';
 import { UserRole } from 'src/users/enum/users.enum';
 import { sanitizeError } from 'src/utils/helpers';
 import { TakeActionDto } from './dto/take-action.dto';
+import { SearchReportDto } from './dto/search-report.dto';
 
 @Controller('v1/reports')
 export class ReportsController {
@@ -63,22 +64,22 @@ export class ReportsController {
    *
    * @param page - Current page number (default: 1)
    * @param pageSize - Number of items per page (default: 10)
-   * @param sort - Sort format: 'field,order' (e.g., 'id,DESC')
+   * @param sort - Sort format: 'field,order' (e.g., 'createdAt,DESC')
    * @returns Paginated list of reports
    */
   @Get()
   @Roles(UserRole.ADMIN)
-  async getAllReports(
-    @Query('page') page = 1,
-    @Query('pageSize') pageSize = 10,
-    @Query('sort') sort = 'id,DESC',
-  ) {
+  async getAllReports(@Query() query: SearchReportDto) {
     try {
-      const reports = await this.reportService.getAllReports({
-        page: Number(page),
-        pageSize: Number(pageSize),
+      const { page, pageSize, sort, dateRange } = query;
+
+      const reports = await this.reportService.getAllReports(
+        Number(page),
+        Number(pageSize),
         sort,
-      });
+        { dateRange },
+      );
+
       return {
         success: true,
         message: 'Reports fetched successfully',

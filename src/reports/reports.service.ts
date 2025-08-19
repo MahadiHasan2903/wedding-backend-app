@@ -14,6 +14,8 @@ import { ReportAction, ReportStatus } from './enum/report.enum';
 import { EmailService } from 'src/common/email/email.service';
 import { UsersService } from 'src/users/users.service';
 import { AccountStatus } from 'src/users/enum/users.enum';
+import { ReportFiltersOptions } from './types/report.types';
+import { Between, FindOptionsWhere } from 'typeorm';
 
 @Injectable()
 export class ReportsService {
@@ -44,12 +46,28 @@ export class ReportsService {
    * @param sort - Sorting string in the format: "field,DESC" or "field,ASC".
    * @returns An object containing paginated results and metadata.
    */
-  async getAllReports({ page, pageSize, sort }: PaginationOptions) {
-    const [sortField, sortOrder] = sort.split(',');
+  async getAllReports(
+    page = 1,
+    pageSize = 10,
+    sort = 'createdAt,DESC',
+    filters: ReportFiltersOptions = {},
+  ) {
+    let [sortField, sortOrder] = sort.split(',');
+    sortField = sortField || 'createdAt';
+    sortOrder = sortOrder?.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
+
+    const where: FindOptionsWhere<Report> = {};
+
+    // Handle dateRange if provided
+    if (filters.dateRange) {
+      const [start, end] = filters.dateRange.split(' - ');
+      where.createdAt = Between(new Date(start), new Date(end));
+    }
 
     const [reports, totalItems] = await this.reportRepository.findAndCount({
+      where,
       order: {
-        [sortField]: sortOrder.toUpperCase() === 'DESC' ? 'DESC' : 'ASC',
+        [sortField]: sortOrder,
       },
       skip: (page - 1) * pageSize,
       take: pageSize,
@@ -61,16 +79,12 @@ export class ReportsService {
         const message = await this.messageService.findById(report.messageId);
         return {
           ...report,
-          messageId: message,
+          message, // 👈 better than overwriting messageId
         };
       }),
     );
 
     const totalPages = Math.ceil(totalItems / pageSize);
-    const hasPrevPage = page > 1;
-    const hasNextPage = page < totalPages;
-    const prevPage = hasPrevPage ? page - 1 : null;
-    const nextPage = hasNextPage ? page + 1 : null;
 
     return {
       items: itemsWithMessages,
@@ -78,10 +92,10 @@ export class ReportsService {
       itemsPerPage: pageSize,
       currentPage: page,
       totalPages,
-      hasPrevPage,
-      hasNextPage,
-      prevPage,
-      nextPage,
+      hasPrevPage: page > 1,
+      hasNextPage: page < totalPages,
+      prevPage: page > 1 ? page - 1 : null,
+      nextPage: page < totalPages ? page + 1 : null,
     };
   }
 

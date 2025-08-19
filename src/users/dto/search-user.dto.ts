@@ -38,7 +38,7 @@ export class SearchUserDto {
   @Matches(/^[a-zA-Z0-9_]+,(ASC|DESC)$/i, {
     message: 'sort must be in the format "field,ASC" or "field,DESC"',
   })
-  sort?: string = 'id,DESC';
+  sort?: string = 'createdAt,DESC';
 
   @IsOptional()
   @IsString()

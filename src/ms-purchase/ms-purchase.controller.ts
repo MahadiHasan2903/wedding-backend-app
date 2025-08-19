@@ -32,7 +32,7 @@ export class MsPurchaseController {
   async getMyPurchases(
     @Query('page') page = 1,
     @Query('pageSize') pageSize = 10,
-    @Query('sort') sort = 'id,DESC',
+    @Query('sort') sort = 'createdAt,DESC',
     @CurrentUser() user: { userId: string },
   ) {
     try {
@@ -155,7 +155,7 @@ export class MsPurchaseController {
   async getAll(
     @Query('page') page = 1,
     @Query('pageSize') pageSize = 10,
-    @Query('sort') sort = 'id,DESC',
+    @Query('sort') sort = 'createdAt,DESC',
   ) {
     try {
       const purchases = await this.msPurchaseService.findAll({
