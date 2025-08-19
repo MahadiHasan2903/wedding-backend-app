@@ -5,7 +5,7 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { ReportType } from '../enum/report.enum';
+import { ReportStatus, ReportAction, ReportType } from '../enum/report.enum';
 
 @Entity('report')
 export class Report {
@@ -33,6 +33,22 @@ export class Report {
 
   @Column({ type: 'text', nullable: true })
   description?: string;
+
+  @Column({
+    type: 'enum',
+    enum: ReportStatus,
+    default: ReportStatus.PENDING,
+    nullable: true,
+  })
+  status?: ReportStatus;
+
+  @Column({
+    type: 'enum',
+    enum: ReportAction,
+    default: ReportAction.PENDING,
+    nullable: true,
+  })
+  actionTaken?: ReportAction;
 
   @CreateDateColumn()
   createdAt: Date;
