@@ -6,3 +6,15 @@ export enum ReportType {
   INAPPROPRIATE = 'inappropriate',
   OTHER = 'other',
 }
+
+export enum ReportStatus {
+  PENDING = 'pending',
+  RESOLVED = 'resolved',
+}
+
+export enum ReportAction {
+  PENDING = 'pending',
+  LOOKS_FINE = 'looks_fine',
+  BANNED_USER = 'banned_user',
+  WARNED_USER = 'warned_user',
+}

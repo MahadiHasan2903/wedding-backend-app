@@ -85,7 +85,7 @@ export class PaymentRepository {
   async findFilteredAndPaginated(
     page = 1,
     pageSize = 10,
-    sort = 'id,DESC',
+    sort = 'createdAt,DESC',
     filters: PaymentFiltersOptions = {},
     userId?: string,
   ) {

@@ -17,6 +17,8 @@ import { UpdateReportDto } from './dto/update-report.dto';
 import { Roles } from 'src/common/decorators/roles.decorator';
 import { UserRole } from 'src/users/enum/users.enum';
 import { sanitizeError } from 'src/utils/helpers';
+import { TakeActionDto } from './dto/take-action.dto';
+import { SearchReportDto } from './dto/search-report.dto';
 
 @Controller('v1/reports')
 export class ReportsController {
@@ -62,22 +64,22 @@ export class ReportsController {
    *
    * @param page - Current page number (default: 1)
    * @param pageSize - Number of items per page (default: 10)
-   * @param sort - Sort format: 'field,order' (e.g., 'id,DESC')
+   * @param sort - Sort format: 'field,order' (e.g., 'createdAt,DESC')
    * @returns Paginated list of reports
    */
   @Get()
   @Roles(UserRole.ADMIN)
-  async getAllReports(
-    @Query('page') page = 1,
-    @Query('pageSize') pageSize = 10,
-    @Query('sort') sort = 'id,DESC',
-  ) {
+  async getAllReports(@Query() query: SearchReportDto) {
     try {
-      const reports = await this.reportService.getAllReports({
-        page: Number(page),
-        pageSize: Number(pageSize),
+      const { page, pageSize, sort, dateRange } = query;
+
+      const reports = await this.reportService.getAllReports(
+        Number(page),
+        Number(pageSize),
         sort,
-      });
+        { dateRange },
+      );
+
       return {
         success: true,
         message: 'Reports fetched successfully',
@@ -201,6 +203,39 @@ export class ReportsController {
         {
           success: false,
           message: `Failed to delete report with ID: ${id}`,
+          status: HttpStatus.INTERNAL_SERVER_ERROR,
+          error: sanitizedError,
+        },
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Patch(':id/take-action')
+  @Roles(UserRole.ADMIN)
+  async takeAction(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() takeActionDto: TakeActionDto,
+  ) {
+    try {
+      const updatedReport = await this.reportService.takeAction(
+        id,
+        takeActionDto.action,
+      );
+      return {
+        success: true,
+        message: `Action '${takeActionDto.action}' applied successfully on report ${id}`,
+        status: HttpStatus.OK,
+        data: updatedReport,
+      };
+    } catch (error: unknown) {
+      const sanitizedError = sanitizeError(error);
+      if (error instanceof HttpException) throw error;
+
+      throw new HttpException(
+        {
+          success: false,
+          message: `Failed to take action on report with ID: ${id}`,
           status: HttpStatus.INTERNAL_SERVER_ERROR,
           error: sanitizedError,
         },

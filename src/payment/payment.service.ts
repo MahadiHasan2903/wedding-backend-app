@@ -312,7 +312,7 @@ export class PaymentService {
   async getAllPayments(
     page = 1,
     pageSize = 10,
-    sort = 'id,DESC',
+    sort = 'createdAt,DESC',
     filters: PaymentFiltersOptions = {},
   ) {
     const {
@@ -372,7 +372,7 @@ export class PaymentService {
     user: string,
     page = 1,
     pageSize = 10,
-    sort = 'id,DESC',
+    sort = 'createdAt,DESC',
     filters: PaymentFiltersOptions = {},
   ) {
     const {

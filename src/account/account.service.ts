@@ -175,9 +175,9 @@ export class AccountService {
     }
 
     // Check if account status is blocked or deleted
-    if (account.accountStatus === AccountStatus.BLOCK) {
+    if (account.accountStatus === AccountStatus.BANNED) {
       throw new Error(
-        'Your account has been blocked. Please contact support for assistance.',
+        'Your account has been banned. Please contact support for assistance.',
       );
     } else if (account.accountStatus === AccountStatus.DELETE) {
       throw new Error('Your account has been deleted and cannot be accessed.');

@@ -103,7 +103,7 @@ export class UsersService {
    *
    * @param page - The current page number (default is 1).
    * @param pageSize - The number of users to return per page (default is 10).
-   * @param sort - A string in the format 'field,ASC|DESC' used to sort results (default is 'id,DESC').
+   * @param sort - A string in the format 'field,ASC|DESC' used to sort results (default is 'createdAt,DESC').
    * @param filters - An object containing various filters such as age range, gender, religion, etc.
    * @returns A Promise resolving to an object containing:
    *
@@ -111,7 +111,7 @@ export class UsersService {
   async findUsersWithRelatedMediaPaginated(
     page = 1,
     pageSize = 10,
-    sort = 'id,DESC',
+    sort = 'createdAt,DESC',
     filters: FiltersOptions = {},
   ) {
     const {

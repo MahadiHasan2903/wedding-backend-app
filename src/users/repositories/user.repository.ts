@@ -56,7 +56,7 @@ export class UserRepository extends Repository<User> {
    *
    * @param page - The current page number (default is 1).
    * @param pageSize - The number of users to return per page (default is 10).
-   * @param sort - Sorting string in the format 'field,ASC|DESC' (default is 'id,DESC').
+   * @param sort - Sorting string in the format 'field,ASC|DESC' (default is 'createdAt,DESC').
    * @param filters - An object containing filtering criteria such as age range, gender, religion, etc.
    *
    * @returns A Promise resolving to a paginated response object containing:
@@ -64,7 +64,7 @@ export class UserRepository extends Repository<User> {
   async findAllPaginated(
     page = 1,
     pageSize = 10,
-    sort = 'id,DESC',
+    sort = 'createdAt,DESC',
     filters: FiltersOptions = {},
   ) {
     const [sortField, sortOrder] = sort.split(',');
