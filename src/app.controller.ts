@@ -1,12 +1,20 @@
-import { Controller, Get } from '@nestjs/common';
 import { AppService } from './app.service';
+import { Controller, Get } from '@nestjs/common';
+import { Public } from './common/decorators/public.decorator';
 
-@Controller()
+@Controller('health')
 export class AppController {
   constructor(private readonly appService: AppService) {}
 
+  @Public()
   @Get()
-  getHello(): string {
-    return this.appService.getHello();
+  checkHealth() {
+    return {
+      status: 'ok',
+      message: 'Backend is running',
+      uptime: process.uptime(),
+      timestamp: new Date().toISOString(),
+      environment: process.env.NODE_ENV || 'development',
+    };
   }
 }
