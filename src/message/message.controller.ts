@@ -14,13 +14,13 @@ import {
   Delete,
 } from '@nestjs/common';
 import { MessageService } from './message.service';
-import { CreateMessageDto } from './dto/create-message.dto';
-import { UpdateMessageStatusDto } from './dto/update-message-status.dto';
 import { sanitizeError } from 'src/utils/helpers';
-import { Roles } from 'src/common/decorators/roles.decorator';
 import { UserRole } from 'src/users/enum/users.enum';
+import { CreateMessageDto } from './dto/create-message.dto';
+import { Roles } from 'src/common/decorators/roles.decorator';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { UpdateMessageContentDto } from './dto/update-message.dto';
+import { UpdateMessageStatusDto } from './dto/update-message-status.dto';
 
 @Controller('v1/message')
 export class MessageController {
