@@ -33,5 +33,5 @@ export class CreateMessageDto {
   @IsOptional()
   @Transform(({ value }) => value === 'true')
   @IsBoolean()
-  needsTranslation?: boolean = true;
+  needTranslation?: boolean = true;
 }

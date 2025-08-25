@@ -25,19 +25,19 @@ export class MessageService {
   /**
    * Prepares the message content with optional translations.
    * @param message - The original message text to process.
-   * @param needsTranslation - Whether the message should be translated into multiple languages.
+   * @param needTranslation - Whether the message should be translated into multiple languages.
    * @returns A Promise resolving to a structured `MessageContent` object.
    * @throws If no message is provided.
    */
   private async prepareMessageContent(
     message: string,
-    needsTranslation: boolean,
+    needTranslation: boolean,
   ): Promise<MessageContent> {
     if (!message) {
       throw new Error('Message is required');
     }
 
-    if (needsTranslation) {
+    if (needTranslation) {
       const translations =
         await this.googleTranslateService.translateMessage(message);
 
@@ -73,7 +73,7 @@ export class MessageService {
     if (dto.message) {
       messageContent = await this.prepareMessageContent(
         dto.message,
-        dto.needsTranslation || false,
+        dto.needTranslation || false,
       );
     }
 
@@ -251,12 +251,12 @@ export class MessageService {
   async updateMessageContent(
     id: string,
     message: string,
-    needsTranslation = false,
+    needTranslation = false,
   ) {
     // Prepare the content (translated or not)
     const translatedContent = await this.prepareMessageContent(
       message,
-      needsTranslation,
+      needTranslation,
     );
 
     // Await updatedMessage correctly
