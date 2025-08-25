@@ -45,14 +45,7 @@ git clone https://github.com/your-username/wedding-backend-app.git
 cd wedding-backend-app
 ```
 
-2. Create a `.env` file in the root of the project and add the required environment variables:
-
-```bash
-PORT=8080
-DATABASE_URL=your_database_connection_string
-JWT_SECRET=your_jwt_secret
-# Add other variables your project requires
-```
+2. Create a `.env` file in the root of the project and add environment variables according to the `.env.example` file.
 
 3. Install dependencies:
 
