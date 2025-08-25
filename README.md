@@ -41,7 +41,7 @@ This backend is built with [NestJS](https://nestjs.com/) and TypeScript. Key fea
 1. Clone the repository:
 
 ```bash
-git clone https://github.com/your-username/wedding-backend-app.git
+git clone git@github.com:MahadiHasan2903/wedding-backend-app.git
 cd wedding-backend-app
 ```
 
@@ -99,7 +99,7 @@ docker pull mahadihasan2903/wedding-backend-app:latest
 docker run -p 8081:8080 --env-file .env mahadihasan2903/wedding-backend-app:latest
 ```
 
-- `-p 8081:8080` maps container port `8080` to your local machine port `8081`.
+- `-p 8080:8080` maps container port `8080` to your local machine port `8080`.
 - `--env-file .env` passes the environment variables to the container.
 
 ---
