@@ -2,97 +2,138 @@
   <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
 </p>
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+# Wedding Backend Application
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+A **NestJS-based backend application** for a wedding/matchmaking platform. Users can create profiles, find matches, like each other's profiles, and have conversations with matches. This application provides all server-side functionality for such a platform, including user management, messaging, and relationship interactions.
 
-## Description
+---
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## Table of Contents
 
-## Project setup
+- [Project Overview](#project-overview)
+- [Project Setup](#project-setup)
+- [Running the Project](#running-the-project)
 
-```bash
-$ npm install
-```
+  - [Normal Development](#normal-development)
+  - [Using Docker](#using-docker)
 
-## Compile and run the project
+- [Deployment](#deployment)
+- [Resources](#resources)
+- [Support](#support)
+- [License](#license)
 
-```bash
-# development
-$ npm run start
+---
 
-# watch mode
-$ npm run start:dev
+## Project Overview
 
-# production mode
-$ npm run start:prod
-```
+This backend is built with [NestJS](https://nestjs.com/) and TypeScript. Key features include:
 
-## Run tests
+- User registration and profile management
+- Matching system for users
+- Ability to like profiles
+- Real-time conversations via messaging
+- Support for scalable and efficient server-side operations
+
+---
+
+## Project Setup
+
+1. Clone the repository:
 
 ```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+git clone git@github.com:MahadiHasan2903/wedding-backend-app.git
+cd wedding-backend-app
 ```
+
+2. Create a `.env` file in the root of the project and add environment variables according to the `.env.example` file.
+
+3. Install dependencies:
+
+```bash
+npm install
+```
+
+---
+
+## Running the Project
+
+### Normal Development / Production
+
+1. **Build the project** (for production):
+
+```bash
+npm run build
+```
+
+2. **Start the server**:
+
+- Development (with watch mode):
+
+```bash
+npm run start:dev
+```
+
+- Production:
+
+```bash
+npm run start:prod
+```
+
+The server should now be running on the port specified in your `.env` file (default `8080`).
+
+---
+
+### Using Docker
+
+You can also run the backend using Docker:
+
+1. **Pull the latest Docker image**:
+
+```bash
+docker pull mahadihasan2903/wedding-backend-app:latest
+```
+
+2. **Run the Docker container**:
+
+```bash
+docker run -p 8081:8080 --env-file .env mahadihasan2903/wedding-backend-app:latest
+```
+
+- `-p 8080:8080` maps container port `8080` to your local machine port `8080`.
+- `--env-file .env` passes the environment variables to the container.
+
+---
 
 ## Deployment
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+For deploying your NestJS application to production, refer to the [official NestJS deployment documentation](https://docs.nestjs.com/deployment).
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+You can also use cloud-based platforms like [Mau](https://mau.nestjs.com) for fast and easy deployment on AWS:
 
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+npm install -g @nestjs/mau
+mau deploy
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+---
 
 ## Resources
 
-Check out a few resources that may come in handy when working with NestJS:
+- [NestJS Documentation](https://docs.nestjs.com)
+- [Discord support channel](https://discord.gg/G7Qnnhy)
+- [Official video courses](https://courses.nestjs.com/)
+- [NestJS Devtools](https://devtools.nestjs.com)
+- [Enterprise support](https://enterprise.nestjs.com)
+- [Jobs board](https://jobs.nestjs.com)
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+---
 
 ## Support
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+This project is MIT-licensed. Contributions and sponsorships are welcome. See [NestJS Support](https://docs.nestjs.com/support).
 
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+---
 
 ## License
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+NestJS framework and this project are [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
