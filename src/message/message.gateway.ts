@@ -121,7 +121,7 @@ export class MessageGateway
       receiverId: string;
       conversationId: string;
       repliedToMessage?: string;
-      needsTranslation?: boolean;
+      needTranslation?: boolean;
       message: string;
       attachmentIds?: string[];
     },
@@ -133,7 +133,7 @@ export class MessageGateway
       message: data.message,
       repliedToMessage: data.repliedToMessage,
       attachments: data.attachmentIds,
-      needsTranslation: data.needsTranslation,
+      needTranslation: data.needTranslation,
     });
 
     // Emit to all sender sockets
@@ -165,13 +165,13 @@ export class MessageGateway
       updatedMessage: string;
       senderId: string;
       receiverId: string;
-      needsTranslation?: boolean;
+      needTranslation?: boolean;
     },
   ) {
     const updatedMessage = await this.messageService.updateMessageContent(
       data.messageId,
       data.updatedMessage,
-      data.needsTranslation,
+      data.needTranslation,
     );
 
     // Emit to all sender sockets

@@ -166,13 +166,13 @@ export class MessageController {
     @Param('id') id: string,
     @Body() body: UpdateMessageContentDto,
   ) {
-    const { message, needsTranslation } = body;
+    const { message, needTranslation } = body;
 
     try {
       const updatedMessage = await this.messageService.updateMessageContent(
         id,
         message,
-        needsTranslation,
+        needTranslation,
       );
 
       return {

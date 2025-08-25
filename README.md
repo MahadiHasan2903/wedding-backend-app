@@ -96,7 +96,7 @@ docker pull mahadihasan2903/wedding-backend-app:latest
 2. **Run the Docker container**:
 
 ```bash
-docker run -p 8081:8080 --env-file .env mahadihasan2903/wedding-backend-app:latest
+docker run -p 8080:8080 --env-file .env mahadihasan2903/wedding-backend-app:latest
 ```
 
 - `-p 8080:8080` maps container port `8080` to your local machine port `8080`.

@@ -600,8 +600,6 @@ export class UsersController {
         targetUserId,
       );
 
-      console.log(isLiked);
-
       return {
         status: HttpStatus.OK,
         success: true,

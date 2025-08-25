@@ -9,5 +9,5 @@ export class UpdateMessageContentDto {
   @IsOptional()
   @Transform(({ value }) => value === 'true')
   @IsBoolean()
-  needsTranslation?: boolean = true;
+  needTranslation?: boolean = true;
 }
