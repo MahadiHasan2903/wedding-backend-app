@@ -1,3 +1,18 @@
+import { BAD_WORDS } from './bad-words';
+
+/**
+ * Checks if the text contains any bad words.
+ * @param text - The text to check
+ * @returns true if any bad word is found, false otherwise
+ */
+export function containsBadWords(text: string): boolean {
+  if (!text) return false;
+
+  const normalizedText = text.toLowerCase();
+
+  return BAD_WORDS.some((word) => normalizedText.includes(word.toLowerCase()));
+}
+
 /**
  * Sanitizes an unknown error by returning a readable string message.
  *

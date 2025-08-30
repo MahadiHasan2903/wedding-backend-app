@@ -172,7 +172,7 @@ export class MessageController {
       const updatedMessage = await this.messageService.updateMessageContent(
         id,
         message,
-        needTranslation,
+        needTranslation || false,
       );
 
       return {
