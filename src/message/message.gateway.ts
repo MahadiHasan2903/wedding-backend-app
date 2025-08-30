@@ -171,7 +171,7 @@ export class MessageGateway
     const updatedMessage = await this.messageService.updateMessageContent(
       data.messageId,
       data.updatedMessage,
-      data.needTranslation,
+      data.needTranslation || false,
     );
 
     // Emit to all sender sockets

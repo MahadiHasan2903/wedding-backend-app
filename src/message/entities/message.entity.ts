@@ -1,9 +1,9 @@
 import {
-  Entity,
-  PrimaryGeneratedColumn,
   Column,
+  Entity,
   CreateDateColumn,
   UpdateDateColumn,
+  PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Language, MessageType, MessageStatus } from '../enum/message.enum';
 
@@ -57,6 +57,9 @@ export class Message {
 
   @Column({ default: false })
   isDeleted: boolean;
+
+  @Column({ default: false })
+  isInappropriate: boolean;
 
   @CreateDateColumn()
   createdAt: Date;

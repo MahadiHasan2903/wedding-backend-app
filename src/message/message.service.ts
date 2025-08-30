@@ -1,16 +1,17 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { In } from 'typeorm';
 import { Language } from './enum/message.enum';
+import { containsBadWords } from 'src/utils/helpers';
 import { MediaService } from 'src/media/media.service';
 import { Media } from 'src/media/entities/media.entity';
+import { PaginationOptions } from 'src/types/common.types';
 import { CreateMessageDto } from './dto/create-message.dto';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { Message, MessageContent } from './entities/message.entity';
 import { MessageRepository } from './repositories/message.repository';
 import { UpdateMessageStatusDto } from './dto/update-message-status.dto';
 import { MediaRepository } from 'src/media/repositories/media.repository';
 import { GoogleTranslateService } from './translation/google-translate.service';
 import { ConversationRepository } from 'src/conversation/repositories/conversation.repository';
-import { PaginationOptions } from 'src/types/common.types';
-import { In } from 'typeorm';
 
 @Injectable()
 export class MessageService {
@@ -94,10 +95,21 @@ export class MessageService {
       attachmentIds = dto.attachments;
     }
 
+    // ✅ Decide which text to check for inappropriate words
+    let textToCheck: string | undefined;
+    if (messageContent) {
+      textToCheck = dto.needTranslation
+        ? messageContent.translationEn // when translation is required
+        : messageContent.originalText; // otherwise use original
+    }
+
+    const isInappropriate = textToCheck ? containsBadWords(textToCheck) : false;
+
     const newMessage = this.messageRepository.create({
       ...dto,
       message: messageContent,
       attachments: attachmentIds.length > 0 ? attachmentIds : undefined,
+      isInappropriate,
     });
 
     const savedMessage = await this.messageRepository.save(newMessage);
@@ -251,18 +263,26 @@ export class MessageService {
   async updateMessageContent(
     id: string,
     message: string,
-    needTranslation = false,
+    needTranslation: boolean,
   ) {
-    // Prepare the content (translated or not)
+    // Prepare the new content
     const translatedContent = await this.prepareMessageContent(
       message,
       needTranslation,
     );
 
-    // Await updatedMessage correctly
+    // Decide which text to check
+    const textToCheck = needTranslation
+      ? translatedContent.translationEn
+      : translatedContent.originalText;
+
+    const isInappropriate = containsBadWords(textToCheck);
+
+    // Update both content + inappropriate flag
     const updatedMessage = await this.messageRepository.updateMessageContent(
       id,
       translatedContent,
+      isInappropriate,
     );
 
     // Check if repliedToMessage exists before querying
