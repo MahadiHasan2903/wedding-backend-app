@@ -143,7 +143,7 @@ export class AccountService {
     const purchaseInfo = await this.msPurchaseService.createPurchase(
       savedAccount.id,
       defaultPackage.id,
-      PurchasePackageCategory.LIFETIME,
+      PurchasePackageCategory.LIFETIME_FREE,
     );
 
     // Update the savedAccount with msPurchaseId and save again

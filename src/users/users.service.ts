@@ -11,16 +11,16 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { MediaService } from 'src/media/media.service';
 import { startOfDay, subDays, format } from 'date-fns';
 import { LikeDislikeDto } from './dto/like-dislike.dto';
+import { CreateAdminDto } from './dto/create-admin.dto';
 import { BlockUnblockDto } from './dto/block-unblock.dto';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { UserRepository } from './repositories/user.repository';
+import { MsPurchaseService } from 'src/ms-purchase/ms-purchase.service';
 import { MediaRepository } from 'src/media/repositories/media.repository';
 import { FiltersOptions, MonthlyRegistrationRaw } from './types/user.types';
-import { MsPurchaseRepository } from 'src/ms-purchase/repositories/ms-purchase.repository';
-import { CreateAdminDto } from './dto/create-admin.dto';
-import { MsPackageRepository } from 'src/ms-package/repositories/msPackage.repository';
-import { MsPurchaseService } from 'src/ms-purchase/ms-purchase.service';
 import { PurchasePackageCategory } from 'src/ms-purchase/enum/ms-purchase.enum';
+import { MsPackageRepository } from 'src/ms-package/repositories/msPackage.repository';
+import { MsPurchaseRepository } from 'src/ms-purchase/repositories/ms-purchase.repository';
 
 @Injectable()
 export class UsersService {
@@ -88,7 +88,7 @@ export class UsersService {
     const purchaseInfo = await this.msPurchaseService.createPurchase(
       savedAdmin.id,
       defaultPackage.id,
-      PurchasePackageCategory.LIFETIME,
+      PurchasePackageCategory.LIFETIME_FREE,
     );
 
     // Link membership

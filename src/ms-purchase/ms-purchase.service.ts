@@ -132,13 +132,17 @@ export class MsPurchaseService {
     let expiresAt: Date | undefined;
 
     // Calculate expiry date based on package type
-    if (packagePurchasedCategory === PurchasePackageCategory.MONTHLY) {
+    if (packagePurchasedCategory === PurchasePackageCategory.MONTHLY_PREMIUM) {
       expiresAt = new Date(purchasedAt);
       expiresAt.setDate(expiresAt.getDate() + 30);
-    } else if (packagePurchasedCategory === PurchasePackageCategory.YEARLY) {
+    } else if (
+      packagePurchasedCategory === PurchasePackageCategory.LIFETIME_PREMIUM
+    ) {
       expiresAt = new Date(purchasedAt);
-      expiresAt.setFullYear(expiresAt.getFullYear() + 1);
-    } else if (packagePurchasedCategory === PurchasePackageCategory.LIFETIME) {
+      expiresAt.setFullYear(expiresAt.getFullYear() + 1000);
+    } else if (
+      packagePurchasedCategory === PurchasePackageCategory.LIFETIME_FREE
+    ) {
       expiresAt = undefined;
     }
 
