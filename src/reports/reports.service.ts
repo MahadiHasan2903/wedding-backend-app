@@ -1,21 +1,22 @@
+import * as fs from 'fs';
+import * as path from 'path';
+import { Report } from './entities/report.entity';
 import {
   HttpException,
   HttpStatus,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { ReportsRepository } from './repositories/reports.repository';
-import { CreateReportDto } from './dto/create-report.dto';
-import { Report } from './entities/report.entity';
-import { UpdateReportDto } from './dto/update-report.dto';
-import { PaginationOptions } from 'src/types/common.types';
-import { MessageService } from 'src/message/message.service';
-import { ReportAction, ReportStatus } from './enum/report.enum';
-import { EmailService } from 'src/common/email/email.service';
+import { Between, FindOptionsWhere } from 'typeorm';
 import { UsersService } from 'src/users/users.service';
+import { UpdateReportDto } from './dto/update-report.dto';
+import { CreateReportDto } from './dto/create-report.dto';
 import { AccountStatus } from 'src/users/enum/users.enum';
 import { ReportFiltersOptions } from './types/report.types';
-import { Between, FindOptionsWhere } from 'typeorm';
+import { MessageService } from 'src/message/message.service';
+import { EmailService } from 'src/common/email/email.service';
+import { ReportAction, ReportStatus } from './enum/report.enum';
+import { ReportsRepository } from './repositories/reports.repository';
 
 @Injectable()
 export class ReportsService {
@@ -165,70 +166,56 @@ export class ReportsService {
    * @returns The updated report entity
    *
    */
+
   async takeAction(reportId: string, action: ReportAction) {
     const report = await this.reportRepository.findOne({
       where: { id: reportId },
     });
-    if (!report) {
+    if (!report)
       throw new HttpException('Report not found', HttpStatus.NOT_FOUND);
-    }
 
-    // 2️⃣ Update report action + status
     report.actionTaken = action;
     report.status =
       action === ReportAction.PENDING
         ? ReportStatus.PENDING
         : ReportStatus.RESOLVED;
 
-    // 3️⃣ Fetch sender details only if action requires notifying the user
     if ([ReportAction.WARNED_USER, ReportAction.BANNED_USER].includes(action)) {
       const user = await this.usersService.findUserById(report.senderId);
-
-      if (!user || !user.email) {
+      if (!user || !user.email)
         throw new HttpException(
           'Sender email not found',
           HttpStatus.BAD_REQUEST,
         );
-      }
 
-      // Prepare subject & body dynamically
+      let templateFile = '';
       let subject = '';
-      let html = '';
 
       if (action === ReportAction.WARNED_USER) {
-        subject = 'Warning Notice - France & Cuba Wedding App';
-        html = `
-        <p>Hello ${user.firstName ?? 'User'},</p>
-        <p>We have reviewed one of your recent messages and found it may violate our community guidelines.</p>
-        <p>Please ensure your communication remains respectful and appropriate. Further violations may result in suspension or banning of your account.</p>
-        <br/>
-        <p>— France Cuba Wedding App Team</p>
-      `;
-      }
-
-      if (action === ReportAction.BANNED_USER) {
-        // 🚫 Update user status to banned
+        templateFile = 'warn-user.html';
+        subject = '⚠️ Warning Notice - France & Cuba Wedding App';
+      } else if (action === ReportAction.BANNED_USER) {
+        templateFile = 'banned-user.html';
+        subject = '🚫 Account Banned - France & Cuba Wedding App';
         await this.usersService.updateAccountStatus(
           user.id,
           AccountStatus.BANNED,
         );
-
-        subject = 'Account Banned - France & Cuba Wedding App';
-        html = `
-        <p>Hello ${user.firstName ?? 'User'},</p>
-        <p>We regret to inform you that your account has been <strong>banned</strong> due to repeated violations of our community guidelines.</p>
-        <p>You will no longer be able to access your account. If you believe this is a mistake, please contact our support team.</p>
-        <br/>
-        <p>— France Cuba Wedding App Team</p>
-      `;
       }
 
+      const templatePath = path.join(
+        __dirname,
+        '..',
+        'common',
+        'email',
+        'templates',
+        templateFile,
+      );
+      let html = fs.readFileSync(templatePath, 'utf-8');
+      html = html.replace('{{FIRST_NAME}}', user.firstName ?? 'User');
+
       // 📧 Send email (warn or ban)
-      await this.emailService.sendMail({
-        to: user.email,
-        subject,
-        html,
-      });
+      await this.emailService.sendMail({ to: user.email, subject, html });
     }
 
     // 4️⃣ Save and return updated report

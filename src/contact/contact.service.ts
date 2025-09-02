@@ -1,9 +1,11 @@
+import * as fs from 'fs';
+import * as path from 'path';
 import { Injectable } from '@nestjs/common';
 import { Contact } from './entities/contact.entity';
 import { CreateContactDto } from './dto/create-contact.dto';
 import { UpdateContactDto } from './dto/update-contact.dto';
-import { ContactRepository } from './repositories/contact.repository';
 import { EmailService } from 'src/common/email/email.service';
+import { ContactRepository } from './repositories/contact.repository';
 
 @Injectable()
 export class ContactService {
@@ -39,18 +41,30 @@ export class ContactService {
     const { firstName, lastName, email, phoneNumber, subject, message } =
       contact;
 
-    const html = `
-      <p><strong>New contact submission received:</strong></p>
-      <ul>
-        <li><strong>Name:</strong> ${firstName} ${lastName}</li>
-        <li><strong>Email:</strong> ${email}</li>
-        ${phoneNumber ? `<li><strong>Phone:</strong> ${phoneNumber}</li>` : ''}
-        <li><strong>Subject:</strong> ${subject}</li>
-        <li><strong>Message:</strong><br/>${message}</li>
-      </ul>
-      <p>— France Cuba Wedding App</p>
-    `;
+    // Load template
+    const templatePath = path.join(
+      __dirname,
+      '..',
+      'common',
+      'email',
+      'templates',
+      'contact-notification.html',
+    );
+    let html = fs.readFileSync(templatePath, 'utf-8');
 
+    // Replace placeholders
+    html = html.replace('{{NAME}}', `${firstName} ${lastName}`);
+    html = html.replace('{{EMAIL}}', email);
+    html = html.replace('{{SUBJECT}}', subject);
+    html = html.replace('{{MESSAGE}}', message);
+
+    // Conditional phone block
+    const phoneBlock = phoneNumber
+      ? `<p style="margin:4px 0;"><strong>Phone:</strong> ${phoneNumber}</p>`
+      : '';
+    html = html.replace('{{PHONE_BLOCK}}', phoneBlock);
+
+    // Send email
     await this.emailService.sendMail({
       from: email,
       subject: '📩 New Contact Form Submission',
