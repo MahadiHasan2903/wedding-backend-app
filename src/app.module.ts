@@ -1,19 +1,20 @@
 import { Module } from '@nestjs/common';
+import { AppService } from './app.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import { AccountModule } from './account/account.module';
+import { AppController } from './app.controller';
 import { UsersModule } from './users/users.module';
 import { MediaModule } from './media/media.module';
-import { MsPackageModule } from './ms-package/msPackage.module';
+import { AccountModule } from './account/account.module';
 import { PaymentModule } from './payment/payment.module';
-import { MsPurchaseModule } from './ms-purchase/ms-purchase.module';
-import { StripeModule } from './payment/stripe/stripe.module';
-import { ConversationModule } from './conversation/conversation.module';
 import { MessageModule } from './message/message.module';
 import { ReportsModule } from './reports/reports.module';
 import { ContactModule } from './contact/contact.module';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
+import { LocationModule } from './location/location.module';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { StripeModule } from './payment/stripe/stripe.module';
+import { MsPackageModule } from './ms-package/msPackage.module';
+import { MsPurchaseModule } from './ms-purchase/ms-purchase.module';
+import { ConversationModule } from './conversation/conversation.module';
 
 @Module({
   controllers: [AppController],
@@ -39,17 +40,18 @@ import { AppService } from './app.service';
         },
       }),
     }),
+    MediaModule,
+    UsersModule,
     StripeModule,
     AccountModule,
-    UsersModule,
-    MediaModule,
-    MsPackageModule,
     PaymentModule,
-    MsPurchaseModule,
-    ConversationModule,
     MessageModule,
     ReportsModule,
     ContactModule,
+    LocationModule,
+    MsPackageModule,
+    MsPurchaseModule,
+    ConversationModule,
   ],
 })
 export class AppModule {}
