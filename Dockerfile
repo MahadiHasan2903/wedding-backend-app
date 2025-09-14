@@ -24,6 +24,7 @@
     COPY --from=build /workspace/node_modules ./node_modules
     COPY --from=build /workspace/dist ./dist
     COPY package*.json ./
+    COPY --from=build /workspace/credentials ./credentials
     
     # your app uses PORT=8080 in .env
     EXPOSE 8080

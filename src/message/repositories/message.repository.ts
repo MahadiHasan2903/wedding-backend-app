@@ -74,8 +74,13 @@ export class MessageRepository extends Repository<Message> {
   async updateMessageContent(
     id: string,
     content: MessageContent,
+    isInappropriate: boolean,
   ): Promise<Message> {
-    await this.update(id, { message: content });
+    await this.update(id, {
+      message: content,
+      isInappropriate,
+    });
+
     return this.findOneByOrFail({ id });
   }
 }

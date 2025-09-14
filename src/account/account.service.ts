@@ -1,15 +1,17 @@
+import * as fs from 'fs';
+import * as path from 'path';
 import * as bcrypt from 'bcrypt';
+import { JwtService } from '@nestjs/jwt';
 import { Injectable } from '@nestjs/common';
-import { AccountRepository } from './repositories/account.repository';
+import { User } from 'src/users/entities/user.entity';
+import { AccountStatus } from 'src/users/enum/users.enum';
 import { CreateAccountDto } from './dto/create-account.dto';
 import { EmailService } from '../common/email/email.service';
-import { JwtService } from '@nestjs/jwt';
-import { AccountStatus } from 'src/users/enum/users.enum';
-import { User } from 'src/users/entities/user.entity';
-import { MsPackageRepository } from 'src/ms-package/repositories/msPackage.repository';
-import { PurchasePackageCategory } from 'src/ms-purchase/enum/ms-purchase.enum';
+import { AccountRepository } from './repositories/account.repository';
 import { MsPurchaseService } from 'src/ms-purchase/ms-purchase.service';
 import { UserRepository } from 'src/users/repositories/user.repository';
+import { PurchasePackageCategory } from 'src/ms-purchase/enum/ms-purchase.enum';
+import { MsPackageRepository } from 'src/ms-package/repositories/msPackage.repository';
 
 @Injectable()
 export class AccountService {
@@ -85,17 +87,21 @@ export class AccountService {
    * @param otp - The one-time password to be sent.
    */
   private async sendOtpEmail(to: string, otp: string) {
-    const subject = 'Your OTP Code';
+    const subject = '🔑 Your OTP Code';
 
-    const html = `
-      <p>Hello,</p>
-      <p>Your verification code for <strong>France & Cuba Wedding App</strong> is:</p>
-      <h2 style="color:#333;">${otp}</h2>
-      <p>Please use this code to complete your registration.</p>
-      <p>If you did not request this, you can ignore this email.</p>
-      <br/>
-      <p>— France Cuba Wedding App Team</p>
-    `;
+    // Load HTML template
+    const templatePath = path.join(
+      __dirname,
+      '..',
+      'common',
+      'email',
+      'templates',
+      'otp-email.html',
+    );
+    let html = fs.readFileSync(templatePath, 'utf-8');
+
+    // Replace placeholders
+    html = html.replace('{{OTP}}', otp);
 
     await this.emailService.sendMail({
       to,
@@ -143,7 +149,7 @@ export class AccountService {
     const purchaseInfo = await this.msPurchaseService.createPurchase(
       savedAccount.id,
       defaultPackage.id,
-      PurchasePackageCategory.LIFETIME,
+      PurchasePackageCategory.LIFETIME_FREE,
     );
 
     // Update the savedAccount with msPurchaseId and save again
